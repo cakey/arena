@@ -9,7 +9,7 @@ ctx = canvas.getContext '2d'
 class Player
     radius = 20
 
-    constructor: ->
+    constructor: (@time) ->
         @x = 100
         @y = 100
 
@@ -25,12 +25,18 @@ class Player
 class Arena
 
     constructor: ->
-        @p1 = new Player()
-        @render()
+        @startTime = new Date().getTime()
+        @p1 = new Player @startTime
 
         addEventListener "mousedown", (event) =>
             @p1.moveTo event.x, event.y
-            @render()
+
+        @loop()
+
+    loop: =>
+        setTimeout @loop, 10
+        console.log "loop"
+        @render()
 
     render: ->
         ctx.clearRect 0, 0, canvas.width, canvas.height
