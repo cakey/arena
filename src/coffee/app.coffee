@@ -74,7 +74,7 @@ class Player
         ctx.arc @x, @y, maxCastRadius, 0, 2*Math.PI
         ctx.lineWidth = 1
         ctx.setLineDash [3,7]
-        ctx.strokeStyle = "#bbbbbb"
+        ctx.strokeStyle = "#777777"
         ctx.stroke()
         ctx.setLineDash []
 
