@@ -1,10 +1,17 @@
 canvas = document.getElementById 'canvas'
+offscreenCanvas = document.createElement 'canvas'
+
 canvas.width = window.innerWidth
 canvas.height = window.innerHeight
+offscreenCanvas.width = canvas.width
+offscreenCanvas.height = canvas.height
 
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 
 ctx = canvas.getContext '2d'
+
+ctxOffscreen = offscreenCanvas.getContext '2d'
+
 
 class Player
 
@@ -105,7 +112,12 @@ class Arena
         @p1.update new Date().getTime()
 
     render: ->
+      
+        ctxOffscreen.clearRect 0, 0, canvas.width, canvas.height
+        
+        @p1.draw ctxOffscreen
+        
         ctx.clearRect 0, 0, canvas.width, canvas.height
-        @p1.draw ctx
+        ctx.drawImage offscreenCanvas, 0, 0
 
 arena = new Arena()
