@@ -14,17 +14,20 @@ gulp.task "scripts", ->
     .pipe(concat("app.js"))
     .pipe(coffee(bare: true).on("error", gutil.log))
     .pipe gulp.dest("./public")
+  return
 
 gulp.task "styles", ->
   gulp.src(["./src/**/*.scss"])
     .pipe(concat("app.css"))
     .pipe(sass(errLogToConsole: true))
     .pipe gulp.dest("./public")
+  return
 
 gulp.task "jade", ->
   gulp.src("./src/jade/index.jade")
     .pipe(jade().on("error", gutil.log))
     .pipe gulp.dest("./public")
+  return
 
 gulp.task "clean", ->
   gulp.src("./public",
