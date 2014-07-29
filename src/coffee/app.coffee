@@ -22,12 +22,14 @@ class Player
         @y = @destY = 300
         @speed = 0.2 # pixels/ms
         @startCastTime = null
-        @castTime = 1000 # ms
+        @castX = null
+        @castY = null
+        @castTime = 600 # ms
 
     moveTo: (@destX,@destY) ->
         @startCastTime = null
 
-    fire: (x, y) ->
+    fire: (@castX, @castY) ->
         # stop moving to fire
         @destX = @x
         @destY = @y
@@ -36,23 +38,45 @@ class Player
 
     draw: (ctx) ->
 
+        maxCastRadius = (@radius+3+@radius)
+
+        # Cast
+        if @startCastTime?
+            radiusMs = maxCastRadius / @castTime
+            radius = radiusMs * (@time - @startCastTime)
+
+            diffY = @castY - @y
+            diffX = @castX - @x
+            angle = Math.atan2 diffY, diffX
+
+            ctx.beginPath()
+            ctx.moveTo @x, @y
+            ctx.arc @x, @y, radius, angle-(@cone/2), angle + (@cone/2)
+            ctx.moveTo @x, @y
+            ctx.lineWidth = 3
+            ctx.fillStyle = "#aa0000"
+            ctx.fill()
+
+
+
         # Location
         ctx.beginPath()
         ctx.moveTo (@x + @radius), @y
         ctx.arc @x, @y, @radius, 0, 2*Math.PI
         ctx.lineWidth = 3
+        ctx.strokeStyle = "#000000"
         ctx.stroke()
 
-        # Cast
-        if @startCastTime?
-            radiusMs = @radius / @castTime
-            radius = radiusMs * (@time - @startCastTime)
+        # casting circle
 
-            ctx.beginPath()
-            ctx.moveTo (@x + radius), @y
-            ctx.arc @x, @y, radius, 0, 2*Math.PI
-            ctx.lineWidth = 1
-            ctx.stroke()
+        ctx.beginPath()
+        ctx.moveTo (@x + maxCastRadius), @y
+        ctx.arc @x, @y, maxCastRadius, 0, 2*Math.PI
+        ctx.lineWidth = 1
+        ctx.setLineDash [3,7]
+        ctx.strokeStyle = "#bbbbbb"
+        ctx.stroke()
+        ctx.setLineDash []
 
 
     update: (newTime) ->
