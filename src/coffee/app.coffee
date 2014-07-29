@@ -7,24 +7,51 @@ document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 ctx = canvas.getContext '2d'
 
 class Player
-    radius = 20
 
-    constructor: (@time) ->
+    constructor: (@arena, @time) ->
+        @cone = Math.PI / 4
+        @radius = 20
         @x = @destX = 300
         @y = @destY = 300
         @speed = 0.2 # pixels/ms
+        @startCastTime = null
+        @castTime = 1000 # ms
 
     moveTo: (@destX,@destY) ->
+        @startCastTime = null
+
+    fire: (x, y) ->
+        # stop moving to fire
+        @destX = @x
+        @destY = @y
+        @startCastTime = @time # needs to be passed through
+
 
     draw: (ctx) ->
+
+        # Location
         ctx.beginPath()
-        ctx.moveTo (@x+20), @y
-        ctx.arc @x, @y, 20, 0, 2*Math.PI
+        ctx.moveTo (@x + @radius), @y
+        ctx.arc @x, @y, @radius, 0, 2*Math.PI
         ctx.lineWidth = 3
         ctx.stroke()
 
+        # Cast
+        if @startCastTime?
+            radiusMs = @radius / @castTime
+            radius = radiusMs * (@time - @startCastTime)
+
+            ctx.beginPath()
+            ctx.moveTo (@x + radius), @y
+            ctx.arc @x, @y, radius, 0, 2*Math.PI
+            ctx.lineWidth = 1
+            ctx.stroke()
+
+
     update: (newTime) ->
         msDiff = newTime - @time
+
+        # Location
 
         diffY = @destY - @y
         diffX = @destX - @x
@@ -44,6 +71,12 @@ class Player
         else
             @y += maxYTravel
 
+        # Cast
+
+        if @startCastTime?
+            if newTime - @startCastTime > @castTime
+                @startCastTime = null
+
         @time = newTime
 
 
@@ -51,16 +84,18 @@ class Arena
 
     constructor: ->
         @startTime = new Date().getTime()
-        @p1 = new Player @startTime
+        @p1 = new Player @, @startTime
 
         addEventListener "mousedown", (event) =>
-            @p1.moveTo event.x, event.y
+            if event.which is 3
+                @p1.moveTo event.x, event.y
+            else if event.which is 1
+                @p1.fire event.x, event.y
 
         @loop()
 
     loop: =>
         setTimeout @loop, 20
-        console.log "loop"
         # TODO: A non sucky game loop...
         # Fixed time updates.
         @update()
