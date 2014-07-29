@@ -10,10 +10,11 @@ class Player
     radius = 20
 
     constructor: (@time) ->
-        @x = 100
-        @y = 100
+        @x = @destX = 300
+        @y = @destY = 300
+        @speed = 0.2 # pixels/ms
 
-    moveTo: (@x,@y) ->
+    moveTo: (@destX,@destY) ->
 
     draw: (ctx) ->
         ctx.beginPath()
@@ -21,6 +22,30 @@ class Player
         ctx.arc @x, @y, 20, 0, 2*Math.PI
         ctx.lineWidth = 3
         ctx.stroke()
+
+    update: (newTime) ->
+        msDiff = newTime - @time
+
+        diffY = @destY - @y
+        diffX = @destX - @x
+        angle = Math.atan2 diffY, diffX
+        ySpeed = Math.sin(angle) * @speed
+        xSpeed = Math.cos(angle) * @speed
+
+        maxXTravel = xSpeed * msDiff
+        if maxXTravel > Math.abs diffX
+            @x = @destX
+        else
+            @x += maxXTravel
+
+        maxYTravel = ySpeed * msDiff
+        if maxYTravel > Math.abs diffY
+            @y = @destY
+        else
+            @y += maxYTravel
+
+        @time = newTime
+
 
 class Arena
 
@@ -34,9 +59,15 @@ class Arena
         @loop()
 
     loop: =>
-        setTimeout @loop, 10
+        setTimeout @loop, 20
         console.log "loop"
+        # TODO: A non sucky game loop...
+        # Fixed time updates.
+        @update()
         @render()
+
+    update: ->
+        @p1.update new Date().getTime()
 
     render: ->
         ctx.clearRect 0, 0, canvas.width, canvas.height

@@ -5,9 +5,14 @@ body {
   padding: 0px;
   font-family: $font-stack;
   background: #AA90FF;
+  overflow: hidden;
 }
 
 h1, h3 {
   color: #FFF;
   text-align: center;
+}
+
+canvas {
+  border: 1px solid #fff
 }
