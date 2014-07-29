@@ -1,21 +1,18 @@
-scene = new THREE.Scene()
-camera = new THREE.PerspectiveCamera 75, window.innerWidth/window.innerHeight, 0.1, 1000
-renderer = new THREE.WebGLRenderer()
-renderer.setSize window.innerWidth, window.innerHeight
-document.body.appendChild renderer.domElement
+canvas = document.getElementById 'canvas'
+canvas.width = window.innerWidth
+canvas.height = window.innerHeight
 
-geometry = new THREE.BoxGeometry 1, 1, 1
-material = new THREE.MeshBasicMaterial color: 0x00ff00
-cube = new THREE.Mesh geometry, material
-scene.add cube
+document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 
-camera.position.z = 5
-camera.rotation.x -= .51
-camera.position.y += 2
+ctx = canvas.getContext '2d'
 
-render = ->
-    requestAnimationFrame render
-    cube.rotation.y += 0.01
-    renderer.render scene, camera
+ctx.beginPath()
+ctx.arc 100, 100, 20, 0, 2*Math.PI
+ctx.stroke()
 
-render()
+canvas.addEventListener "mouseup", (event) ->
+    ctx.clearRect 0, 0, canvas.width, canvas.height
+    ctx.beginPath()
+    ctx.moveTo (event.x+20), event.y
+    ctx.arc (event.x), event.y, 20, 0, 2*Math.PI
+    ctx.stroke()
