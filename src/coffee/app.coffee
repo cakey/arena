@@ -15,4 +15,5 @@ canvas.addEventListener "mouseup", (event) ->
     ctx.beginPath()
     ctx.moveTo (event.x+20), event.y
     ctx.arc (event.x), event.y, 20, 0, 2*Math.PI
+    ctx.lineWidth = 3;
     ctx.stroke()
