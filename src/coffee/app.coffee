@@ -6,14 +6,34 @@ document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 
 ctx = canvas.getContext '2d'
 
-ctx.beginPath()
-ctx.arc 100, 100, 20, 0, 2*Math.PI
-ctx.stroke()
+class Player
+    radius = 20
 
-canvas.addEventListener "mouseup", (event) ->
-    ctx.clearRect 0, 0, canvas.width, canvas.height
-    ctx.beginPath()
-    ctx.moveTo (event.x+20), event.y
-    ctx.arc (event.x), event.y, 20, 0, 2*Math.PI
-    ctx.lineWidth = 3;
-    ctx.stroke()
+    constructor: ->
+        @x = 100
+        @y = 100
+
+    moveTo: (@x,@y) ->
+
+    draw: (ctx) ->
+        ctx.beginPath()
+        ctx.moveTo (@x+20), @y
+        ctx.arc @x, @y, 20, 0, 2*Math.PI
+        ctx.lineWidth = 3
+        ctx.stroke()
+
+class Arena
+
+    constructor: ->
+        @p1 = new Player()
+        @render()
+
+        addEventListener "mousedown", (event) =>
+            @p1.moveTo event.x, event.y
+            @render()
+
+    render: ->
+        ctx.clearRect 0, 0, canvas.width, canvas.height
+        @p1.draw ctx
+
+arena = new Arena()
