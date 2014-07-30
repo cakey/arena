@@ -19,6 +19,8 @@ ping stats
 ## UI
 
 Camera Panning
+change mouse
+
 
 ## Other
 

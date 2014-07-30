@@ -1,3 +1,9 @@
+# todo:
+# immutable coordinate
+# generalise abilities
+# generalise projectiles?
+# player extends projectile
+
 canvas = document.getElementById 'canvas'
 offscreenCanvas = document.createElement 'canvas'
 
@@ -24,7 +30,7 @@ class Player
         @startCastTime = null
         @castX = null
         @castY = null
-        @castTime = 600 # ms
+        @castTime = 400 # ms
 
     moveTo: (@destX,@destY) ->
         @startCastTime = null
@@ -107,6 +113,50 @@ class Player
         if @startCastTime?
             if newTime - @startCastTime > @castTime
                 @startCastTime = null
+                @arena.addProjectile @x, @y, @castX, @castY
+
+        @time = newTime
+
+class Projectile
+
+    constructor: (@arena, @time, @x, @y, @destX, @destY) ->
+        @radius = 5
+        @speed = 0.6 # pixels/ms
+
+    draw: (ctx) ->
+
+        # Location
+        ctx.beginPath()
+        ctx.moveTo (@x + @radius), @y
+        ctx.arc @x, @y, @radius, 0, 2*Math.PI
+        ctx.lineWidth = 3
+        ctx.fillStyle = "#aa0000"
+        ctx.fill()
+
+    update: (newTime) ->
+        msDiff = newTime - @time
+
+        # Location
+
+        diffY = @destY - @y
+        diffX = @destX - @x
+        angle = Math.atan2 diffY, diffX
+        ySpeed = Math.sin(angle) * @speed
+        xSpeed = Math.cos(angle) * @speed
+
+        maxXTravel = xSpeed * msDiff
+        if maxXTravel > Math.abs diffX
+            @x = @destX
+        else
+            @x += maxXTravel
+
+        maxYTravel = ySpeed * msDiff
+        if maxYTravel > Math.abs diffY
+            @y = @destY
+        else
+            @y += maxYTravel
+
+        # Cast
 
         @time = newTime
 
@@ -116,6 +166,7 @@ class Arena
     constructor: ->
         @startTime = new Date().getTime()
         @p1 = new Player @, @startTime
+        @projectiles = []
 
         addEventListener "mousedown", (event) =>
             if event.which is 3
@@ -124,6 +175,10 @@ class Arena
                 @p1.fire event.x, event.y
 
         @loop()
+
+    addProjectile: (startX, startY, destX, destY) ->
+        p = new Projectile @, new Date().getTime(), startX, startY, destX, destY
+        @projectiles.push p
 
     loop: =>
         setTimeout @loop, 20
@@ -134,13 +189,16 @@ class Arena
 
     update: ->
         @p1.update new Date().getTime()
+        for p in @projectiles
+            p.update new Date().getTime()
 
     render: ->
-      
         ctxOffscreen.clearRect 0, 0, canvas.width, canvas.height
-        
+
         @p1.draw ctxOffscreen
-        
+        for p in @projectiles
+            p.draw ctxOffscreen
+
         ctx.clearRect 0, 0, canvas.width, canvas.height
         ctx.drawImage offscreenCanvas, 0, 0
 
