@@ -46,6 +46,7 @@ class Player
 
         maxCastRadius = (@radius+3+@radius)
 
+
         # Cast
         if @startCastTime?
             radiusMs = maxCastRadius / @castTime
@@ -63,15 +64,13 @@ class Player
             ctx.fillStyle = "#aa0000"
             ctx.fill()
 
-
-
         # Location
         ctx.beginPath()
         ctx.moveTo (@x + @radius), @y
         ctx.arc @x, @y, @radius, 0, 2*Math.PI
         ctx.lineWidth = 3
-        ctx.strokeStyle = "#000000"
-        ctx.stroke()
+        ctx.fillStyle = "#aaaacc"
+        ctx.fill()
 
         # casting circle
 
@@ -79,7 +78,7 @@ class Player
         ctx.moveTo (@x + maxCastRadius), @y
         ctx.arc @x, @y, maxCastRadius, 0, 2*Math.PI
         ctx.lineWidth = 1
-        ctx.setLineDash [3,7]
+        ctx.setLineDash [3,12]
         ctx.strokeStyle = "#777777"
         ctx.stroke()
         ctx.setLineDash []
