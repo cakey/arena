@@ -22,8 +22,9 @@ ctxOffscreen = offscreenCanvas.getContext '2d'
 class Player
 
     constructor: (@arena, @time) ->
-        @cone = Math.PI / 4
+        @cone = Math.PI / 5
         @radius = 20
+        @maxCastRadius = (@radius+3+@radius)
         @x = @destX = 300
         @y = @destY = 300
         @speed = 0.2 # pixels/ms
@@ -44,13 +45,10 @@ class Player
 
     draw: (ctx) ->
 
-        maxCastRadius = (@radius+3+@radius)
-
-
         # Cast
         if @startCastTime?
-            radiusMs = maxCastRadius / @castTime
-            radius = radiusMs * (@time - @startCastTime)
+            radiusMs = @radius / @castTime
+            radius = (radiusMs * (@time - @startCastTime))+@radius+3
 
             diffY = @castY - @y
             diffX = @castX - @x
@@ -75,8 +73,8 @@ class Player
         # casting circle
 
         ctx.beginPath()
-        ctx.moveTo (@x + maxCastRadius), @y
-        ctx.arc @x, @y, maxCastRadius, 0, 2*Math.PI
+        ctx.moveTo (@x + @maxCastRadius), @y
+        ctx.arc @x, @y, @maxCastRadius, 0, 2*Math.PI
         ctx.lineWidth = 1
         ctx.setLineDash [3,12]
         ctx.strokeStyle = "#777777"
@@ -112,14 +110,20 @@ class Player
         if @startCastTime?
             if newTime - @startCastTime > @castTime
                 @startCastTime = null
-                @arena.addProjectile @x, @y, @castX, @castY
+
+                castAngle = Math.atan2 (@castY - @y), (@castX - @x)
+
+                edgeX = @x + Math.cos(castAngle) * @maxCastRadius
+                edgeY = @y + Math.sin(castAngle) * @maxCastRadius
+
+                @arena.addProjectile edgeX, edgeY, @castX, @castY
 
         @time = newTime
 
 class Projectile
 
     constructor: (@arena, @time, @x, @y, dirX, dirY) ->
-        @radius = 5
+        @radius = 7
         @speed = 0.6 # pixels/ms
         @range = 300
         diffY = dirY - @y
