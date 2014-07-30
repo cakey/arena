@@ -18,11 +18,19 @@ ctx = canvas.getContext '2d'
 
 ctxOffscreen = offscreenCanvas.getContext '2d'
 
+skills =
+    orb:
+        cone: Math.PI / 5
+        radius: 7
+        castTime = 400
+        speed: 0.6
+        range: 300
+        color: "#aa0000"
+
 
 class Player
 
     constructor: (@arena, @time) ->
-        @cone = Math.PI / 5
         @radius = 20
         @maxCastRadius = (@radius+3+@radius)
         @x = @destX = 300
@@ -31,23 +39,21 @@ class Player
         @startCastTime = null
         @castX = null
         @castY = null
-        @castTime = 400 # ms
 
-    moveTo: (@destX,@destY) ->
+    moveTo: (@destX, @destY) ->
         @startCastTime = null
 
-    fire: (@castX, @castY) ->
+    fire: (@castX, @castY, @castedSkill) ->
         # stop moving to fire
         @destX = @x
         @destY = @y
         @startCastTime = @time # needs to be passed through
 
-
     draw: (ctx) ->
 
         # Cast
         if @startCastTime?
-            radiusMs = @radius / @castTime
+            radiusMs = @radius / @castedSkill.castTime
             radius = (radiusMs * (@time - @startCastTime))+@radius+3
 
             diffY = @castY - @y
@@ -56,10 +62,9 @@ class Player
 
             ctx.beginPath()
             ctx.moveTo @x, @y
-            ctx.arc @x, @y, radius, angle-(@cone/2), angle + (@cone/2)
+            ctx.arc @x, @y, radius, angle-(@castedSkill.cone/2), angle + (@castedSkill.cone/2)
             ctx.moveTo @x, @y
-            ctx.lineWidth = 3
-            ctx.fillStyle = "#aa0000"
+            ctx.fillStyle = castedSkill.color
             ctx.fill()
 
         # Location
@@ -80,7 +85,6 @@ class Player
         ctx.strokeStyle = "#777777"
         ctx.stroke()
         ctx.setLineDash []
-
 
     update: (newTime) ->
         msDiff = newTime - @time
@@ -108,7 +112,7 @@ class Player
         # Cast
 
         if @startCastTime?
-            if newTime - @startCastTime > @castTime
+            if newTime - @startCastTime > @castedSkill.castTime
                 @startCastTime = null
 
                 castAngle = Math.atan2 (@castY - @y), (@castX - @x)
@@ -116,21 +120,18 @@ class Player
                 edgeX = @x + Math.cos(castAngle) * @maxCastRadius
                 edgeY = @y + Math.sin(castAngle) * @maxCastRadius
 
-                @arena.addProjectile edgeX, edgeY, @castX, @castY
+                @arena.addProjectile edgeX, edgeY, @castX, @castY, @castedSkill
 
         @time = newTime
 
 class Projectile
 
-    constructor: (@arena, @time, @x, @y, dirX, dirY) ->
-        @radius = 7
-        @speed = 0.6 # pixels/ms
-        @range = 300
+    constructor: (@arena, @time, @x, @y, dirX, dirY, @skill) ->
         diffY = dirY - @y
         diffX = dirX - @x
         angle = Math.atan2 diffY, diffX
-        ySpeed = Math.sin(angle) * @range
-        xSpeed = Math.cos(angle) * @range
+        ySpeed = Math.sin(angle) * @skill.range
+        xSpeed = Math.cos(angle) * @skill.range
         @destX = @x + xSpeed
         @destY = @y + ySpeed
 
@@ -138,10 +139,9 @@ class Projectile
 
         # Location
         ctx.beginPath()
-        ctx.moveTo (@x + @radius), @y
-        ctx.arc @x, @y, @radius, 0, 2*Math.PI
-        ctx.lineWidth = 3
-        ctx.fillStyle = "#aa0000"
+        ctx.moveTo (@x + @skill.radius), @y
+        ctx.arc @x, @y, @skill.radius, 0, 2*Math.PI
+        ctx.fillStyle = @skill.color
         ctx.fill()
 
     update: (newTime) ->
@@ -156,8 +156,8 @@ class Projectile
         diffY = @destY - @y
         diffX = @destX - @x
         angle = Math.atan2 diffY, diffX
-        ySpeed = Math.sin(angle) * @speed
-        xSpeed = Math.cos(angle) * @speed
+        ySpeed = Math.sin(angle) * @skill.speed
+        xSpeed = Math.cos(angle) * @skill.speed
 
         maxXTravel = xSpeed * msDiff
         if maxXTravel > Math.abs diffX
@@ -187,12 +187,12 @@ class Arena
             if event.which is 3
                 @p1.moveTo event.x, event.y
             else if event.which is 1
-                @p1.fire event.x, event.y
+                @p1.fire event.x, event.y, skills.orb
 
         @loop()
 
-    addProjectile: (startX, startY, destX, destY) ->
-        p = new Projectile @, new Date().getTime(), startX, startY, destX, destY
+    addProjectile: (startX, startY, destX, destY, skill) ->
+        p = new Projectile @, new Date().getTime(), startX, startY, destX, destY, skill
         @projectiles.push p
 
     loop: =>
