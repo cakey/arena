@@ -119,9 +119,17 @@ class Player
 
 class Projectile
 
-    constructor: (@arena, @time, @x, @y, @destX, @destY) ->
+    constructor: (@arena, @time, @x, @y, dirX, dirY) ->
         @radius = 5
         @speed = 0.6 # pixels/ms
+        @range = 300
+        diffY = dirY - @y
+        diffX = dirX - @x
+        angle = Math.atan2 diffY, diffX
+        ySpeed = Math.sin(angle) * @range
+        xSpeed = Math.cos(angle) * @range
+        @destX = @x + xSpeed
+        @destY = @y + ySpeed
 
     draw: (ctx) ->
 
@@ -134,6 +142,10 @@ class Projectile
         ctx.fill()
 
     update: (newTime) ->
+
+        if @x is @destX and @y is @destY
+            return false
+
         msDiff = newTime - @time
 
         # Location
@@ -159,7 +171,7 @@ class Projectile
         # Cast
 
         @time = newTime
-
+        return true
 
 class Arena
 
@@ -189,8 +201,12 @@ class Arena
 
     update: ->
         @p1.update new Date().getTime()
+        newProjectiles = []
         for p in @projectiles
-            p.update new Date().getTime()
+            alive = p.update new Date().getTime()
+            if alive
+                newProjectiles.push p
+        @projectiles = newProjectiles
 
     render: ->
         ctxOffscreen.clearRect 0, 0, canvas.width, canvas.height
