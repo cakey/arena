@@ -22,11 +22,18 @@ skills =
     orb:
         cone: Math.PI / 5
         radius: 7
-        castTime = 400
+        castTime: 400
         speed: 0.6
         range: 300
         color: "#aa0000"
 
+    disrupt:
+        cone: Math.PI / 10
+        radius: 3
+        castTime: 50
+        speed: 3
+        range: 800
+        color: "#990099"
 
 class Player
 
@@ -64,7 +71,7 @@ class Player
             ctx.moveTo @x, @y
             ctx.arc @x, @y, radius, angle-(@castedSkill.cone/2), angle + (@castedSkill.cone/2)
             ctx.moveTo @x, @y
-            ctx.fillStyle = castedSkill.color
+            ctx.fillStyle = @castedSkill.color
             ctx.fill()
 
         # Location
@@ -188,6 +195,8 @@ class Arena
                 @p1.moveTo event.x, event.y
             else if event.which is 1
                 @p1.fire event.x, event.y, skills.orb
+            else if event.which is 2
+                @p1.fire event.x, event.y, skills.disrupt
 
         @loop()
 
