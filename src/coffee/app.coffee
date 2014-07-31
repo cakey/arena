@@ -127,7 +127,16 @@ class Player
                 edgeX = @x + Math.cos(castAngle) * @maxCastRadius
                 edgeY = @y + Math.sin(castAngle) * @maxCastRadius
 
-                @arena.addProjectile edgeX, edgeY, @castX, @castY, @castedSkill
+                # handle edgecase where castPoint was within casting circle
+                castX = @castX
+                castY = @castY
+                if @x < castX < edgeX or @x > castX > edgeX
+                    castX = edgeX + Math.cos(castAngle)
+
+                if @y < castY < edgeY or @y > castY > edgeY
+                    castY = edgeY + Math.sin(castAngle)
+
+                @arena.addProjectile edgeX, edgeY, castX, castY, @castedSkill
 
         @time = newTime
 
