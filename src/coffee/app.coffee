@@ -3,6 +3,8 @@
 # generalise abilities
 # generalise projectiles?
 # player extends projectile
+# todo: pull out key bindings
+# smooth the camera panning by setting a speed for a certain time
 
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 class Canvas
@@ -222,6 +224,7 @@ class Arena
         @startTime = new Date().getTime()
         @p1 = new Player @, @startTime
         @projectiles = []
+        @cameraSpeed = 100
 
         @map =
             x: 25
@@ -231,23 +234,36 @@ class Arena
             wallSize: 10
 
         addEventListener "mousedown", (event) =>
+            x = event.x-@map.x
+            y = event.y-@map.y
+
+            if x < 0 + @p1.radius
+                x = 0 + @p1.radius
+            else if x > @map.width - @p1.radius
+                x = @map.width - @p1.radius
+
+            if y < 0  + @p1.radius
+                y = 0  + @p1.radius
+            else if y > @map.height - @p1.radius
+                y = @map.height - @p1.radius
+
             if event.which is 3
-                @p1.moveTo event.x, event.y
+                @p1.moveTo x, y
             else if event.which is 1
-                @p1.fire event.x, event.y, skills.orb
+                @p1.fire x, y, skills.orb
             else if event.which is 2
-                @p1.fire event.x, event.y, skills.disrupt
+                @p1.fire x, y, skills.disrupt
 
         addEventListener "keypress", (event) =>
             # TODO: naive keyboard camera pan feels far too clunky
-            if event.which is 97
-                @map.x += 10
+            if event.which is 97 
+                @map.x += @cameraSpeed
             else if event.which is 100
-                @map.x -= 10
+                @map.x -= @cameraSpeed
             else if event.which is 115
-                @map.y -= 10
+                @map.y -= @cameraSpeed
             else if event.which is 119
-                @map.y += 10
+                @map.y += @cameraSpeed
             else
                 console.log event
                 console.log event.which
@@ -260,7 +276,7 @@ class Arena
             ctx.beginPath()
             ctx.lineWidth @map.wallSize
             ctx.strokeStyle "#558893"
-            ctx.strokeRect 0, 0, @map.width, @map.height
+            ctx.strokeRect (-@map.wallSize/2), (-@map.wallSize/2), @map.width+@map.wallSize, @map.height+@map.wallSize
 
             @p1.draw ctx
             for p in @projectiles
