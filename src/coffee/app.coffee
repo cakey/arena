@@ -4,7 +4,6 @@
 # generalise projectiles?
 # player extends projectile
 
-
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 class Canvas
     constructor: ->
@@ -18,11 +17,27 @@ class Canvas
         @ctx = @canvas.getContext '2d'
         @ctxOffscreen = @offscreenCanvas.getContext '2d'
 
-    withDouble: (drawFunc) ->
+    withMap: (map, drawFunc) ->
         =>
             @ctxOffscreen.clearRect 0, 0, @canvas.width, @canvas.height
 
-            drawFunc @ctxOffscreen
+            o = @ctxOffscreen
+
+            # TODO: not this
+
+            translatedContext =
+                beginPath: -> o.beginPath()
+                moveTo: (x, y) -> o.moveTo (x+map.x+map.wallSize), (y+map.y+map.wallSize)
+                arc: (x, y, args...) -> o.arc (x+map.x+map.wallSize), (y+map.y+map.wallSize), args...
+                fillStyle: (arg) -> o.fillStyle = arg
+                fill: o.fill.bind o
+                lineWidth: (arg) -> o.lineWidth = arg
+                setLineDash: o.setLineDash.bind o
+                stroke: o.stroke.bind o
+                strokeStyle: (arg) -> o.strokeStyle = arg
+                strokeRect: (x, y, args...) -> o.strokeRect (x+map.x+map.wallSize), (y+map.y+map.wallSize), args...
+
+            drawFunc translatedContext
 
             @ctx.clearRect 0, 0, @canvas.width, @canvas.height
             @ctx.drawImage @offscreenCanvas, 0, 0
@@ -49,8 +64,8 @@ class Player
     constructor: (@arena, @time) ->
         @radius = 20
         @maxCastRadius = (@radius+3+@radius)
-        @x = @destX = 300
-        @y = @destY = 300
+        @x = @destX = 100
+        @y = @destY = 100
         @speed = 0.2 # pixels/ms
         @startCastTime = null
         @castX = null
@@ -80,15 +95,15 @@ class Player
             ctx.moveTo @x, @y
             ctx.arc @x, @y, radius, angle-(@castedSkill.cone/2), angle + (@castedSkill.cone/2)
             ctx.moveTo @x, @y
-            ctx.fillStyle = @castedSkill.color
+            ctx.fillStyle @castedSkill.color
             ctx.fill()
 
         # Location
         ctx.beginPath()
         ctx.moveTo (@x + @radius), @y
         ctx.arc @x, @y, @radius, 0, 2*Math.PI
-        ctx.lineWidth = 3
-        ctx.fillStyle = "#aaaacc"
+        ctx.lineWidth 3
+        ctx.fillStyle "#aaaacc"
         ctx.fill()
 
         # casting circle
@@ -96,9 +111,9 @@ class Player
         ctx.beginPath()
         ctx.moveTo (@x + @maxCastRadius), @y
         ctx.arc @x, @y, @maxCastRadius, 0, 2*Math.PI
-        ctx.lineWidth = 1
+        ctx.lineWidth 1
         ctx.setLineDash [3,12]
-        ctx.strokeStyle = "#777777"
+        ctx.strokeStyle "#777777"
         ctx.stroke()
         ctx.setLineDash []
 
@@ -166,7 +181,7 @@ class Projectile
         ctx.beginPath()
         ctx.moveTo (@x + @skill.radius), @y
         ctx.arc @x, @y, @skill.radius, 0, 2*Math.PI
-        ctx.fillStyle = @skill.color
+        ctx.fillStyle @skill.color
         ctx.fill()
 
     update: (newTime) ->
@@ -208,6 +223,13 @@ class Arena
         @p1 = new Player @, @startTime
         @projectiles = []
 
+        @map =
+            x: 25
+            y: 25
+            width: 800
+            height: 400
+            wallSize: 10
+
         addEventListener "mousedown", (event) =>
             if event.which is 3
                 @p1.moveTo event.x, event.y
@@ -216,8 +238,29 @@ class Arena
             else if event.which is 2
                 @p1.fire event.x, event.y, skills.disrupt
 
+        addEventListener "keypress", (event) =>
+            # TODO: naive keyboard camera pan feels far too clunky
+            if event.which is 97
+                @map.x += 10
+            else if event.which is 100
+                @map.x -= 10
+            else if event.which is 115
+                @map.y -= 10
+            else if event.which is 119
+                @map.y += 10
+            else
+                console.log event
+                console.log event.which
+
         # well this is ugly...
-        @render = @canvas.withDouble (ctx) =>
+        @render = @canvas.withMap @map, (ctx) =>
+
+            # draw Map
+            # Location
+            ctx.beginPath()
+            ctx.lineWidth @map.wallSize
+            ctx.strokeStyle "#558893"
+            ctx.strokeRect 0, 0, @map.width, @map.height
 
             @p1.draw ctx
             for p in @projectiles
@@ -230,7 +273,7 @@ class Arena
         @projectiles.push p
 
     loop: =>
-        setTimeout @loop, 20
+        setTimeout @loop, 5
         # TODO: A non sucky game loop...
         # Fixed time updates.
         @update()
