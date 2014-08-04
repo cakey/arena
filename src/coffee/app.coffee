@@ -4,19 +4,28 @@
 # generalise projectiles?
 # player extends projectile
 
-canvas = document.getElementById 'canvas'
-offscreenCanvas = document.createElement 'canvas'
-
-canvas.width = window.innerWidth
-canvas.height = window.innerHeight
-offscreenCanvas.width = canvas.width
-offscreenCanvas.height = canvas.height
 
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
+class Canvas
+    constructor: ->
+        @canvas = document.getElementById 'canvas'
+        @offscreenCanvas = document.createElement 'canvas'
 
-ctx = canvas.getContext '2d'
+        @canvas.width = window.innerWidth
+        @canvas.height = window.innerHeight
+        @offscreenCanvas.width = @canvas.width
+        @offscreenCanvas.height = @canvas.height
+        @ctx = @canvas.getContext '2d'
+        @ctxOffscreen = @offscreenCanvas.getContext '2d'
 
-ctxOffscreen = offscreenCanvas.getContext '2d'
+    withDouble: (drawFunc) ->
+        =>
+            @ctxOffscreen.clearRect 0, 0, @canvas.width, @canvas.height
+
+            drawFunc @ctxOffscreen
+
+            @ctx.clearRect 0, 0, @canvas.width, @canvas.height
+            @ctx.drawImage @offscreenCanvas, 0, 0
 
 skills =
     orb:
@@ -194,7 +203,7 @@ class Projectile
 
 class Arena
 
-    constructor: ->
+    constructor: (@canvas) ->
         @startTime = new Date().getTime()
         @p1 = new Player @, @startTime
         @projectiles = []
@@ -206,6 +215,13 @@ class Arena
                 @p1.fire event.x, event.y, skills.orb
             else if event.which is 2
                 @p1.fire event.x, event.y, skills.disrupt
+
+        # well this is ugly...
+        @render = @canvas.withDouble (ctx) =>
+
+            @p1.draw ctx
+            for p in @projectiles
+                p.draw ctx
 
         @loop()
 
@@ -229,14 +245,6 @@ class Arena
                 newProjectiles.push p
         @projectiles = newProjectiles
 
-    render: ->
-        ctxOffscreen.clearRect 0, 0, canvas.width, canvas.height
 
-        @p1.draw ctxOffscreen
-        for p in @projectiles
-            p.draw ctxOffscreen
-
-        ctx.clearRect 0, 0, canvas.width, canvas.height
-        ctx.drawImage offscreenCanvas, 0, 0
-
-arena = new Arena()
+canvas = new Canvas()
+arena = new Arena canvas
