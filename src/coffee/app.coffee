@@ -6,6 +6,17 @@
 # todo: pull out key bindings
 # smooth the camera panning by setting a speed for a certain time
 
+
+utils =
+    randInt: (lower, upper=0) ->
+        start = Math.random()
+        if not lower?
+            [lower, upper] = [0, lower]
+        if lower > upper
+            [lower, upper] = [upper, lower]
+        return Math.floor(start * (upper - lower + 1) + lower)
+
+
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 class Canvas
     constructor: ->
@@ -50,7 +61,7 @@ skills =
         radius: 7
         castTime: 400
         speed: 0.6
-        range: 300
+        range: 400
         color: "#aa0000"
 
     disrupt:
@@ -63,11 +74,11 @@ skills =
 
 class Player
 
-    constructor: (@arena, @time) ->
+    constructor: (@arena, @time, @x, @y) ->
         @radius = 20
         @maxCastRadius = (@radius+3+@radius)
-        @x = @destX = 100
-        @y = @destY = 100
+        @destX = @x
+        @destY = @y
         @speed = 0.2 # pixels/ms
         @startCastTime = null
         @castX = null
@@ -166,6 +177,22 @@ class Player
 
         @time = newTime
 
+class AI extends Player
+
+    update: (newTime) ->
+        super newTime
+
+        #if @arena.p1.startCastTime? and not @startCastTime?
+        #    @fire @arena.p1.x, @arena.p1.y, skills.disrupt
+
+        if Math.random() < 0.005 and not @startCastTime?
+            @fire @arena.p1.x, @arena.p1.y, skills.orb
+
+        if not @startCastTime? and (Math.random() < 0.03 or (@x is @destX and @y is @destY))
+            @moveTo utils.randInt(0,@arena.map.width), utils.randInt(0,@arena.map.height)
+            #@moveTo ((@arena.p1.x+@x)/2)+utils.randInt(-250,250), ((@arena.p1.y+@y)/2)+utils.randInt(-250,250)
+
+
 class Projectile
 
     constructor: (@arena, @time, @x, @y, dirX, dirY, @skill) ->
@@ -222,15 +249,16 @@ class Arena
 
     constructor: (@canvas) ->
         @startTime = new Date().getTime()
-        @p1 = new Player @, @startTime
+        @p1 = new Player @, @startTime, 100, 100
+        @ai = new AI @, @startTime, 200, 100
         @projectiles = []
         @cameraSpeed = 100
 
         @map =
             x: 25
             y: 25
-            width: 800
-            height: 400
+            width: window.innerWidth - 100
+            height: window.innerHeight - 100
             wallSize: 10
 
         addEventListener "mousedown", (event) =>
@@ -279,6 +307,7 @@ class Arena
             ctx.strokeRect (-@map.wallSize/2), (-@map.wallSize/2), @map.width+@map.wallSize, @map.height+@map.wallSize
 
             @p1.draw ctx
+            @ai.draw ctx
             for p in @projectiles
                 p.draw ctx
 
@@ -296,10 +325,15 @@ class Arena
         @render()
 
     update: ->
-        @p1.update new Date().getTime()
+        updateTime = new Date().getTime()
+        @p1.update updateTime
+
+
+        @ai.update updateTime
+
         newProjectiles = []
         for p in @projectiles
-            alive = p.update new Date().getTime()
+            alive = p.update updateTime
             if alive
                 newProjectiles.push p
         @projectiles = newProjectiles
