@@ -6,7 +6,6 @@
 # todo: pull out key bindings
 # smooth the camera panning by setting a speed for a certain time
 
-
 utils =
     randInt: (lower, upper=0) ->
         start = Math.random()
@@ -21,6 +20,64 @@ utils =
         return actualDistance <= distance
 
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
+
+class Point
+    # Immutable point.
+    constructor: (@x,@y) ->
+
+    angle: (otherP) ->
+        diffY = otherP.y - @y
+        diffX = otherP.x - @x
+        angle = Math.atan2 diffY, diffX
+        return angle
+
+    equal: (otherP) ->
+        return @x is otherP.x and @y is otherP.y
+
+    towards: (destP, maxDistance) ->
+
+        diffY = destP.y - @y
+        diffX = destP.x - @x
+        angle = Math.atan2 diffY, diffX
+        maxYTravel = Math.sin(angle) * maxDistance
+        maxXTravel = Math.cos(angle) * maxDistance
+
+        if maxXTravel > Math.abs diffX
+            x = destP.x
+        else
+            x = @x + maxXTravel
+
+        if maxYTravel > Math.abs diffY
+            y = destP.y
+        else
+            y = @y + maxYTravel
+
+        new Point x,y
+
+    bearing: (angle, distance) ->
+        x = @x + Math.cos(angle) * distance
+        y = @y + Math.sin(angle) * distance
+        new Point x,y
+
+    within: (center, radius) ->
+        actualDistance = Math.sqrt(Math.pow(@x-center.x,2) + Math.pow(@y-center.y, 2))
+        return actualDistance <= radius
+
+    bound: (topLeft, bottomRight) ->
+        x = @x
+        y = @y
+        if x < topLeft.x
+            x = topLeft.x
+        else if x > bottomRight.x
+            x = bottomRight.x
+
+        if y < topLeft.y
+            y = topLeft.y
+        else if y > bottomRight.y
+            y = bottomRight.y
+
+        new Point x,y
+
 class Canvas
     constructor: ->
         @canvas = document.getElementById 'canvas'
@@ -42,10 +99,10 @@ class Canvas
             # TODO: not this
 
             translatedContext =
-                moveTo: (x, y) -> o.moveTo (x+map.x+map.wallSize), (y+map.y+map.wallSize)
-                arc: (x, y, args...) -> o.arc (x+map.x+map.wallSize), (y+map.y+map.wallSize), args...
+                moveTo: (p) -> o.moveTo (p.x+map.x+map.wallSize), (p.y+map.y+map.wallSize)
+                arc: (p, args...) -> o.arc (p.x+map.x+map.wallSize), (p.y+map.y+map.wallSize), args...
                 strokeRect: (x, y, args...) -> o.strokeRect (x+map.x+map.wallSize), (y+map.y+map.wallSize), args...
-
+                circle: (p, radius) -> translatedContext.arc p, radius, 0, 2*Math.PI
                 beginPath: -> o.beginPath()
                 fillStyle: (arg) -> o.fillStyle = arg
                 fill: o.fill.bind o
@@ -80,23 +137,20 @@ skills =
 
 class Player
 
-    constructor: (@arena, @time, @x, @y) ->
+    constructor: (@arena, @time, @p) ->
         @radius = 20
         @maxCastRadius = (@radius+3+@radius)
-        @destX = @x
-        @destY = @y
+        @destP = @p
         @speed = 0.2 # pixels/ms
         @startCastTime = null
-        @castX = null
-        @castY = null
+        @castP = null
 
-    moveTo: (@destX, @destY) ->
+    moveTo: (@destP) ->
         @startCastTime = null
 
-    fire: (@castX, @castY, @castedSkill) ->
+    fire: (@castP, @castedSkill) ->
         # stop moving to fire
-        @destX = @x
-        @destY = @y
+        @destP = @p
         @startCastTime = @time # needs to be passed through
 
     draw: (ctx) ->
@@ -106,21 +160,18 @@ class Player
             radiusMs = @radius / @castedSkill.castTime
             radius = (radiusMs * (@time - @startCastTime))+@radius+3
 
-            diffY = @castY - @y
-            diffX = @castX - @x
-            angle = Math.atan2 diffY, diffX
+            angle = @p.angle @castP
 
             ctx.beginPath()
-            ctx.moveTo @x, @y
-            ctx.arc @x, @y, radius, angle-(@castedSkill.cone/2), angle + (@castedSkill.cone/2)
-            ctx.moveTo @x, @y
+            ctx.moveTo @p
+            ctx.arc @p, radius, angle-(@castedSkill.cone/2), angle + (@castedSkill.cone/2)
+            ctx.moveTo @p
             ctx.fillStyle @castedSkill.color
             ctx.fill()
 
         # Location
         ctx.beginPath()
-        ctx.moveTo (@x + @radius), @y
-        ctx.arc @x, @y, @radius, 0, 2*Math.PI
+        ctx.circle @p, @radius
         ctx.lineWidth 3
         ctx.fillStyle "#aaaacc"
         ctx.fill()
@@ -128,8 +179,7 @@ class Player
         # casting circle
 
         ctx.beginPath()
-        ctx.moveTo (@x + @maxCastRadius), @y
-        ctx.arc @x, @y, @maxCastRadius, 0, 2*Math.PI
+        ctx.circle @p, @maxCastRadius
         ctx.lineWidth 1
         ctx.setLineDash [3,12]
         ctx.strokeStyle "#777777"
@@ -141,23 +191,7 @@ class Player
 
         # Location
 
-        diffY = @destY - @y
-        diffX = @destX - @x
-        angle = Math.atan2 diffY, diffX
-        ySpeed = Math.sin(angle) * @speed
-        xSpeed = Math.cos(angle) * @speed
-
-        maxXTravel = xSpeed * msDiff
-        if maxXTravel > Math.abs diffX
-            @x = @destX
-        else
-            @x += maxXTravel
-
-        maxYTravel = ySpeed * msDiff
-        if maxYTravel > Math.abs diffY
-            @y = @destY
-        else
-            @y += maxYTravel
+        @p = @p.towards @destP, (@speed * msDiff)
 
         # Cast
 
@@ -165,21 +199,15 @@ class Player
             if newTime - @startCastTime > @castedSkill.castTime
                 @startCastTime = null
 
-                castAngle = Math.atan2 (@castY - @y), (@castX - @x)
+                castAngle = @p.angle @castP
 
-                edgeX = @x + Math.cos(castAngle) * @maxCastRadius
-                edgeY = @y + Math.sin(castAngle) * @maxCastRadius
+                edgeP = @p.bearing castAngle, @maxCastRadius
 
                 # handle edgecase where castPoint was within casting circle
-                castX = @castX
-                castY = @castY
-                if @x < castX < edgeX or @x > castX > edgeX
-                    castX = edgeX + Math.cos(castAngle)
+                if edgeP.within @p, @radius
+                    @castP = edgeP.bearing castAngle, 1
 
-                if @y < castY < edgeY or @y > castY > edgeY
-                    castY = edgeY + Math.sin(castAngle)
-
-                @arena.addProjectile edgeX, edgeY, castX, castY, @castedSkill
+                @arena.addProjectile edgeP, @castP, @castedSkill
 
         @time = newTime
 
@@ -192,61 +220,35 @@ class AI extends Player
         #    @fire @arena.p1.x, @arena.p1.y, skills.disrupt
 
         if Math.random() < 0.005 and not @startCastTime?
-            @fire @arena.p1.x, @arena.p1.y, skills.orb
+            @fire @arena.p1.p, skills.orb
 
-        if not @startCastTime? and (Math.random() < 0.03 or (@x is @destX and @y is @destY))
-            @moveTo utils.randInt(0,@arena.map.width), utils.randInt(0,@arena.map.height)
+        if not @startCastTime? and (Math.random() < 0.03 or (@p.equal @destP))
+            @moveTo new Point utils.randInt(0,@arena.map.width), utils.randInt(0,@arena.map.height)
             #@moveTo ((@arena.p1.x+@x)/2)+utils.randInt(-250,250), ((@arena.p1.y+@y)/2)+utils.randInt(-250,250)
 
 
 class Projectile
 
-    constructor: (@arena, @time, @x, @y, dirX, dirY, @skill) ->
-        diffY = dirY - @y
-        diffX = dirX - @x
-        angle = Math.atan2 diffY, diffX
-        ySpeed = Math.sin(angle) * @skill.range
-        xSpeed = Math.cos(angle) * @skill.range
-        @destX = @x + xSpeed
-        @destY = @y + ySpeed
+    constructor: (@arena, @time, @p, dirP, @skill) ->
+        angle = @p.angle dirP
+        @destP = @p.bearing angle, @skill.range
 
     draw: (ctx) ->
 
         # Location
         ctx.beginPath()
-        ctx.moveTo (@x + @skill.radius), @y
-        ctx.arc @x, @y, @skill.radius, 0, 2*Math.PI
+        ctx.circle @p, @skill.radius
         ctx.fillStyle @skill.color
         ctx.fill()
 
     update: (newTime) ->
 
-        if @x is @destX and @y is @destY
+        if @p.equal @destP
             return false
 
         msDiff = newTime - @time
 
-        # Location
-
-        diffY = @destY - @y
-        diffX = @destX - @x
-        angle = Math.atan2 diffY, diffX
-        ySpeed = Math.sin(angle) * @skill.speed
-        xSpeed = Math.cos(angle) * @skill.speed
-
-        maxXTravel = xSpeed * msDiff
-        if maxXTravel > Math.abs diffX
-            @x = @destX
-        else
-            @x += maxXTravel
-
-        maxYTravel = ySpeed * msDiff
-        if maxYTravel > Math.abs diffY
-            @y = @destY
-        else
-            @y += maxYTravel
-
-        # Cast
+        @p = @p.towards @destP, (@skill.speed * msDiff)
 
         @time = newTime
         return true
@@ -255,8 +257,8 @@ class Arena
 
     constructor: (@canvas) ->
         @startTime = new Date().getTime()
-        @p1 = new Player @, @startTime, 100, 100
-        @ai = new AI @, @startTime, 200, 100
+        @p1 = new Player @, @startTime, new Point 100, 100
+        @ai = new AI @, @startTime, new Point 200, 100
         @projectiles = []
         @cameraSpeed = 100
 
@@ -274,22 +276,19 @@ class Arena
             x = event.x-@map.x
             y = event.y-@map.y
 
-            if x < 0 + @p1.radius
-                x = 0 + @p1.radius
-            else if x > @map.width - @p1.radius
-                x = @map.width - @p1.radius
+            p = new Point x,y
 
-            if y < 0  + @p1.radius
-                y = 0  + @p1.radius
-            else if y > @map.height - @p1.radius
-                y = @map.height - @p1.radius
+            topLeft = new Point @p1.radius, @p1.radius
+            bottomRight = new Point @map.width-@p1.radius, @map.height-@p1.radius
+
+            p = p.bound topLeft, bottomRight
 
             if event.which is 3
-                @p1.moveTo x, y
+                @p1.moveTo p
             else if event.which is 1
-                @p1.fire x, y, skills.orb
+                @p1.fire p, skills.orb
             else if event.which is 2
-                @p1.fire x, y, skills.disrupt
+                @p1.fire p, skills.disrupt
 
         addEventListener "keypress", (event) =>
             # TODO: naive keyboard camera pan feels far too clunky
@@ -327,8 +326,8 @@ class Arena
 
         @loop()
 
-    addProjectile: (startX, startY, destX, destY, skill) ->
-        p = new Projectile @, new Date().getTime(), startX, startY, destX, destY, skill
+    addProjectile: (startP, destP, skill) ->
+        p = new Projectile @, new Date().getTime(), startP, destP, skill
         @projectiles.push p
 
     loop: =>
@@ -347,9 +346,9 @@ class Arena
         for p in @projectiles
             alive = p.update updateTime
             if alive
-                if utils.within(p.skill.radius+@p1.radius,p.x, p.y, @p1.x, @p1.y)
+                if p.p.within @p1.p, p.skill.radius+@p1.radius
                     @aiscore += 1
-                else if utils.within(p.skill.radius+@ai.radius,p.x, p.y, @ai.x, @ai.y)
+                else if p.p.within @ai.p, p.skill.radius+@ai.radius
                     @p1score += 1
                 else
                     newProjectiles.push p
