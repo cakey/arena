@@ -16,6 +16,9 @@ utils =
             [lower, upper] = [upper, lower]
         return Math.floor(start * (upper - lower + 1) + lower)
 
+    within: (distance, x1, y1, x2, y2) ->
+        actualDistance = Math.sqrt(Math.pow(x1-x2,2) + Math.pow(y1-y2, 2))
+        return actualDistance <= distance
 
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 class Canvas
@@ -39,16 +42,19 @@ class Canvas
             # TODO: not this
 
             translatedContext =
-                beginPath: -> o.beginPath()
                 moveTo: (x, y) -> o.moveTo (x+map.x+map.wallSize), (y+map.y+map.wallSize)
                 arc: (x, y, args...) -> o.arc (x+map.x+map.wallSize), (y+map.y+map.wallSize), args...
+                strokeRect: (x, y, args...) -> o.strokeRect (x+map.x+map.wallSize), (y+map.y+map.wallSize), args...
+
+                beginPath: -> o.beginPath()
                 fillStyle: (arg) -> o.fillStyle = arg
                 fill: o.fill.bind o
                 lineWidth: (arg) -> o.lineWidth = arg
                 setLineDash: o.setLineDash.bind o
                 stroke: o.stroke.bind o
+                fillText: o.fillText.bind o
+                font: (arg) -> o.font = arg
                 strokeStyle: (arg) -> o.strokeStyle = arg
-                strokeRect: (x, y, args...) -> o.strokeRect (x+map.x+map.wallSize), (y+map.y+map.wallSize), args...
 
             drawFunc translatedContext
 
@@ -254,6 +260,9 @@ class Arena
         @projectiles = []
         @cameraSpeed = 100
 
+        @p1score = 0
+        @aiscore = 0
+
         @map =
             x: 25
             y: 25
@@ -306,6 +315,11 @@ class Arena
             ctx.strokeStyle "#558893"
             ctx.strokeRect (-@map.wallSize/2), (-@map.wallSize/2), @map.width+@map.wallSize, @map.height+@map.wallSize
 
+            ctx.fillStyle "#444466"
+            ctx.font "20px verdana"
+            ctx.fillText "P1: #{@p1score}", 10, window.innerHeight - 20
+            ctx.fillText "AI: #{@aiscore}", 100, window.innerHeight - 20
+
             @p1.draw ctx
             @ai.draw ctx
             for p in @projectiles
@@ -327,15 +341,18 @@ class Arena
     update: ->
         updateTime = new Date().getTime()
         @p1.update updateTime
-
-
         @ai.update updateTime
 
         newProjectiles = []
         for p in @projectiles
             alive = p.update updateTime
             if alive
-                newProjectiles.push p
+                if utils.within(p.skill.radius+@p1.radius,p.x, p.y, @p1.x, @p1.y)
+                    @aiscore += 1
+                else if utils.within(p.skill.radius+@ai.radius,p.x, p.y, @ai.x, @ai.y)
+                    @p1score += 1
+                else
+                    newProjectiles.push p
         @projectiles = newProjectiles
 
 
