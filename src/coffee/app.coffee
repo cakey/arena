@@ -15,10 +15,6 @@ utils =
             [lower, upper] = [upper, lower]
         return Math.floor(start * (upper - lower + 1) + lower)
 
-    within: (distance, x1, y1, x2, y2) ->
-        actualDistance = Math.sqrt(Math.pow(x1-x2,2) + Math.pow(y1-y2, 2))
-        return actualDistance <= distance
-
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 
 class Point
@@ -96,7 +92,7 @@ class Canvas
 
             o = @ctxOffscreen
 
-            # TODO: not this
+            # TODO: higher level...
 
             translatedContext =
                 moveTo: (p) -> o.moveTo (p.x+map.x+map.wallSize), (p.y+map.y+map.wallSize)
