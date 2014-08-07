@@ -28,7 +28,7 @@ class Point
         return angle
 
     equal: (otherP) ->
-        return @x is otherP.x and @y is otherP.y
+        @x is otherP.x and @y is otherP.y
 
     towards: (destP, maxDistance) ->
 
@@ -73,6 +73,21 @@ class Point
             y = bottomRight.y
 
         new Point x,y
+
+    mapBound: (map) ->
+        x = @x-map.x
+        y = @y-map.y
+
+        p = new Point x,y
+
+        topLeft = new Point 0, 0
+        bottomRight = new Point map.width, map.height
+
+        return p.bound topLeft, bottomRight
+
+    subtract: (otherP) ->
+        new Point (@x-otherP.x), (@y-otherP.y)
+
 
 class Canvas
     constructor: ->
@@ -252,11 +267,13 @@ class Projectile
 class Arena
 
     constructor: (@canvas) ->
-        @startTime = new Date().getTime()
-        @p1 = new Player @, @startTime, new Point 100, 100
-        @ai = new AI @, @startTime, new Point 200, 100
+        @time = new Date().getTime()
+        @p1 = new Player @, @time, new Point 100, 100
+        @ai = new AI @, @time, new Point 200, 100
         @projectiles = []
-        @cameraSpeed = 100
+        @cameraSpeed = 0.3
+
+        @mouseP = new Point 0, 0
 
         @p1score = 0
         @aiscore = 0
@@ -267,6 +284,11 @@ class Arena
             width: window.innerWidth - 100
             height: window.innerHeight - 100
             wallSize: 10
+
+        @mapMiddle = @mapToGo = new Point window.innerWidth/2, window.innerHeight/2
+
+        addEventListener "mousemove", (event) =>
+            @mouseP = new Point event.x, event.y
 
         addEventListener "mousedown", (event) =>
             x = event.x-@map.x
@@ -282,20 +304,13 @@ class Arena
             if event.which is 3
                 @p1.moveTo p
             else if event.which is 1
-                @p1.fire p, skills.orb
-            else if event.which is 2
-                @p1.fire p, skills.disrupt
+                @mapToGo = @mapMiddle.towards new Point(event.x, event.y), 100
 
         addEventListener "keypress", (event) =>
-            # TODO: naive keyboard camera pan feels far too clunky
-            if event.which is 97 
-                @map.x += @cameraSpeed
-            else if event.which is 100
-                @map.x -= @cameraSpeed
-            else if event.which is 115
-                @map.y -= @cameraSpeed
-            else if event.which is 119
-                @map.y += @cameraSpeed
+            if event.which is 103
+                @p1.fire (@mouseP.mapBound @map), skills.orb
+            else if event.which is 104
+                @p1.fire (@mouseP.mapBound @map), skills.disrupt
             else
                 console.log event
                 console.log event.which
@@ -335,6 +350,17 @@ class Arena
 
     update: ->
         updateTime = new Date().getTime()
+
+        msDiff = updateTime - @time
+
+        newCamP = @mapMiddle.towards @mapToGo, @cameraSpeed*msDiff
+
+        moveVector = newCamP.subtract @mapMiddle
+        @mapToGo = @mapToGo.subtract moveVector
+
+        @map.x -= moveVector.x
+        @map.y -= moveVector.y
+
         @p1.update updateTime
         @ai.update updateTime
 
@@ -349,6 +375,8 @@ class Arena
                 else
                     newProjectiles.push p
         @projectiles = newProjectiles
+
+        @time = updateTime
 
 
 canvas = new Canvas()
