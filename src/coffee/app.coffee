@@ -1,10 +1,8 @@
 # todo:
-# immutable coordinate
 # generalise abilities
 # generalise projectiles?
 # player extends projectile
 # todo: pull out key bindings
-# smooth the camera panning by setting a speed for a certain time
 
 utils =
     randInt: (lower, upper=0) ->
@@ -75,10 +73,7 @@ class Point
         new Point x,y
 
     mapBound: (map) ->
-        x = @x-map.x
-        y = @y-map.y
-
-        p = new Point x,y
+        p = @subtract map
 
         topLeft = new Point 0, 0
         bottomRight = new Point map.width, map.height
@@ -87,6 +82,9 @@ class Point
 
     subtract: (otherP) ->
         new Point (@x-otherP.x), (@y-otherP.y)
+
+    add: (otherP) ->
+        new Point (@x+otherP.x), (@y+otherP.y)
 
 
 class Canvas
@@ -110,9 +108,9 @@ class Canvas
             # TODO: higher level...
 
             translatedContext =
-                moveTo: (p) -> o.moveTo (p.x+map.x+map.wallSize), (p.y+map.y+map.wallSize)
-                arc: (p, args...) -> o.arc (p.x+map.x+map.wallSize), (p.y+map.y+map.wallSize), args...
-                strokeRect: (x, y, args...) -> o.strokeRect (x+map.x+map.wallSize), (y+map.y+map.wallSize), args...
+                moveTo: (p) -> o.moveTo (p.x+map.p.x+map.wallSize), (p.y+map.p.y+map.wallSize)
+                arc: (p, args...) -> o.arc (p.x+map.p.x+map.wallSize), (p.y+map.p.y+map.wallSize), args...
+                strokeRect: (x, y, args...) -> o.strokeRect (x+map.p.x+map.wallSize), (y+map.p.y+map.wallSize), args...
                 circle: (p, radius) -> translatedContext.arc p, radius, 0, 2*Math.PI
                 beginPath: -> o.beginPath()
                 fillStyle: (arg) -> o.fillStyle = arg
@@ -279,8 +277,7 @@ class Arena
         @aiscore = 0
 
         @map =
-            x: 25
-            y: 25
+            p: new Point 25, 25
             width: window.innerWidth - 100
             height: window.innerHeight - 100
             wallSize: 10
@@ -291,10 +288,9 @@ class Arena
             @mouseP = new Point event.x, event.y
 
         addEventListener "mousedown", (event) =>
-            x = event.x-@map.x
-            y = event.y-@map.y
+            e = new Point event.x, event.y
 
-            p = new Point x,y
+            p = e.subtract @map.p
 
             topLeft = new Point @p1.radius, @p1.radius
             bottomRight = new Point @map.width-@p1.radius, @map.height-@p1.radius
@@ -358,8 +354,7 @@ class Arena
         moveVector = newCamP.subtract @mapMiddle
         @mapToGo = @mapToGo.subtract moveVector
 
-        @map.x -= moveVector.x
-        @map.y -= moveVector.y
+        @map.p = @map.p.subtract moveVector
 
         @p1.update updateTime
         @ai.update updateTime
