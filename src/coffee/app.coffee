@@ -5,7 +5,7 @@
 # todo: pull out key bindings
 
 utils =
-    randInt: (lower, upper=0) ->
+    randInt: (lower, upper = 0) ->
         start = Math.random()
         if not lower?
             [lower, upper] = [0, lower]
@@ -54,7 +54,10 @@ class Point
         new Point x,y
 
     within: (center, radius) ->
-        actualDistance = Math.sqrt(Math.pow(@x-center.x,2) + Math.pow(@y-center.y, 2))
+        actualDistance = Math.sqrt(
+            Math.pow(@x - center.x, 2) +
+            Math.pow(@y - center.y, 2)
+        )
         return actualDistance <= radius
 
     bound: (topLeft, bottomRight) ->
@@ -81,10 +84,10 @@ class Point
         return p.bound topLeft, bottomRight
 
     subtract: (otherP) ->
-        new Point (@x-otherP.x), (@y-otherP.y)
+        new Point (@x - otherP.x), (@y - otherP.y)
 
     add: (otherP) ->
-        new Point (@x+otherP.x), (@y+otherP.y)
+        new Point (@x + otherP.x), (@y + otherP.y)
 
 
 class Canvas
@@ -108,10 +111,19 @@ class Canvas
             # TODO: higher level...
 
             translatedContext =
-                moveTo: (p) -> o.moveTo (p.x+map.p.x+map.wallSize), (p.y+map.p.y+map.wallSize)
-                arc: (p, args...) -> o.arc (p.x+map.p.x+map.wallSize), (p.y+map.p.y+map.wallSize), args...
-                strokeRect: (x, y, args...) -> o.strokeRect (x+map.p.x+map.wallSize), (y+map.p.y+map.wallSize), args...
-                circle: (p, radius) -> translatedContext.arc p, radius, 0, 2*Math.PI
+                moveTo: (p) ->
+                    x = p.x + map.p.x + map.wallSize
+                    y = p.y + map.p.y + map.wallSize
+                    o.moveTo x, y
+                arc: (p, args...) ->
+                    x = p.x + map.p.x + map.wallSize
+                    y = p.y + map.p.y + map.wallSize
+                    o.arc x, y, args...
+                strokeRect: (p, args...) ->
+                    x = p.x + map.p.x + map.wallSize
+                    y = p.y + map.p.y + map.wallSize
+                    o.strokeRect x, y, args...
+                circle: (p, radius) -> translatedContext.arc p, radius, 0, 2 * Math.PI
                 beginPath: -> o.beginPath()
                 fillStyle: (arg) -> o.fillStyle = arg
                 fill: o.fill.bind o
@@ -148,7 +160,7 @@ class Player
 
     constructor: (@arena, @time, @p) ->
         @radius = 20
-        @maxCastRadius = (@radius+3+@radius)
+        @maxCastRadius = (@radius + 3 + @radius)
         @destP = @p
         @speed = 0.2 # pixels/ms
         @startCastTime = null
@@ -167,13 +179,14 @@ class Player
         # Cast
         if @startCastTime?
             radiusMs = @radius / @castedSkill.castTime
-            radius = (radiusMs * (@time - @startCastTime))+@radius+3
+            radius = (radiusMs * (@time - @startCastTime)) + @radius + 3
 
             angle = @p.angle @castP
+            halfCone = @castedSkill.cone / 2
 
             ctx.beginPath()
             ctx.moveTo @p
-            ctx.arc @p, radius, angle-(@castedSkill.cone/2), angle + (@castedSkill.cone/2)
+            ctx.arc @p, radius, angle - halfCone, angle + halfCone
             ctx.moveTo @p
             ctx.fillStyle @castedSkill.color
             ctx.fill()
@@ -232,8 +245,14 @@ class AI extends Player
             @fire @arena.p1.p, skills.orb
 
         if not @startCastTime? and (Math.random() < 0.03 or (@p.equal @destP))
-            @moveTo new Point utils.randInt(0,@arena.map.width), utils.randInt(0,@arena.map.height)
-            #@moveTo ((@arena.p1.x+@x)/2)+utils.randInt(-250,250), ((@arena.p1.y+@y)/2)+utils.randInt(-250,250)
+            @moveTo new Point(
+                utils.randInt(0,@arena.map.width),
+                utils.randInt(0,@arena.map.height)
+            )
+            #@moveTo(
+            #    ((@arena.p1.x+@x)/2)+utils.randInt(-250,250),
+            #    ((@arena.p1.y+@y)/2)+utils.randInt(-250,250)
+            #)
 
 
 class Projectile
@@ -282,7 +301,7 @@ class Arena
             height: window.innerHeight - 100
             wallSize: 10
 
-        @mapMiddle = @mapToGo = new Point window.innerWidth/2, window.innerHeight/2
+        @mapMiddle = @mapToGo = new Point window.innerWidth / 2, window.innerHeight / 2
 
         addEventListener "mousemove", (event) =>
             @mouseP = new Point event.x, event.y
@@ -293,7 +312,7 @@ class Arena
             p = e.subtract @map.p
 
             topLeft = new Point @p1.radius, @p1.radius
-            bottomRight = new Point @map.width-@p1.radius, @map.height-@p1.radius
+            bottomRight = new Point @map.width - @p1.radius, @map.height - @p1.radius
 
             p = p.bound topLeft, bottomRight
 
@@ -319,7 +338,8 @@ class Arena
             ctx.beginPath()
             ctx.lineWidth @map.wallSize
             ctx.strokeStyle "#558893"
-            ctx.strokeRect (-@map.wallSize/2), (-@map.wallSize/2), @map.width+@map.wallSize, @map.height+@map.wallSize
+            wallP = new Point (-@map.wallSize / 2), (-@map.wallSize / 2)
+            ctx.strokeRect wallP, @map.width + @map.wallSize, @map.height + @map.wallSize
 
             ctx.fillStyle "#444466"
             ctx.font "20px verdana"
@@ -349,7 +369,7 @@ class Arena
 
         msDiff = updateTime - @time
 
-        newCamP = @mapMiddle.towards @mapToGo, @cameraSpeed*msDiff
+        newCamP = @mapMiddle.towards @mapToGo, @cameraSpeed * msDiff
 
         moveVector = newCamP.subtract @mapMiddle
         @mapToGo = @mapToGo.subtract moveVector
@@ -363,9 +383,9 @@ class Arena
         for p in @projectiles
             alive = p.update updateTime
             if alive
-                if p.p.within @p1.p, p.skill.radius+@p1.radius
+                if p.p.within @p1.p, p.skill.radius + @p1.radius
                     @aiscore += 1
-                else if p.p.within @ai.p, p.skill.radius+@ai.radius
+                else if p.p.within @ai.p, p.skill.radius + @ai.radius
                     @p1score += 1
                 else
                     newProjectiles.push p
