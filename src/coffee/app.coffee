@@ -76,7 +76,7 @@ class Point
         new Point x,y
 
     mapBound: (map) ->
-        p = @subtract map
+        p = @subtract map.p
 
         topLeft = new Point 0, 0
         bottomRight = new Point map.width, map.height
