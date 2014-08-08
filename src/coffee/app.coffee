@@ -73,15 +73,40 @@ class Point
         else if y > bottomRight.y
             y = bottomRight.y
 
-        new Point x,y
+        new Point x, y
 
-    mapBound: (map) ->
-        p = @subtract map.p
+    angleBound: (from, topLeft, bottomRight) ->
+        # if @ is outside the boundingBox, then return
+        # where it intersects, otherwise just return @
 
+        if (
+            @x > topLeft.x and
+            @x < bottomRight.x and
+            @y > topLeft.y and
+            @y < bottomRight.y)
+            return @
+
+        angle = from.angle @
+
+        # TODO: Maths
+        # :( :(
+
+        closest = from
+
+        while (
+            closest.x > topLeft.x and
+            closest.x < bottomRight.x and
+            closest.y > topLeft.y and
+            closest.y < bottomRight.y)
+            closest = closest.bearing angle, 1
+
+        return closest
+
+    mapBound: (from, map) ->
         topLeft = new Point 0, 0
         bottomRight = new Point map.width, map.height
 
-        return p.bound topLeft, bottomRight
+        return @angleBound from, topLeft, bottomRight
 
     subtract: (otherP) ->
         new Point (@x - otherP.x), (@y - otherP.y)
@@ -304,17 +329,16 @@ class Arena
         @mapMiddle = @mapToGo = new Point window.innerWidth / 2, window.innerHeight / 2
 
         addEventListener "mousemove", (event) =>
-            @mouseP = new Point event.x, event.y
+            @mouseP = new Point(
+                event.x - (@map.p.x + @map.wallSize),
+                event.y - (@map.p.y + @map.wallSize))
 
         addEventListener "mousedown", (event) =>
-            e = new Point event.x, event.y
-
-            p = e.subtract @map.p
 
             topLeft = new Point @p1.radius, @p1.radius
             bottomRight = new Point @map.width - @p1.radius, @map.height - @p1.radius
 
-            p = p.bound topLeft, bottomRight
+            p = @mouseP.bound topLeft, bottomRight
 
             if event.which is 3
                 @p1.moveTo p
@@ -323,9 +347,9 @@ class Arena
 
         addEventListener "keypress", (event) =>
             if event.which is 103
-                @p1.fire (@mouseP.mapBound @map), skills.orb
+                @p1.fire (@mouseP.mapBound @p1.p, @map), skills.orb
             else if event.which is 104
-                @p1.fire (@mouseP.mapBound @map), skills.disrupt
+                @p1.fire (@mouseP.mapBound @p1.p, @map), skills.disrupt
             else
                 console.log event
                 console.log event.which
