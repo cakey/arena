@@ -18,7 +18,7 @@ gulp.task 'scripts', ->
         .pipe(browserify({
           transform: ['coffeeify'],
           extensions: ['.coffee']
-        }))
+        })).on("error", gutil.log)
         .pipe(rename('app.js'))
         .pipe(gulp.dest('./public'))
     return

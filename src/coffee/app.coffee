@@ -6,6 +6,14 @@
 
 Point = require "./point"
 
+Array.prototype.some ?= (f) ->
+    (return true if f x) for x in @
+    return false
+
+Array.prototype.every ?= (f) ->
+    (return false if not f x) for x in @
+    return true
+
 utils =
     randInt: (lower, upper = 0) ->
         start = Math.random()
@@ -212,7 +220,10 @@ class Arena
     constructor: (@canvas) ->
         @time = new Date().getTime()
         @p1 = new Player @, @time, new Point 100, 100
-        @ai = new AI @, @time, new Point 200, 100
+        numais = 1
+        @ais = []
+        for a in [0...numais]
+            @ais.push new AI @, @time, new Point 200, 100
         @projectiles = []
         @cameraSpeed = 0.3
 
@@ -269,10 +280,11 @@ class Arena
             ctx.fillStyle "#444466"
             ctx.font "20px verdana"
             ctx.fillText "P1: #{@p1score}", 10, window.innerHeight - 20
-            ctx.fillText "AI: #{@aiscore}", 100, window.innerHeight - 20
+            ctx.fillText "AI: #{@aiscore}", 150, window.innerHeight - 20
 
             @p1.draw ctx
-            @ai.draw ctx
+            for ai in @ais
+                ai.draw ctx
             for p in @projectiles
                 p.draw ctx
 
@@ -302,7 +314,8 @@ class Arena
         @map.p = @map.p.subtract moveVector
 
         @p1.update updateTime
-        @ai.update updateTime
+        for ai in @ais
+            ai.update updateTime
 
         newProjectiles = []
         for p in @projectiles
@@ -310,7 +323,7 @@ class Arena
             if alive
                 if p.p.within @p1.p, p.skill.radius + @p1.radius
                     @aiscore += 1
-                else if p.p.within @ai.p, p.skill.radius + @ai.radius
+                else if (@ais.some (ai) -> p.p.within ai.p, p.skill.radius + ai.radius)
                     @p1score += 1
                 else
                     newProjectiles.push p
