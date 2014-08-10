@@ -14,37 +14,35 @@ browserify = require 'gulp-browserify'
 rename = require 'gulp-rename'
 
 gulp.task 'scripts', ->
-    gulp.src('src/coffee/app.coffee', { read: false })
+    return gulp.src('src/coffee/app.coffee', { read: false })
         .pipe(browserify({
           transform: ['coffeeify'],
           extensions: ['.coffee']
-        })).on("error", gutil.log)
+        })).on("error", gutil.log).on("error", gutil.beep)
         .pipe(rename('app.js'))
         .pipe(gulp.dest('./public'))
-    return
+
 
 gulp.task 'tests', ->
-    gulp.src('src/tests/test.coffee', { read: false })
+    return gulp.src('src/tests/test.coffee', { read: false })
         .pipe(browserify({
           transform: ['coffeeify'],
           extensions: ['.coffee']
-        }))
+        })).on("error", gutil.log).on("error", gutil.beep)
         .pipe(rename('tests.js'))
         .pipe(gulp.dest('./gen'))
-    return
 
 gulp.task "styles", ->
-    gulp.src(["./src/**/*.scss"])
+    return gulp.src(["./src/**/*.scss"])
         .pipe(concat("app.css"))
-        .pipe(sass(errLogToConsole: true))
+        .pipe(sass(errLogToConsole: true).on("error", gutil.log).on("error", gutil.beep))
         .pipe gulp.dest("./public")
-    return
 
 gulp.task "jade", ->
     gulp.src("./src/jade/index.jade")
-        .pipe(jade().on("error", gutil.log))
+        .pipe(jade().on("error", gutil.log).on("error", gutil.log).on("error", gutil.beep))
         .pipe gulp.dest("./public")
-    return
+
 
 gulp.task "clean", ->
     gulp.src("./public",
@@ -56,10 +54,11 @@ gulp.task "assets", ->
         .pipe gulp.dest("./public")
 
 gulp.task "lint", ->
-    gulp.src(["src/**/*.coffee"])
+    return gulp.src(["src/**/*.coffee"])
         .pipe(coffeelint())
         .pipe(coffeelint.reporter())
-    return
+        .pipe(coffeelint.reporter('fail'))
+        .on("error", gutil.beep)
 
 karmaCommonConf =
     browsers: ['Chrome']
@@ -67,6 +66,7 @@ karmaCommonConf =
     files: [
         'gen/tests.js',
     ]
+    reporters: ['mocha', 'beep'],
 
 gulp.task "tdd", (done) ->
     karma.start karmaCommonConf, done

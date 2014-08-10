@@ -29,8 +29,10 @@
     "gulp-serve": "0.0.1",
     "gulp-util": "~2.2.12",
     "karma": "^0.12.21",
+    "karma-beep-reporter": "^0.1.4",
     "karma-chrome-launcher": "^0.1.4",
     "karma-mocha": "^0.1.7",
+    "karma-mocha-reporter": "^0.2.8",
     "mocha": "^1.21.4"
   }
 }
