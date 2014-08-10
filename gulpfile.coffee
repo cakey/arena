@@ -1,53 +1,45 @@
-coffee = require "gulp-coffee"
-concat = require "gulp-concat"
 gulp = require "gulp"
 gutil = require "gulp-util"
-sass = require "gulp-sass"
-serve = require "gulp-serve"
 http = require "http"
 ecstatic = require "ecstatic"
-jade = require "gulp-jade"
-clean = require "gulp-clean"
-coffeelint = require "gulp-coffeelint"
 karma = require("karma").server
-browserify = require 'gulp-browserify'
-rename = require 'gulp-rename'
+$ = require('gulp-load-plugins')()
 
 gulp.task 'scripts', ->
     return gulp.src('src/coffee/app.coffee', { read: false })
-        .pipe(browserify({
+        .pipe($.browserify({
           transform: ['coffeeify'],
           extensions: ['.coffee']
         })).on("error", gutil.log).on("error", gutil.beep)
-        .pipe(rename('app.js'))
+        .pipe($.rename('app.js'))
         .pipe(gulp.dest('./public'))
 
 
 gulp.task 'tests', ->
     return gulp.src('src/tests/test.coffee', { read: false })
-        .pipe(browserify({
+        .pipe($.browserify({
           transform: ['coffeeify'],
           extensions: ['.coffee']
         })).on("error", gutil.log).on("error", gutil.beep)
-        .pipe(rename('tests.js'))
+        .pipe($.rename('tests.js'))
         .pipe(gulp.dest('./gen'))
 
 gulp.task "styles", ->
     return gulp.src(["./src/**/*.scss"])
-        .pipe(concat("app.css"))
-        .pipe(sass(errLogToConsole: true).on("error", gutil.log).on("error", gutil.beep))
+        .pipe($.concat("app.css"))
+        .pipe($.sass(errLogToConsole: true).on("error", gutil.log).on("error", gutil.beep))
         .pipe gulp.dest("./public")
 
 gulp.task "jade", ->
     gulp.src("./src/jade/index.jade")
-        .pipe(jade().on("error", gutil.log).on("error", gutil.log).on("error", gutil.beep))
+        .pipe($.jade().on("error", gutil.log).on("error", gutil.beep))
         .pipe gulp.dest("./public")
 
 
 gulp.task "clean", ->
     gulp.src("./public",
         read: false
-    ).pipe clean()
+    ).pipe $.clean()
 
 gulp.task "assets", ->
     gulp.src("./src/assets/**/*")
@@ -55,9 +47,9 @@ gulp.task "assets", ->
 
 gulp.task "lint", ->
     return gulp.src(["src/**/*.coffee"])
-        .pipe(coffeelint())
-        .pipe(coffeelint.reporter())
-        .pipe(coffeelint.reporter('fail'))
+        .pipe($.coffeelint())
+        .pipe($.coffeelint.reporter())
+        .pipe($.coffeelint.reporter('fail'))
         .on("error", gutil.beep)
 
 karmaCommonConf =
