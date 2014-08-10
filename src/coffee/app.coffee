@@ -86,8 +86,8 @@ skills =
     disrupt:
         cone: Math.PI / 10
         radius: 3
-        castTime: 50
-        speed: 3
+        castTime: 50 #10 
+        speed: 3 #0.2
         range: 800
         color: "#990099"
 
@@ -189,6 +189,28 @@ class AI extends Player
             #    ((@arena.p1.y+@y)/2)+utils.randInt(-250,250)
             #)
 
+class UIPlayer extends Player
+
+    constructor: ->
+        super
+        addEventListener "mousedown", (event) =>
+            topLeft = new Point @radius, @radius
+            bottomRight = new Point @arena.map.width - @radius, @arena.map.height - @radius
+
+            p = @arena.mouseP.bound topLeft, bottomRight
+
+            if event.which is 3
+                @moveTo p
+
+        addEventListener "keypress", (event) =>
+            if event.which is 103
+                @fire (@arena.mouseP.mapBound @p, @arena.map), skills.orb
+            else if event.which is 104
+                @fire (@arena.mouseP.mapBound @p, @arena.map), skills.disrupt
+            else
+                console.log event
+                console.log event.which
+
 class Projectile
 
     constructor: (@arena, @time, @p, dirP, @skill) ->
@@ -219,7 +241,7 @@ class Arena
 
     constructor: (@canvas) ->
         @time = new Date().getTime()
-        @p1 = new Player @, @time, new Point 100, 100
+        @p1 = new UIPlayer @, @time, new Point 100, 100
         numais = 1
         @ais = []
         for a in [0...numais]
@@ -246,25 +268,8 @@ class Arena
                 event.y - (@map.p.y + @map.wallSize))
 
         addEventListener "mousedown", (event) =>
-
-            topLeft = new Point @p1.radius, @p1.radius
-            bottomRight = new Point @map.width - @p1.radius, @map.height - @p1.radius
-
-            p = @mouseP.bound topLeft, bottomRight
-
-            if event.which is 3
-                @p1.moveTo p
-            else if event.which is 1
+            if event.which is 1
                 @mapToGo = @mapMiddle.towards new Point(event.x, event.y), 100
-
-        addEventListener "keypress", (event) =>
-            if event.which is 103
-                @p1.fire (@mouseP.mapBound @p1.p, @map), skills.orb
-            else if event.which is 104
-                @p1.fire (@mouseP.mapBound @p1.p, @map), skills.disrupt
-            else
-                console.log event
-                console.log event.which
 
         # well this is ugly...
         @render = @canvas.withMap @map, (ctx) =>
