@@ -84,16 +84,16 @@ skills =
         color: "#aa0000"
 
     disrupt:
-        cone: Math.PI / 10
-        radius: 3
-        castTime: 50 #10 
-        speed: 3 #0.2
+        cone: Math.PI / 3
+        radius: 10
+        castTime: 10 #10
+        speed: 0.1 #0.2
         range: 800
         color: "#990099"
 
 class Player
 
-    constructor: (@arena, @time, @p) ->
+    constructor: (@arena, @time, @p, @team) ->
         @radius = 20
         @maxCastRadius = (@radius + 3 + @radius)
         @destP = @p
@@ -164,7 +164,7 @@ class Player
                 if edgeP.within @p, @radius
                     @castP = edgeP.bearing castAngle, 1
 
-                @arena.addProjectile edgeP, @castP, @castedSkill
+                @arena.addProjectile edgeP, @castP, @castedSkill, @team
 
         @time = newTime
 
@@ -195,7 +195,9 @@ class UIPlayer extends Player
         super
         addEventListener "mousedown", (event) =>
             topLeft = new Point @radius, @radius
-            bottomRight = new Point @arena.map.width - @radius, @arena.map.height - @radius
+            bottomRight = new Point(
+                @arena.map.width - @radius,
+                @arena.map.height - @radius)
 
             p = @arena.mouseP.bound topLeft, bottomRight
 
@@ -213,7 +215,7 @@ class UIPlayer extends Player
 
 class Projectile
 
-    constructor: (@arena, @time, @p, dirP, @skill) ->
+    constructor: (@arena, @time, @p, dirP, @skill, @team) ->
         angle = @p.angle dirP
         @destP = @p.bearing angle, @skill.range
 
@@ -241,11 +243,11 @@ class Arena
 
     constructor: (@canvas) ->
         @time = new Date().getTime()
-        @p1 = new UIPlayer @, @time, new Point 100, 100
-        numais = 1
+        @p1 = new UIPlayer @, @time, new Point(100, 100), "human"
+        numais = 0
         @ais = []
         for a in [0...numais]
-            @ais.push new AI @, @time, new Point 200, 100
+            @ais.push new AI @, @time, new Point(200, 100), "ai1"
         @projectiles = []
         @cameraSpeed = 0.3
 
@@ -295,8 +297,8 @@ class Arena
 
         @loop()
 
-    addProjectile: (startP, destP, skill) ->
-        p = new Projectile @, new Date().getTime(), startP, destP, skill
+    addProjectile: (startP, destP, skill, team) ->
+        p = new Projectile @, new Date().getTime(), startP, destP, skill, team
         @projectiles.push p
 
     loop: =>
@@ -326,9 +328,10 @@ class Arena
         for p in @projectiles
             alive = p.update updateTime
             if alive
-                if p.p.within @p1.p, p.skill.radius + @p1.radius
+                if p.team isnt "human" and p.p.within @p1.p, p.skill.radius + @p1.radius
                     @aiscore += 1
-                else if (@ais.some (ai) -> p.p.within ai.p, p.skill.radius + ai.radius)
+                else if (p.team isnt "ai1" and (@ais.some (ai) ->
+                    p.p.within ai.p, p.skill.radius + ai.radius))
                     @p1score += 1
                 else
                     newProjectiles.push p
