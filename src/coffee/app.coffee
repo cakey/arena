@@ -95,7 +95,7 @@ class Player
 
     constructor: (@arena, @time, @p, @team) ->
         @radius = 20
-        @maxCastRadius = (@radius + 3 + @radius)
+        @maxCastRadius = @radius * 2
         @destP = @p
         @speed = 0.2 # pixels/ms
         @startCastTime = null
@@ -114,7 +114,7 @@ class Player
         # Cast
         if @startCastTime?
             radiusMs = @radius / @castedSkill.castTime
-            radius = (radiusMs * (@time - @startCastTime)) + @radius + 3
+            radius = (radiusMs * (@time - @startCastTime)) + @radius
 
             angle = @p.angle @castP
             halfCone = @castedSkill.cone / 2
@@ -129,7 +129,6 @@ class Player
         # Location
         ctx.beginPath()
         ctx.circle @p, @radius
-        ctx.lineWidth 3
         ctx.fillStyle "#aaaacc"
         ctx.fill()
 
@@ -161,8 +160,8 @@ class Player
                 edgeP = @p.bearing castAngle, @maxCastRadius
 
                 # handle edgecase where castPoint was within casting circle
-                if edgeP.within @p, @radius
-                    @castP = edgeP.bearing castAngle, 1
+                if @castP.within @p, @maxCastRadius
+                    @castP = edgeP.bearing castAngle, 0.1
 
                 @arena.addProjectile edgeP, @castP, @castedSkill, @team
 
