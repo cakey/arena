@@ -202,10 +202,7 @@ class AI extends Player
             @fire otherPs.choice().p, skills.orb
 
         if not @startCastTime? and (Math.random() < gameSpeed(0.03) or (@p.equal @destP))
-            @moveTo new Point(
-                utils.randInt(0,@arena.map.width),
-                utils.randInt(0,@arena.map.height)
-            )
+            @moveTo @arena.map.randomPoint()
             #@moveTo(
             #    ((@arena.p1.x+@x)/2)+utils.randInt(-250,250),
             #    ((@arena.p1.y+@y)/2)+utils.randInt(-250,250)
@@ -266,11 +263,20 @@ class Arena
     constructor: (@canvas) ->
         @time = new Date().getTime()
 
+        @map =
+            p: new Point 25, 25
+            width: window.innerWidth - 100
+            height: window.innerHeight - 100
+            wallSize: 10
+            randomPoint: =>
+                new Point(utils.randInt(0, @map.width), utils.randInt(0, @map.height))
+
+
         @teams =
             human:
                 color: "#aa3333"
                 players: [
-                    new UIPlayer @, @time, new Point(100, 100), "human"
+                    new UIPlayer @, @time, @map.randomPoint(), "human"
                 ]
                 score: 0
             ai1:
@@ -285,19 +291,14 @@ class Arena
         numais = 5
 
         for a in [0...numais]
-            @teams.ai2.players.push new AI @, @time, new Point(200, 100), "ai2"
-            @teams.ai1.players.push new AI @, @time, new Point(200, 100), "ai1"
+            @teams.ai2.players.push new AI @, @time, @map.randomPoint(), "ai2"
+            @teams.ai1.players.push new AI @, @time, @map.randomPoint(), "ai1"
 
         @projectiles = []
         @cameraSpeed = 0.3
 
         @mouseP = new Point 0, 0
 
-        @map =
-            p: new Point 25, 25
-            width: window.innerWidth - 100
-            height: window.innerHeight - 100
-            wallSize: 10
 
         @mapMiddle = @mapToGo = new Point window.innerWidth / 2, window.innerHeight / 2
 
