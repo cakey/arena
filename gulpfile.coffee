@@ -1,9 +1,8 @@
 gulp = require "gulp"
 gutil = require "gulp-util"
-http = require "http"
-ecstatic = require "ecstatic"
 karma = require("karma").server
 $ = require('gulp-load-plugins')()
+express = require 'express'
 
 gulp.task 'scripts', ->
     return gulp.src('src/coffee/app.coffee', { read: false })
@@ -13,6 +12,7 @@ gulp.task 'scripts', ->
         })).on("error", gutil.log).on("error", gutil.beep)
         .pipe($.rename('app.js'))
         .pipe(gulp.dest('./public'))
+        .pipe($.livereload())
 
 
 gulp.task 'tests', ->
@@ -29,11 +29,13 @@ gulp.task "styles", ->
         .pipe($.concat("app.css"))
         .pipe($.sass(errLogToConsole: true).on("error", gutil.log).on("error", gutil.beep))
         .pipe gulp.dest("./public")
+        .pipe($.livereload())
 
 gulp.task "jade", ->
     gulp.src("./src/jade/index.jade")
         .pipe($.jade().on("error", gutil.log).on("error", gutil.beep))
         .pipe gulp.dest("./public")
+        .pipe($.livereload())
 
 
 gulp.task "clean", ->
@@ -44,6 +46,7 @@ gulp.task "clean", ->
 gulp.task "assets", ->
     gulp.src("./src/assets/**/*")
         .pipe gulp.dest("./public")
+        .pipe($.livereload())
 
 gulp.task "lint", ->
     return gulp.src(["src/**/*.coffee"])
@@ -64,11 +67,15 @@ gulp.task "tdd", (done) ->
     karma.start karmaCommonConf, done
 
 gulp.task "default", ["lint", "scripts", "tests", "styles", "jade", "assets"], ->
+    app = express()
+    app.use require('connect-livereload')()
+    app.use express.static "#{__dirname}/public"
+    $.livereload.listen()
 
-    http.createServer(ecstatic(root: __dirname + "/public")).listen 8090
-    console.log "Listening on :8090"
+    gutil.log gutil.colors.cyan '=== Listening on port 4000. ==='
+    app.listen 4000
 
-    gulp.watch "src/**/*.coffee", ["lint", "scripts", "tests"]
-    gulp.watch "src/**/*.scss", ["styles"]
-    gulp.watch "src/**/*.jade", ["jade"]
-    gulp.watch "src/assets/**/*", ["assets"]
+    gulp.watch("src/**/*.coffee", ["lint", "scripts", "tests"])
+    gulp.watch("src/**/*.scss", ["styles"])
+    gulp.watch("src/**/*.jade", ["jade"])
+    gulp.watch("src/assets/**/*", ["assets"])
