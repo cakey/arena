@@ -184,8 +184,13 @@ class AI extends Player
         #if @arena.p1.startCastTime? and not @startCastTime?
         #    @fire @arena.p1.x, @arena.p1.y, skills.disrupt
 
+        otherPs = []
+        for n,t of @arena.teams
+            if n isnt @team
+                otherPs.push t.players...
+
         if Math.random() < 0.005 and not @startCastTime?
-            @fire @arena.teams.human.players.choice().p, skills.orb
+            @fire otherPs.choice().p, skills.orb
 
         if not @startCastTime? and (Math.random() < 0.03 or (@p.equal @destP))
             @moveTo new Point(
@@ -259,15 +264,19 @@ class Arena
                     new UIPlayer @, @time, new Point(100, 100), "human"
                 ]
                 score: 0
-            ai:
+            ai1:
+                color: "#33aa33"
+                players: []
+                score: 0
+            ai2:
                 color: "#3333aa"
                 players: []
                 score: 0
-
         numais = 5
 
         for a in [0...numais]
-            @teams.ai.players.push new AI @, @time, new Point(200, 100), "ai"
+            @teams.ai2.players.push new AI @, @time, new Point(200, 100), "ai2"
+            @teams.ai1.players.push new AI @, @time, new Point(200, 100), "ai1"
 
         @projectiles = []
         @cameraSpeed = 0.3
@@ -304,8 +313,11 @@ class Arena
 
             ctx.fillStyle "#444466"
             ctx.font "20px verdana"
-            ctx.fillText "You: #{@teams.human.score}", 10, window.innerHeight - 20
-            ctx.fillText "AI: #{@teams.ai.score}", 150, window.innerHeight - 20
+
+            x = 50
+            for name, team of @teams
+                ctx.fillText "#{name}: #{team.score}", x, window.innerHeight - 20
+                x += 150
 
             for name, team of @teams
                 for player in team.players
@@ -353,7 +365,7 @@ class Arena
         for name, team of @teams
             if name isnt p.team
                 for player in team.players
-                    return true if p.p.within player.p, p.skill.radius + player.radius
+                    return name if p.p.within player.p, p.skill.radius + player.radius
         return false
 
     loop: =>
@@ -383,8 +395,10 @@ class Arena
         for p in @projectiles
             alive = p.update updateTime
             if alive
-                if @projectileCollide p
+                if hitTeam = @projectileCollide p
                     @teams[p.team].score += 1
+                    @teams[hitTeam].score -= 1
+
                 else
                     newProjectiles.push p
         @projectiles = newProjectiles
