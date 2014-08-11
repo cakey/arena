@@ -4,7 +4,7 @@ Point = require "../coffee/point"
 
 # todo: it should name tests well
 
-describe "points", ->
+describe "Points", ->
     p = new Point 0, 0
     it "should have x and y initialised corrected", ->
         expect(p.x).to.be 0
@@ -56,6 +56,10 @@ describe "points", ->
         withinP = new Point 1,1
         expect(p.within(withinP, 2)).to.be true
         expect(p.within(withinP, 1)).to.be false
+
+    it "should have distance functions", ->
+        distanceP = new Point 3,4
+        expect(p.distance(distanceP)).to.be 5
 
     # TODO:
     # bound

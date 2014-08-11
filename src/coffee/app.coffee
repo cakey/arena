@@ -96,6 +96,8 @@ skills =
 
 class Player
 
+    @id = 0
+
     constructor: (@arena, @time, @p, @team) ->
         @radius = 20
         @maxCastRadius = @radius * 2
@@ -103,6 +105,8 @@ class Player
         @speed = 0.2 # pixels/ms
         @startCastTime = null
         @castP = null
+        @id = Player.id
+        Player.id += 1
 
     moveTo: (@destP) ->
         @startCastTime = null
@@ -150,7 +154,9 @@ class Player
 
         # Location
 
-        @p = @p.towards @destP, (@speed * msDiff)
+        newP = @p.towards @destP, (@speed * msDiff)
+        if @arena.allowedMovement newP, @
+            @p = newP
 
         # Cast
 
@@ -257,7 +263,8 @@ class Arena
                 color: "#3333aa"
                 players: []
                 score: 0
-        numais = 2
+
+        numais = 5
 
         for a in [0...numais]
             @teams.ai.players.push new AI @, @time, new Point(200, 100), "ai"
@@ -312,6 +319,31 @@ class Arena
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
         @projectiles.push p
+
+    allowedMovement: (newP, player) ->
+
+        # TODO: n^2? seriously?
+
+        currentUnallowed = 0
+        newUnallowed = 0
+        for teamName, team of @teams
+            for otherPlayer in team.players
+                if otherPlayer.id isnt player.id
+                    currentD = player.p.distance otherPlayer.p
+                    newD = newP.distance otherPlayer.p
+                    minimum = player.radius + otherPlayer.radius
+                    if currentD < minimum
+                        currentUnallowed += (minimum - currentD)
+                    if newD < minimum
+                        newUnallowed += (minimum - newD)
+
+        allowed = newUnallowed <= currentUnallowed
+
+        # stickiness parameter (less likely to get caught on an edge)
+        if 0 < newUnallowed < 2
+            return true
+
+        return allowed
 
     projectileCollide: (p) ->
         # for each other team

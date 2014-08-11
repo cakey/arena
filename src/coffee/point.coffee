@@ -37,12 +37,14 @@ class Point
         y = @y + Math.sin(angle) * distance
         new Point x,y
 
-    within: (center, radius) ->
-        actualDistance = Math.sqrt(
-            Math.pow(@x - center.x, 2) +
-            Math.pow(@y - center.y, 2)
+    distance: (otherP) ->
+        Math.sqrt(
+            Math.pow(@x - otherP.x, 2) +
+            Math.pow(@y - otherP.y, 2)
         )
-        return actualDistance <= radius
+
+    within: (center, radius) ->
+        return @distance(center) <= radius
 
     bound: (topLeft, bottomRight) ->
         x = @x
