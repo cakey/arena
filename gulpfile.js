@@ -1,4 +1,4 @@
-require('coffee-script');
+require('coffee-script/register');
 var gutil = require('gulp-util');
 
 var gulpfile = 'Gulpfile.coffee';

@@ -21,32 +21,31 @@ gulp.task 'tests', ->
           transform: ['coffeeify'],
           extensions: ['.coffee']
         })).on("error", gutil.log).on("error", gutil.beep)
-        .pipe($.rename('tests.js'))
-        .pipe(gulp.dest('./gen'))
+        .pipe $.rename 'tests.js'
+        .pipe gulp.dest './gen'
 
 gulp.task "styles", ->
     return gulp.src(["./src/**/*.scss"])
         .pipe($.concat("app.css"))
         .pipe($.sass(errLogToConsole: true).on("error", gutil.log).on("error", gutil.beep))
-        .pipe gulp.dest("./public")
+        .pipe(gulp.dest("./public"))
         .pipe($.livereload())
 
 gulp.task "jade", ->
-    gulp.src("./src/jade/index.jade")
+    return gulp.src("./src/jade/index.jade")
         .pipe($.jade().on("error", gutil.log).on("error", gutil.beep))
         .pipe gulp.dest("./public")
-        .pipe($.livereload())
+        .pipe $.livereload()
 
 
 gulp.task "clean", ->
-    gulp.src("./public",
-        read: false
-    ).pipe $.clean()
+    gulp.src(["./public", "./gen"])
+        .pipe $.clean()
 
 gulp.task "assets", ->
-    gulp.src("./src/assets/**/*")
+    gulp.src "./src/assets/**/*"
         .pipe gulp.dest("./public")
-        .pipe($.livereload())
+        .pipe $.livereload()
 
 gulp.task "lint", ->
     return gulp.src(["src/**/*.coffee"])
