@@ -28,6 +28,15 @@ utils =
 
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 
+speedup = 1
+
+gameSpeed = (arg) ->
+    arg * speedup
+
+gameSpeedInverse = (arg) ->
+    arg / speedup
+
+
 class Canvas
     constructor: ->
         @canvas = document.getElementById 'canvas'
@@ -120,7 +129,7 @@ class Player
 
         # Cast
         if @startCastTime?
-            radiusMs = @radius / @castedSkill.castTime
+            radiusMs = @radius / gameSpeedInverse(@castedSkill.castTime)
             radius = (radiusMs * (@time - @startCastTime)) + @radius
 
             angle = @p.angle @castP
@@ -154,14 +163,14 @@ class Player
 
         # Location
 
-        newP = @p.towards @destP, (@speed * msDiff)
+        newP = @p.towards @destP, (gameSpeed(@speed) * msDiff)
         if @arena.allowedMovement newP, @
             @p = newP
 
         # Cast
 
         if @startCastTime?
-            if newTime - @startCastTime > @castedSkill.castTime
+            if newTime - @startCastTime > gameSpeedInverse(@castedSkill.castTime)
                 @startCastTime = null
 
                 castAngle = @p.angle @castP
@@ -189,10 +198,10 @@ class AI extends Player
             if n isnt @team
                 otherPs.push t.players...
 
-        if Math.random() < 0.005 and not @startCastTime?
+        if Math.random() < gameSpeed(0.005) and not @startCastTime?
             @fire otherPs.choice().p, skills.orb
 
-        if not @startCastTime? and (Math.random() < 0.03 or (@p.equal @destP))
+        if not @startCastTime? and (Math.random() < gameSpeed(0.03) or (@p.equal @destP))
             @moveTo new Point(
                 utils.randInt(0,@arena.map.width),
                 utils.randInt(0,@arena.map.height)
@@ -247,7 +256,7 @@ class Projectile
 
         msDiff = newTime - @time
 
-        @p = @p.towards @destP, (@skill.speed * msDiff)
+        @p = @p.towards @destP, (gameSpeed(@skill.speed) * msDiff)
 
         @time = newTime
         return true
@@ -272,6 +281,7 @@ class Arena
                 color: "#3333aa"
                 players: []
                 score: 0
+
         numais = 5
 
         for a in [0...numais]
