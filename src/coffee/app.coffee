@@ -6,13 +6,16 @@
 
 Point = require "./point"
 
-Array.prototype.some ?= (f) ->
+Array::some ?= (f) ->
     (return true if f x) for x in @
     return false
 
-Array.prototype.every ?= (f) ->
+Array::every ?= (f) ->
     (return false if not f x) for x in @
     return true
+
+Array::choice ?= ->
+    @[Math.floor(Math.random() * @length)]
 
 utils =
     randInt: (lower, upper = 0) ->
@@ -87,7 +90,7 @@ skills =
         cone: Math.PI / 3
         radius: 10
         castTime: 10 #10
-        speed: 0.1 #0.2
+        speed: 0.2
         range: 800
         color: "#990099"
 
@@ -129,7 +132,7 @@ class Player
         # Location
         ctx.beginPath()
         ctx.circle @p, @radius
-        ctx.fillStyle "#aaaacc"
+        ctx.fillStyle @arena.teams[@team].color
         ctx.fill()
 
         # casting circle
@@ -176,7 +179,7 @@ class AI extends Player
         #    @fire @arena.p1.x, @arena.p1.y, skills.disrupt
 
         if Math.random() < 0.005 and not @startCastTime?
-            @fire @arena.p1.p, skills.orb
+            @fire @arena.teams.human.players.choice().p, skills.orb
 
         if not @startCastTime? and (Math.random() < 0.03 or (@p.equal @destP))
             @moveTo new Point(
@@ -242,18 +245,27 @@ class Arena
 
     constructor: (@canvas) ->
         @time = new Date().getTime()
-        @p1 = new UIPlayer @, @time, new Point(100, 100), "human"
+
+        @teams =
+            human:
+                color: "#aa3333"
+                players: [
+                    new UIPlayer @, @time, new Point(100, 100), "human"
+                ]
+                score: 0
+            ai:
+                color: "#3333aa"
+                players: []
+                score: 0
         numais = 2
-        @ais = []
+
         for a in [0...numais]
-            @ais.push new AI @, @time, new Point(200, 100), "ai1"
+            @teams.ai.players.push new AI @, @time, new Point(200, 100), "ai"
+
         @projectiles = []
         @cameraSpeed = 0.3
 
         @mouseP = new Point 0, 0
-
-        @p1score = 0
-        @aiscore = 0
 
         @map =
             p: new Point 25, 25
@@ -285,12 +297,13 @@ class Arena
 
             ctx.fillStyle "#444466"
             ctx.font "20px verdana"
-            ctx.fillText "P1: #{@p1score}", 10, window.innerHeight - 20
-            ctx.fillText "AI: #{@aiscore}", 150, window.innerHeight - 20
+            ctx.fillText "You: #{@teams.human.score}", 10, window.innerHeight - 20
+            ctx.fillText "AI: #{@teams.ai.score}", 150, window.innerHeight - 20
 
-            @p1.draw ctx
-            for ai in @ais
-                ai.draw ctx
+            for name, team of @teams
+                for player in team.players
+                    player.draw ctx
+
             for p in @projectiles
                 p.draw ctx
 
@@ -299,6 +312,17 @@ class Arena
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
         @projectiles.push p
+
+    projectileCollide: (p) ->
+        # for each other team
+        # check if projectile hits a player
+        # if so increment owner of projechtile score
+        # otherwise add to newProjectiles
+        for name, team of @teams
+            if name isnt p.team
+                for player in team.players
+                    return true if p.p.within player.p, p.skill.radius + player.radius
+        return false
 
     loop: =>
         setTimeout @loop, 5
@@ -319,24 +343,16 @@ class Arena
 
         @map.p = @map.p.subtract moveVector
 
-        @p1.update updateTime
-        for ai in @ais
-            ai.update updateTime
+        for name, team of @teams
+            for player in team.players
+                player.update updateTime
 
         newProjectiles = []
         for p in @projectiles
             alive = p.update updateTime
             if alive
-                hithuman = p.team isnt "human" and
-                    p.p.within @p1.p, p.skill.radius + @p1.radius
-
-                hitai = p.team isnt "ai1" and @ais.some (ai) ->
-                    p.p.within ai.p, p.skill.radius + ai.radius
-
-                if hithuman
-                    @aiscore += 1
-                else if hitai
-                    @p1score += 1
+                if @projectileCollide p
+                    @teams[p.team].score += 1
                 else
                     newProjectiles.push p
         @projectiles = newProjectiles
