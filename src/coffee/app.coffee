@@ -5,6 +5,7 @@
 # todo: pull out key bindings
 
 Point = require "./point"
+Skills = require "./skills"
 
 Array::some ?= (f) ->
     (return true if f x) for x in @
@@ -86,23 +87,6 @@ class Canvas
             @ctx.clearRect 0, 0, @canvas.width, @canvas.height
             @ctx.drawImage @offscreenCanvas, 0, 0
 
-skills =
-    orb:
-        cone: Math.PI / 5
-        radius: 7
-        castTime: 400
-        speed: 0.6
-        range: 400
-        color: "#aa0000"
-
-    disrupt:
-        cone: Math.PI / 3
-        radius: 10
-        castTime: 10 #10
-        speed: 0.2
-        range: 800
-        color: "#990099"
-
 class Player
 
     @id = 0
@@ -118,11 +102,13 @@ class Player
         Player.id += 1
 
     moveTo: (@destP) ->
-        @startCastTime = null
+        if @startCastTime isnt null and @castedSkill.channeled
+            @startCastTime = null
 
     fire: (@castP, @castedSkill) ->
         # stop moving to fire
-        @destP = @p
+        if @castedSkill.channeled
+            @destP = @p
         @startCastTime = @time # needs to be passed through
 
     draw: (ctx) ->
@@ -199,7 +185,7 @@ class AI extends Player
                 otherPs.push t.players...
 
         if Math.random() < gameSpeed(0.005) and not @startCastTime?
-            @fire otherPs.choice().p, skills.orb
+            @fire otherPs.choice().p, Skills.orb
 
         if not @startCastTime? and (Math.random() < gameSpeed(0.03) or (@p.equal @destP))
             @moveTo @arena.map.randomPoint()
@@ -225,9 +211,11 @@ class UIPlayer extends Player
 
         addEventListener "keypress", (event) =>
             if event.which is 103
-                @fire (@arena.mouseP.mapBound @p, @arena.map), skills.orb
+                @fire (@arena.mouseP.mapBound @p, @arena.map), Skills.orb
             else if event.which is 104
-                @fire (@arena.mouseP.mapBound @p, @arena.map), skills.disrupt
+                @fire (@arena.mouseP.mapBound @p, @arena.map), Skills.disrupt
+            else if event.which is 98
+                @fire (@arena.mouseP.mapBound @p, @arena.map), Skills.gun
             else
                 console.log event
                 console.log event.which
@@ -288,7 +276,7 @@ class Arena
                 players: []
                 score: 0
 
-        numais = 5
+        numais = 3
 
         for a in [0...numais]
             @teams.ai2.players.push new AI @, @time, @map.randomPoint(), "ai2"
