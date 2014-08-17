@@ -17,6 +17,15 @@ skills =
         color: "#000000"
         channeled: false
 
+    slowgun:
+        cone: Math.PI / 2
+        radius: 20
+        castTime: 150
+        speed: 0.2
+        range: 800
+        color: "#00bbbb"
+        channeled: false
+
     disrupt:
         cone: Math.PI / 3
         radius: 10

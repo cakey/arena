@@ -1,6 +1,6 @@
 expect = require "expect.js"
 
-Point = require "../coffee/point"
+Point = require "../lib/point"
 
 # todo: it should name tests well
 

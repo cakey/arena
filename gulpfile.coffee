@@ -5,7 +5,7 @@ $ = require('gulp-load-plugins')()
 express = require 'express'
 
 gulp.task 'scripts', ->
-    return gulp.src('src/coffee/app.coffee', { read: false })
+    return gulp.src('src/client/app.coffee', { read: false })
         .pipe($.browserify({
           transform: ['coffeeify'],
           extensions: ['.coffee']

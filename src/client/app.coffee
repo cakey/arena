@@ -4,8 +4,8 @@
 # player extends projectile
 # todo: pull out key bindings
 
-Point = require "./point"
-Skills = require "./skills"
+Point = require "../lib/point"
+Skills = require "../lib/skills"
 
 Array::some ?= (f) ->
     (return true if f x) for x in @
@@ -210,12 +210,14 @@ class UIPlayer extends Player
                 @moveTo p
 
         addEventListener "keypress", (event) =>
-            if event.which is 103
-                @fire (@arena.mouseP.mapBound @p, @arena.map), Skills.orb
-            else if event.which is 104
-                @fire (@arena.mouseP.mapBound @p, @arena.map), Skills.disrupt
-            else if event.which is 98
-                @fire (@arena.mouseP.mapBound @p, @arena.map), Skills.gun
+            keyBindings =
+                103: Skills.orb #g
+                104: Skills.disrupt #h
+                98: Skills.gun #b
+                110: Skills.slowgun #n
+
+            if skill = keyBindings[event.which]
+                @fire (@arena.mouseP.mapBound @p, @arena.map), skill
             else
                 console.log event
                 console.log event.which
