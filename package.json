@@ -1,16 +1,16 @@
 {
-  "name": "scene",
+  "name": "arena",
   "version": "0.0.0",
   "description": "",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cakey/Scene.git"
+    "url": "https://github.com/cakey/arena.git"
   },
   "author": "Ben Shaw",
   "license": "BSD-2-Clause",
   "bugs": {
-    "url": "https://github.com/cakey/Scene/issues"
+    "url": "https://github.com/cakey/arena/issues"
   },
   "devDependencies": {
     "coffee-script": "~1.7.1",
