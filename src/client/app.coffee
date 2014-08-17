@@ -109,8 +109,6 @@ class Canvas
 
 class Player
 
-    @id = 0
-
     constructor: (@arena, @time, @p, @team) ->
         @radius = 20
         @maxCastRadius = @radius * 2
@@ -118,8 +116,7 @@ class Player
         @speed = 0.2 # pixels/ms
         @startCastTime = null
         @castP = null
-        @id = Player.id
-        Player.id += 1
+        @id = uuid.v4()
 
     moveTo: (@destP) ->
         if @startCastTime isnt null and @castedSkill.channeled
