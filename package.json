@@ -36,5 +36,9 @@
     "karma-mocha": "^0.1.7",
     "karma-mocha-reporter": "^0.2.8",
     "mocha": "^1.21.4"
+  },
+  "dependencies": {
+    "node-uuid": "^1.4.1",
+    "ws": "^0.4.32"
   }
 }

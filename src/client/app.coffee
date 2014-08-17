@@ -4,8 +4,28 @@
 # player extends projectile
 # todo: pull out key bindings
 
+WebSocket = require 'ws'
+uuid = require 'node-uuid'
+
 Point = require "../lib/point"
 Skills = require "../lib/skills"
+Config = require "../lib/config"
+
+ws = new WebSocket Config.ws.host
+
+client_uuid = uuid.v4()
+
+ws.onopen = ->
+    message =
+        action: 'register'
+        id: client_uuid
+    ws.send JSON.stringify message
+
+window.onbeforeunload = ->
+    message =
+        action: 'deregister'
+        id: client_uuid
+    ws.send JSON.stringify message
 
 Array::some ?= (f) ->
     (return true if f x) for x in @
