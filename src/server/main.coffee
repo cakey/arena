@@ -15,3 +15,6 @@ wss.on 'connection', (ws) ->
         else if message.action is "deregister"
             console.log "deregister - #{message.id}"
             delete clients[message.id]
+        else if message.action is "control"
+            for client_id, client of clients
+                client.send unparsed

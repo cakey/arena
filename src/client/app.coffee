@@ -15,6 +15,8 @@ ws = new WebSocket Config.ws.host
 
 client_uuid = uuid.v4()
 
+localPlayers = {}
+
 ws.onopen = ->
     message =
         action: 'register'
@@ -26,6 +28,17 @@ window.onbeforeunload = ->
         action: 'deregister'
         id: client_uuid
     ws.send JSON.stringify message
+
+ws.onmessage = (unparsed) ->
+    message = JSON.parse unparsed.data
+    if message.action is "control"
+        d = message.data
+        if d.action is "moveTo"
+            player = localPlayers[d.playerId]
+            player.moveTo new Point d.position.x, d.position.y
+        else if d.action is "fire"
+            player = localPlayers[d.playerId]
+            player.fire (new Point d.position.x, d.position.y), Skills[d.skill]
 
 Array::some ?= (f) ->
     (return true if f x) for x in @
@@ -188,7 +201,7 @@ class Player
 
         @time = newTime
 
-class AI extends Player
+class LocalAI extends Player
 
     update: (newTime) ->
         super newTime
@@ -211,7 +224,7 @@ class AI extends Player
             #    ((@arena.p1.y+@y)/2)+utils.randInt(-250,250)
             #)
 
-class UIPlayer extends Player
+class LocalUIPlayer extends Player
 
     constructor: ->
         super
@@ -235,6 +248,58 @@ class UIPlayer extends Player
 
             if skill = keyBindings[event.which]
                 @fire (@arena.mouseP.mapBound @p, @arena.map), skill
+            else
+                console.log event
+                console.log event.which
+
+class NetworkUIPlayer extends Player
+
+    constructor: ->
+        super
+        localPlayers[@id] = @
+
+        addEventListener "mousedown", (event) =>
+            topLeft = new Point @radius, @radius
+            bottomRight = new Point(
+                @arena.map.width - @radius,
+                @arena.map.height - @radius)
+
+            p = @arena.mouseP.bound topLeft, bottomRight
+
+            if event.which is 3
+                message =
+                    action: 'control'
+                    data:
+                        playerId: @id
+                        action: 'moveTo'
+                        position:
+                            x: p.x
+                            y: p.y
+                    id: client_uuid
+                ws.send JSON.stringify message
+
+        addEventListener "keypress", (event) =>
+            keyBindings =
+                103: 'orb'
+                104: 'disrupt'
+                98: 'gun'
+                110: 'slowgun'
+
+            if skill = keyBindings[event.which]
+                p = (@arena.mouseP.mapBound @p, @arena.map)
+
+                message =
+                    action: 'control'
+                    data:
+                        playerId: @id
+                        action: 'fire'
+                        position:
+                            x: p.x
+                            y: p.y
+                        skill: skill
+                    id: client_uuid
+                ws.send JSON.stringify message
+
             else
                 console.log event
                 console.log event.which
@@ -283,7 +348,7 @@ class Arena
             human:
                 color: "#aa3333"
                 players: [
-                    new UIPlayer @, @time, @map.randomPoint(), "human"
+                    new NetworkUIPlayer @, @time, @map.randomPoint(), "human"
                 ]
                 score: 0
             ai1:
@@ -298,8 +363,8 @@ class Arena
         numais = 3
 
         for a in [0...numais]
-            @teams.ai2.players.push new AI @, @time, @map.randomPoint(), "ai2"
-            @teams.ai1.players.push new AI @, @time, @map.randomPoint(), "ai1"
+            @teams.ai2.players.push new LocalAI @, @time, @map.randomPoint(), "ai2"
+            @teams.ai1.players.push new LocalAI @, @time, @map.randomPoint(), "ai1"
 
         @projectiles = []
         @cameraSpeed = 0.3
