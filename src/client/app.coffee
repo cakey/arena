@@ -273,9 +273,9 @@ class UIPlayer extends Player
         addEventListener "keypress", (event) =>
             keyBindings =
                 103: 'orb'
-                104: 'disrupt'
+                104: 'flame'
                 98: 'gun'
-                110: 'slowgun'
+                110: 'bomb'
 
             if skill = keyBindings[event.which]
                 @handler.fire (@arena.mouseP.mapBound @p, @arena.map), skill
@@ -417,22 +417,20 @@ class Arena
             blue:
                 color: "#3333aa"
                 score: 0
-        ###
-        ai1:
-            color: "#33aa33"
-            players: []
-            score: 0
-        ai2:
-            color: "#3333aa"
-            players: []
-            score: 0
-        ###
 
         rp = @map.randomPoint()
 
         new NetworkUIPlayer @, rp, (name for name, r of @teams).choice()
 
-        numais = 0
+        numais = 1
+
+        if numais > 0
+            @teams.ai1 =
+                color: "#33aa33"
+                score: 0
+            @teams.ai2 =
+                color: "#ddaa44"
+                score: 0
 
         for a in [0...numais]
             new NetworkAIPlayer @, @map.randomPoint(), "ai2"
@@ -547,8 +545,8 @@ class Arena
             alive = p.update updateTime
             if alive
                 if hitTeam = @projectileCollide p
-                    @teams[p.team].score += 1
-                    @teams[hitTeam].score -= 1
+                    @teams[p.team].score += p.skill.score
+                    @teams[hitTeam].score -= p.skill.score
 
                 else
                     newProjectiles.push p

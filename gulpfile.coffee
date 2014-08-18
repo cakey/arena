@@ -71,8 +71,8 @@ gulp.task "default", ["lint", "scripts", "tests", "styles", "jade", "assets"], -
     app.use express.static "#{__dirname}/public"
     $.livereload.listen()
 
-    gutil.log gutil.colors.cyan '=== Listening on port 4000. ==='
-    app.listen 4000
+    gutil.log gutil.colors.cyan '=== Listening on port 4001. ==='
+    app.listen 4001
 
     gulp.watch("src/**/*.coffee", ["lint", "scripts", "tests"])
     gulp.watch("src/**/*.scss", ["styles"])
