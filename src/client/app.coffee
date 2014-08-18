@@ -33,12 +33,12 @@ ws.onmessage = (unparsed) ->
     message = JSON.parse unparsed.data
     if message.action is "control"
         d = message.data
+        position = new Point d.position.x, d.position.y
+        player = localPlayers[d.playerId]
         if d.action is "moveTo"
-            player = localPlayers[d.playerId]
-            player.moveTo new Point d.position.x, d.position.y
+            player.moveTo position
         else if d.action is "fire"
-            player = localPlayers[d.playerId]
-            player.fire (new Point d.position.x, d.position.y), Skills[d.skill]
+            player.fire position, Skills[d.skill]
 
 Array::some ?= (f) ->
     (return true if f x) for x in @
@@ -237,46 +237,7 @@ class LocalUIPlayer extends Player
             p = @arena.mouseP.bound topLeft, bottomRight
 
             if event.which is 3
-                @moveTo p
-
-        addEventListener "keypress", (event) =>
-            keyBindings =
-                103: Skills.orb #g
-                104: Skills.disrupt #h
-                98: Skills.gun #b
-                110: Skills.slowgun #n
-
-            if skill = keyBindings[event.which]
-                @fire (@arena.mouseP.mapBound @p, @arena.map), skill
-            else
-                console.log event
-                console.log event.which
-
-class NetworkUIPlayer extends Player
-
-    constructor: ->
-        super
-        localPlayers[@id] = @
-
-        addEventListener "mousedown", (event) =>
-            topLeft = new Point @radius, @radius
-            bottomRight = new Point(
-                @arena.map.width - @radius,
-                @arena.map.height - @radius)
-
-            p = @arena.mouseP.bound topLeft, bottomRight
-
-            if event.which is 3
-                message =
-                    action: 'control'
-                    data:
-                        playerId: @id
-                        action: 'moveTo'
-                        position:
-                            x: p.x
-                            y: p.y
-                    id: client_uuid
-                ws.send JSON.stringify message
+                @UImoveTo p
 
         addEventListener "keypress", (event) =>
             keyBindings =
@@ -286,23 +247,48 @@ class NetworkUIPlayer extends Player
                 110: 'slowgun'
 
             if skill = keyBindings[event.which]
-                p = (@arena.mouseP.mapBound @p, @arena.map)
-
-                message =
-                    action: 'control'
-                    data:
-                        playerId: @id
-                        action: 'fire'
-                        position:
-                            x: p.x
-                            y: p.y
-                        skill: skill
-                    id: client_uuid
-                ws.send JSON.stringify message
-
+                @UIfire (@arena.mouseP.mapBound @p, @arena.map), skill
             else
                 console.log event
                 console.log event.which
+
+    UImoveTo: (p) ->
+        @moveTo p
+
+    UIfire: (p, skillName) ->
+        @fire p, Skills[skillName]
+
+class NetworkUIPlayer extends LocalUIPlayer
+
+    constructor: ->
+        super
+        localPlayers[@id] = @
+
+    UImoveTo: (p) ->
+        message =
+            action: 'control'
+            data:
+                playerId: @id
+                action: 'moveTo'
+                position:
+                    x: p.x
+                    y: p.y
+            id: client_uuid
+        ws.send JSON.stringify message
+
+
+    UIfire: (p, skillName) ->
+        message =
+            action: 'control'
+            data:
+                playerId: @id
+                action: 'fire'
+                position:
+                    x: p.x
+                    y: p.y
+                skill: skillName
+            id: client_uuid
+        ws.send JSON.stringify message
 
 class Projectile
 
