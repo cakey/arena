@@ -9,7 +9,8 @@ Point = require "../lib/point"
 Skills = require "../lib/skills"
 Config = require "../lib/config"
 
-ws = new WebSocket Config.ws.host
+host = "ws://#{location.hostname}:#{Config.ws.port}"
+ws = new WebSocket host
 
 client_uuid = uuid.v4()
 
