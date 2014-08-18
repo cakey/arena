@@ -23,6 +23,9 @@ ws.onopen = ->
         id: client_uuid
     ws.send JSON.stringify message
 
+    canvas = new Canvas()
+    arena = new Arena canvas
+
 window.onbeforeunload = ->
     message =
         action: 'deregister'
@@ -201,7 +204,7 @@ class Player
 
         @time = newTime
 
-class LocalAI extends Player
+class AIPlayer extends Player
 
     update: (newTime) ->
         super newTime
@@ -215,16 +218,16 @@ class LocalAI extends Player
                 otherPs.push t.players...
 
         if Math.random() < gameSpeed(0.005) and not @startCastTime?
-            @fire otherPs.choice().p, Skills.orb
+            @handler.fire otherPs.choice().p, 'orb'
 
         if not @startCastTime? and (Math.random() < gameSpeed(0.03) or (@p.equal @destP))
-            @moveTo @arena.map.randomPoint()
+            @handler.moveTo @arena.map.randomPoint()
             #@moveTo(
             #    ((@arena.p1.x+@x)/2)+utils.randInt(-250,250),
             #    ((@arena.p1.y+@y)/2)+utils.randInt(-250,250)
             #)
 
-class LocalUIPlayer extends Player
+class UIPlayer extends Player
 
     constructor: ->
         super
@@ -237,7 +240,7 @@ class LocalUIPlayer extends Player
             p = @arena.mouseP.bound topLeft, bottomRight
 
             if event.which is 3
-                @UImoveTo p
+                @handler.moveTo p
 
         addEventListener "keypress", (event) =>
             keyBindings =
@@ -247,28 +250,32 @@ class LocalUIPlayer extends Player
                 110: 'slowgun'
 
             if skill = keyBindings[event.which]
-                @UIfire (@arena.mouseP.mapBound @p, @arena.map), skill
+                @handler.fire (@arena.mouseP.mapBound @p, @arena.map), skill
             else
                 console.log event
                 console.log event.which
 
-    UImoveTo: (p) ->
-        @moveTo p
+class LocalHandler
 
-    UIfire: (p, skillName) ->
-        @fire p, Skills[skillName]
+    constructor: (@player) ->
 
-class NetworkUIPlayer extends LocalUIPlayer
+    moveTo: (p) ->
+        @player.moveTo p
 
-    constructor: ->
-        super
-        localPlayers[@id] = @
+    fire: (p, skillName) ->
+        @player.fire p, Skills[skillName]
 
-    UImoveTo: (p) ->
+class NetworkHandler
+
+    constructor: (@player) ->
+        localPlayers[@player.id] = @player
+        # TODO: register with server...
+
+    moveTo: (p) ->
         message =
             action: 'control'
             data:
-                playerId: @id
+                playerId: @player.id
                 action: 'moveTo'
                 position:
                     x: p.x
@@ -276,12 +283,11 @@ class NetworkUIPlayer extends LocalUIPlayer
             id: client_uuid
         ws.send JSON.stringify message
 
-
-    UIfire: (p, skillName) ->
+    fire: (p, skillName) ->
         message =
             action: 'control'
             data:
-                playerId: @id
+                playerId: @player.id
                 action: 'fire'
                 position:
                     x: p.x
@@ -289,6 +295,32 @@ class NetworkUIPlayer extends LocalUIPlayer
                 skill: skillName
             id: client_uuid
         ws.send JSON.stringify message
+
+# TODO: refactor
+class LocalAIPlayer extends AIPlayer
+
+    constructor: ->
+        super
+        @handler = new LocalHandler @
+
+class LocalUIPlayer extends UIPlayer
+
+    constructor: ->
+        super
+        @handler = new LocalHandler @
+
+class NetworkAIPlayer extends AIPlayer
+
+    constructor: ->
+        super
+        @handler = new NetworkHandler @
+
+class NetworkUIPlayer extends UIPlayer
+
+    constructor: ->
+        super
+        @handler = new NetworkHandler @
+
 
 class Projectile
 
@@ -349,8 +381,10 @@ class Arena
         numais = 3
 
         for a in [0...numais]
-            @teams.ai2.players.push new LocalAI @, @time, @map.randomPoint(), "ai2"
-            @teams.ai1.players.push new LocalAI @, @time, @map.randomPoint(), "ai1"
+            @teams.ai2.players.push new NetworkAIPlayer(
+                @, @time, @map.randomPoint(), "ai2")
+            @teams.ai1.players.push new NetworkAIPlayer(
+                @, @time, @map.randomPoint(), "ai1")
 
         @projectiles = []
         @cameraSpeed = 0.3
@@ -473,7 +507,3 @@ class Arena
         @projectiles = newProjectiles
 
         @time = updateTime
-
-
-canvas = new Canvas()
-arena = new Arena canvas
