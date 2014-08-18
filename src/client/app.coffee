@@ -1,8 +1,6 @@
-# todo:
-# generalise abilities
-# generalise projectiles?
-# player extends projectile
-# todo: pull out key bindings
+# TODO: filter / map
+# teams
+
 
 WebSocket = require 'ws'
 uuid = require 'node-uuid'
@@ -15,7 +13,25 @@ ws = new WebSocket Config.ws.host
 
 client_uuid = uuid.v4()
 
+Array::some ?= (f) ->
+    (return true if f x) for x in @
+    return false
+
+Array::every ?= (f) ->
+    (return false if not f x) for x in @
+    return true
+
+Array::choice ?= ->
+    @[Math.floor(Math.random() * @length)]
+
 localPlayers = {}
+
+canvas = null
+arena = null
+
+registerPlayer = (player) ->
+    localPlayers[player.id] = player
+    player.arena.players.push player
 
 ws.onopen = ->
     message =
@@ -34,25 +50,37 @@ window.onbeforeunload = ->
 
 ws.onmessage = (unparsed) ->
     message = JSON.parse unparsed.data
+    d = message.data
     if message.action is "control"
-        d = message.data
-        position = new Point d.position.x, d.position.y
+        position = new Point d.actionPosition.x, d.actionPosition.y
         player = localPlayers[d.playerId]
+
+        playerPosition = new Point d.playerPosition.x, d.playerPosition.y
+        if not player
+            console.log "unregistered player"
+            return
+
         if d.action is "moveTo"
+            # server corrects us
+            player.p = playerPosition
             player.moveTo position
         else if d.action is "fire"
             player.fire position, Skills[d.skill]
+    else if message.action is "newPlayer"
+        playerPosition = new Point d.playerPosition.x, d.playerPosition.y
+        player = new Player arena, playerPosition, d.team, d.playerId
+        registerPlayer player
+    else if message.action is "deletePlayer"
+        delete localPlayers[d]
+        arena.players = (p for p in arena.players when p.id isnt d)
+    else
+        console.log "unrecognised message"
+        console.log message
 
-Array::some ?= (f) ->
-    (return true if f x) for x in @
-    return false
-
-Array::every ?= (f) ->
-    (return false if not f x) for x in @
-    return true
-
-Array::choice ?= ->
-    @[Math.floor(Math.random() * @length)]
+ws.onclose = ->
+    # Server crashed or connection dropped
+    # TODO: more rebust, in the meantime, essentially live reload
+    document.location.reload true
 
 utils =
     randInt: (lower, upper = 0) ->
@@ -125,14 +153,16 @@ class Canvas
 
 class Player
 
-    constructor: (@arena, @time, @p, @team) ->
+    constructor: (@arena, @p, @team, @id) ->
+        @time = @arena.time
         @radius = 20
         @maxCastRadius = @radius * 2
         @destP = @p
         @speed = 0.2 # pixels/ms
         @startCastTime = null
         @castP = null
-        @id = uuid.v4()
+        if not @id?
+            @id = uuid.v4()
 
     moveTo: (@destP) ->
         if @startCastTime isnt null and @castedSkill.channeled
@@ -212,10 +242,7 @@ class AIPlayer extends Player
         #if @arena.p1.startCastTime? and not @startCastTime?
         #    @fire @arena.p1.x, @arena.p1.y, skills.disrupt
 
-        otherPs = []
-        for n,t of @arena.teams
-            if n isnt @team
-                otherPs.push t.players...
+        otherPs = (p for p in @arena.players when p.team isnt @team)
 
         if Math.random() < gameSpeed(0.005) and not @startCastTime?
             @handler.fire otherPs.choice().p, 'orb'
@@ -268,8 +295,17 @@ class LocalHandler
 class NetworkHandler
 
     constructor: (@player) ->
-        localPlayers[@player.id] = @player
-        # TODO: register with server...
+        registerPlayer @player
+        message =
+            action: 'newPlayer'
+            data:
+                playerId: @player.id
+                playerPosition:
+                    x: @player.p.x
+                    y: @player.p.y
+                team: @player.team
+            id: client_uuid
+        ws.send JSON.stringify message
 
     moveTo: (p) ->
         message =
@@ -277,9 +313,13 @@ class NetworkHandler
             data:
                 playerId: @player.id
                 action: 'moveTo'
-                position:
+                actionPosition:
                     x: p.x
                     y: p.y
+                playerPosition:
+                    x: @player.p.x
+                    y: @player.p.y
+                team: @player.team
             id: client_uuid
         ws.send JSON.stringify message
 
@@ -289,10 +329,14 @@ class NetworkHandler
             data:
                 playerId: @player.id
                 action: 'fire'
-                position:
+                actionPosition:
                     x: p.x
                     y: p.y
+                playerPosition:
+                    x: @player.p.x
+                    y: @player.p.y
                 skill: skillName
+                team: @player.team
             id: client_uuid
         ws.send JSON.stringify message
 
@@ -348,6 +392,8 @@ class Projectile
         @time = newTime
         return true
 
+
+# TODO pull out update parts of arena and player to allow running on the server
 class Arena
 
     constructor: (@canvas) ->
@@ -355,36 +401,40 @@ class Arena
 
         @map =
             p: new Point 25, 25
-            width: window.innerWidth - 100
-            height: window.innerHeight - 100
+            width: Config.game.width
+            height: Config.game.height
             wallSize: 10
             randomPoint: =>
                 new Point(utils.randInt(0, @map.width), utils.randInt(0, @map.height))
 
+        @players = []
 
         @teams =
-            human:
+            red:
                 color: "#aa3333"
-                players: [
-                    new NetworkUIPlayer @, @time, @map.randomPoint(), "human"
-                ]
                 score: 0
-            ai1:
-                color: "#33aa33"
-                players: []
-                score: 0
-            ai2:
+            blue:
                 color: "#3333aa"
-                players: []
                 score: 0
+        ###
+        ai1:
+            color: "#33aa33"
+            players: []
+            score: 0
+        ai2:
+            color: "#3333aa"
+            players: []
+            score: 0
+        ###
 
-        numais = 3
+        rp = @map.randomPoint()
+        new NetworkUIPlayer @, rp, "red"
+
+        numais = 0
 
         for a in [0...numais]
-            @teams.ai2.players.push new NetworkAIPlayer(
-                @, @time, @map.randomPoint(), "ai2")
-            @teams.ai1.players.push new NetworkAIPlayer(
-                @, @time, @map.randomPoint(), "ai1")
+            new NetworkAIPlayer @, @map.randomPoint(), "ai2"
+            new NetworkAIPlayer @, @map.randomPoint(), "ai1"
 
         @projectiles = []
         @cameraSpeed = 0.3
@@ -422,9 +472,8 @@ class Arena
                 ctx.fillText "#{name}: #{team.score}", x, window.innerHeight - 20
                 x += 150
 
-            for name, team of @teams
-                for player in team.players
-                    player.draw ctx
+            for player in @players
+                player.draw ctx
 
             for p in @projectiles
                 p.draw ctx
@@ -441,16 +490,15 @@ class Arena
 
         currentUnallowed = 0
         newUnallowed = 0
-        for teamName, team of @teams
-            for otherPlayer in team.players
-                if otherPlayer.id isnt player.id
-                    currentD = player.p.distance otherPlayer.p
-                    newD = newP.distance otherPlayer.p
-                    minimum = player.radius + otherPlayer.radius
-                    if currentD < minimum
-                        currentUnallowed += (minimum - currentD)
-                    if newD < minimum
-                        newUnallowed += (minimum - newD)
+        for otherPlayer in @players
+            if otherPlayer.id isnt player.id
+                currentD = player.p.distance otherPlayer.p
+                newD = newP.distance otherPlayer.p
+                minimum = player.radius + otherPlayer.radius
+                if currentD < minimum
+                    currentUnallowed += (minimum - currentD)
+                if newD < minimum
+                    newUnallowed += (minimum - newD)
 
         allowed = newUnallowed <= currentUnallowed
 
@@ -465,10 +513,9 @@ class Arena
         # check if projectile hits a player
         # if so increment owner of projechtile score
         # otherwise add to newProjectiles
-        for name, team of @teams
-            if name isnt p.team
-                for player in team.players
-                    return name if p.p.within player.p, p.skill.radius + player.radius
+        for player in @players
+            if p.team isnt player.team
+                return name if p.p.within player.p, p.skill.radius + player.radius
         return false
 
     loop: =>
@@ -490,9 +537,8 @@ class Arena
 
         @map.p = @map.p.subtract moveVector
 
-        for name, team of @teams
-            for player in team.players
-                player.update updateTime
+        for player in @players
+            player.update updateTime
 
         newProjectiles = []
         for p in @projectiles
