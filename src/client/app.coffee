@@ -428,7 +428,8 @@ class Arena
         ###
 
         rp = @map.randomPoint()
-        new NetworkUIPlayer @, rp, "red"
+
+        new NetworkUIPlayer @, rp, (name for name, r of @teams).choice()
 
         numais = 0
 
@@ -515,7 +516,7 @@ class Arena
         # otherwise add to newProjectiles
         for player in @players
             if p.team isnt player.team
-                return name if p.p.within player.p, p.skill.radius + player.radius
+                return player.team if p.p.within player.p, p.skill.radius + player.radius
         return false
 
     loop: =>
