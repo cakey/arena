@@ -14,22 +14,12 @@ uuid = require 'node-uuid'
 Point = require "../lib/point"
 Skills = require "../lib/skills"
 Config = require "../lib/config"
+Utils = require "../lib/utils"
 
 host = "ws://#{location.hostname}:#{Config.ws.port}"
 ws = new WebSocket host
 
 client_uuid = uuid.v4()
-
-Array::some ?= (f) ->
-    (return true if f x) for x in @
-    return false
-
-Array::every ?= (f) ->
-    (return false if not f x) for x in @
-    return true
-
-Array::choice ?= ->
-    @[Math.floor(Math.random() * @length)]
 
 localPlayers = {}
 
@@ -88,15 +78,6 @@ ws.onclose = ->
     # Server crashed or connection dropped
     # TODO: more rebust, in the meantime, essentially live reload
     document.location.reload true
-
-utils =
-    randInt: (lower, upper = 0) ->
-        start = Math.random()
-        if not lower?
-            [lower, upper] = [0, lower]
-        if lower > upper
-            [lower, upper] = [upper, lower]
-        return Math.floor(start * (upper - lower + 1) + lower)
 
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 
@@ -252,7 +233,7 @@ class AIPlayer extends Player
         otherPs = (p for p in @arena.players when p.team isnt @team)
 
         if Math.random() < gameSpeed(0.005) and not @startCastTime?
-            @handler.fire otherPs.choice().p, 'orb'
+            @handler.fire Utils.choice(otherPs).p, 'orb'
 
         if not @startCastTime? and (Math.random() < gameSpeed(0.03) or (@p.equal @destP))
             @handler.moveTo @arena.map.randomPoint()
@@ -402,7 +383,7 @@ class Arena
             height: Config.game.height
             wallSize: 10
             randomPoint: =>
-                new Point(utils.randInt(0, @map.width), utils.randInt(0, @map.height))
+                new Point(Utils.randInt(0, @map.width), Utils.randInt(0, @map.height))
 
         @players = []
 
@@ -416,7 +397,7 @@ class Arena
 
         rp = @map.randomPoint()
 
-        new NetworkUIPlayer @, rp, (name for name, r of @teams).choice()
+        new NetworkUIPlayer @, rp, Utils.choice(name for name, r of @teams)
 
         numais = 1
 
