@@ -1,7 +1,20 @@
 
 class Point
+
+
+
     # Immutable point.
     constructor: (@x,@y) ->
+
+    @fromObject: (object) ->
+        if not object.x? and not object.y?
+            throw new Error "Point.fromObject constructor requires x/y keys"
+
+        new Point object.x, object.y
+
+    toObject: ->
+        x: @x
+        y: @y
 
     angle: (otherP) ->
         diffY = otherP.y - @y

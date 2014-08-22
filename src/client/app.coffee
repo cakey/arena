@@ -1,6 +1,12 @@
 # TODO: filter / map
 # teams
-
+# refactor utils and array prototype & tests (lodash?)
+# interrupt skill with cooldown
+# UI for cooldown / skills
+# refactor websocket stuff
+# health
+# heal
+# shield / reversal
 
 WebSocket = require 'ws'
 uuid = require 'node-uuid'
@@ -53,10 +59,10 @@ ws.onmessage = (unparsed) ->
     message = JSON.parse unparsed.data
     d = message.data
     if message.action is "control"
-        position = new Point d.actionPosition.x, d.actionPosition.y
+        position = Point.fromObject d.actionPosition
         player = localPlayers[d.playerId]
 
-        playerPosition = new Point d.playerPosition.x, d.playerPosition.y
+        playerPosition = Point.fromObject d.playerPosition
         if not player
             console.log "unregistered player"
             return
@@ -68,7 +74,7 @@ ws.onmessage = (unparsed) ->
         else if d.action is "fire"
             player.fire position, Skills[d.skill]
     else if message.action is "newPlayer"
-        playerPosition = new Point d.playerPosition.x, d.playerPosition.y
+        playerPosition = Point.fromObject d.playerPosition
         player = new Player arena, playerPosition, d.team, d.playerId
         registerPlayer player
     else if message.action is "deletePlayer"
@@ -301,9 +307,7 @@ class NetworkHandler
             action: 'newPlayer'
             data:
                 playerId: @player.id
-                playerPosition:
-                    x: @player.p.x
-                    y: @player.p.y
+                playerPosition: @player.p.toObject()
                 team: @player.team
             id: client_uuid
         ws.send JSON.stringify message
@@ -314,12 +318,8 @@ class NetworkHandler
             data:
                 playerId: @player.id
                 action: 'moveTo'
-                actionPosition:
-                    x: p.x
-                    y: p.y
-                playerPosition:
-                    x: @player.p.x
-                    y: @player.p.y
+                actionPosition: p.toObject()
+                playerPosition: @player.p.toObject()
                 team: @player.team
             id: client_uuid
         ws.send JSON.stringify message
@@ -330,12 +330,8 @@ class NetworkHandler
             data:
                 playerId: @player.id
                 action: 'fire'
-                actionPosition:
-                    x: p.x
-                    y: p.y
-                playerPosition:
-                    x: @player.p.x
-                    y: @player.p.y
+                actionPosition: p.toObject()
+                playerPosition: @player.p.toObject()
                 skill: skillName
                 team: @player.team
             id: client_uuid

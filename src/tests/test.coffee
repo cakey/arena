@@ -10,6 +10,17 @@ describe "Points", ->
         expect(p.x).to.be 0
         expect(p.y).to.be 0
 
+    it "should have an object constructor", ->
+        objP = Point.fromObject {x: 3, y: 7}
+        expect(objP.x).to.be 3
+        expect(objP.y).to.be 7
+
+    it "should have an object generator", ->
+        obj = p.toObject()
+        expect(obj).to.be.an 'object'
+        expect(obj.x).to.be 0
+        expect(obj.y).to.be 0
+
     it "should be able to add", ->
         otherP = new Point 4, 5
         newP = p.add otherP
