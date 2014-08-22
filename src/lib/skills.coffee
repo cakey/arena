@@ -2,7 +2,7 @@ skills =
     orb:
         cone: Math.PI / 5
         radius: 7
-        castTime: 400
+        castTime: 750
         speed: 0.6
         range: 400
         color: "#aa0000"
@@ -22,7 +22,7 @@ skills =
     bomb:
         cone: Math.PI / 1.5
         radius: 25
-        castTime: 600
+        castTime: 1000
         speed: 0.05
         range: 800
         color: "#00bbbb"
@@ -38,5 +38,17 @@ skills =
         color: "#990099"
         channeled: true
         score: 3
+
+    interrupt:
+        cone: Math.PI / 8
+        radius: 4
+        castTime: 1 #10
+        speed: 3
+        range: 1000
+        color: "#aa0077"
+        channeled: false
+        score: 0
+        hitPlayer: (hitPlayer) ->
+            hitPlayer.startCastTime = nullj
 
 module.exports = skills

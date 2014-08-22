@@ -1,6 +1,5 @@
 # TODO: filter / map
 # teams
-# refactor utils and array prototype & tests (lodash?)
 # interrupt skill with cooldown
 # UI for cooldown / skills
 # refactor websocket stuff
@@ -259,12 +258,13 @@ class UIPlayer extends Player
 
         addEventListener "keypress", (event) =>
             keyBindings =
-                103: 'orb'
-                104: 'flame'
-                98: 'gun'
-                110: 'bomb'
+                g: 'orb'
+                h: 'flame'
+                b: 'gun'
+                n: 'bomb'
+                j: 'interrupt'
 
-            if skill = keyBindings[event.which]
+            if skill = keyBindings[String.fromCharCode event.which]
                 @handler.fire (@arena.mouseP.mapBound @p, @arena.map), skill
             else
                 console.log event
@@ -492,7 +492,7 @@ class Arena
         # otherwise add to newProjectiles
         for player in @players
             if p.team isnt player.team
-                return player.team if p.p.within player.p, p.skill.radius + player.radius
+                return player if p.p.within player.p, p.skill.radius + player.radius
         return false
 
     loop: =>
@@ -521,9 +521,11 @@ class Arena
         for p in @projectiles
             alive = p.update updateTime
             if alive
-                if hitTeam = @projectileCollide p
+                if hitPlayer = @projectileCollide p
                     @teams[p.team].score += p.skill.score
-                    @teams[hitTeam].score -= p.skill.score
+                    @teams[hitPlayer.team].score -= p.skill.score
+                    if p.skill.hitPlayer?
+                        p.skill.hitPlayer hitPlayer
 
                 else
                     newProjectiles.push p
