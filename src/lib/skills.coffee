@@ -34,10 +34,22 @@ skills =
         radius: 12
         castTime: 5 #10
         speed: 0.3
-        range: 55
+        range: 75
         color: "#990099"
         channeled: true
         score: 3
+        hitPlayer: (hitPlayer, projectile) ->
+            # TODO
+            # There are likely issues with network syncronisation
+            #   (this needs to be calculated server side too...)
+            # Also, probably bug with knockback out of arena...
+
+            # knockback
+            angle = projectile.p.angle hitPlayer.p
+            hitPlayer.p = hitPlayer.p.bearing angle, 45
+            # cancel cast
+            hitPlayer.startCastTime = null
+
 
     interrupt:
         cone: Math.PI / 8
@@ -49,6 +61,6 @@ skills =
         channeled: false
         score: 0
         hitPlayer: (hitPlayer) ->
-            hitPlayer.startCastTime = nullj
+            hitPlayer.startCastTime = null
 
 module.exports = skills

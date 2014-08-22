@@ -518,17 +518,18 @@ class Arena
             player.update updateTime
 
         newProjectiles = []
-        for p in @projectiles
-            alive = p.update updateTime
+        for projectile in @projectiles
+            alive = projectile.update updateTime
             if alive
-                if hitPlayer = @projectileCollide p
-                    @teams[p.team].score += p.skill.score
-                    @teams[hitPlayer.team].score -= p.skill.score
-                    if p.skill.hitPlayer?
-                        p.skill.hitPlayer hitPlayer
+                if hitPlayer = @projectileCollide projectile
+                    skill = projectile.skill
+                    @teams[projectile.team].score += skill.score
+                    @teams[hitPlayer.team].score -= skill.score
+                    if skill.hitPlayer?
+                        skill.hitPlayer hitPlayer, projectile
 
                 else
-                    newProjectiles.push p
+                    newProjectiles.push projectile
         @projectiles = newProjectiles
 
         @time = updateTime
