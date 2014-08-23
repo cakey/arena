@@ -537,6 +537,8 @@ class Arena
                     @teams[hitPlayer.team].score -= skill.score
                     if skill.hitPlayer?
                         skill.hitPlayer hitPlayer, projectile
+                    if skill.continue
+                        newProjectiles.push projectile
 
                 else
                     newProjectiles.push projectile

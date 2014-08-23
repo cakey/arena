@@ -1,3 +1,6 @@
+# Wanted: sprayArc effect - but it's random which is bad
+# also hard to coordinate over network.
+
 skills =
     orb:
         cone: Math.PI / 5
@@ -38,6 +41,7 @@ skills =
         color: "#990099"
         channeled: true
         score: 3
+        continue: true
         hitPlayer: (hitPlayer, projectile) ->
             # TODO
             # There are likely issues with network syncronisation
