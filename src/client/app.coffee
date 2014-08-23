@@ -343,7 +343,6 @@ class NetworkUIPlayer extends UIPlayer
         super
         @handler = new NetworkHandler @
 
-
 class Projectile
 
     constructor: (@arena, @time, @p, dirP, @skill, @team) ->
@@ -357,6 +356,12 @@ class Projectile
         ctx.circle @p, @skill.radius
         ctx.fillStyle @skill.color
         ctx.fill()
+
+        ctx.beginPath()
+        ctx.circle @p, @skill.radius - 1
+        ctx.strokeStyle @arena.teams[@team].color
+        ctx.lineWidth 1
+        ctx.stroke()
 
     update: (newTime) ->
 
