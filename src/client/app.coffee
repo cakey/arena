@@ -525,7 +525,12 @@ class Arena
         newProjectiles = []
         for projectile in @projectiles
             alive = projectile.update updateTime
-            if alive
+            withinMap = (
+                projectile.p.x > 0 and
+                projectile.p.y > 0 and
+                projectile.p.x < @map.width and
+                projectile.p.y < @map.height)
+            if alive and withinMap
                 if hitPlayer = @projectileCollide projectile
                     skill = projectile.skill
                     @teams[projectile.team].score += skill.score
