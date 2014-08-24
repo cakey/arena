@@ -27,10 +27,11 @@ skills =
         radius: 25
         castTime: 1000
         speed: 0.05
-        range: 800
+        range: 200
         color: "#00bbbb"
         channeled: false
         score: 500
+        # TODO: smaller over time?
 
     flame:
         cone: Math.PI / 2
