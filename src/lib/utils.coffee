@@ -1,3 +1,5 @@
+Config = require "../lib/config"
+
 Utils =
     randInt: (lower, upper = 0) ->
         start = Math.random()
@@ -18,5 +20,13 @@ Utils =
 
     choice: (arr) ->
         arr[Math.floor(Math.random() * arr.length)]
+
+    game:
+        speed: (arg, speedup = Config.game.speedup) ->
+            arg * speedup
+
+        speedInverse: (arg, speedup = Config.game.speedup) ->
+            arg / speedup
+
 
 module.exports = Utils

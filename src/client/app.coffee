@@ -79,15 +79,6 @@ ws.onclose = ->
 
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 
-speedup = 1
-
-gameSpeed = (arg) ->
-    arg * speedup
-
-gameSpeedInverse = (arg) ->
-    arg / speedup
-
-
 class Player
 
     constructor: (@arena, @p, @team, @id) ->
@@ -115,7 +106,7 @@ class Player
 
         # Cast
         if @startCastTime?
-            radiusMs = @radius / gameSpeedInverse(@castedSkill.castTime)
+            radiusMs = @radius / Utils.game.speedInverse(@castedSkill.castTime)
             radius = (radiusMs * (@time - @startCastTime)) + @radius
 
             angle = @p.angle @castP
@@ -146,14 +137,14 @@ class Player
 
         # Location
 
-        newP = @p.towards @destP, (gameSpeed(@speed) * msDiff)
+        newP = @p.towards @destP, (Utils.game.speed(@speed) * msDiff)
         if @arena.allowedMovement newP, @
             @p = newP
 
         # Cast
 
         if @startCastTime?
-            if newTime - @startCastTime > gameSpeedInverse(@castedSkill.castTime)
+            if newTime - @startCastTime > Utils.game.speedInverse(@castedSkill.castTime)
                 @startCastTime = null
 
                 castAngle = @p.angle @castP
@@ -178,10 +169,11 @@ class AIPlayer extends Player
 
         otherPs = (p for p in @arena.players when p.team isnt @team)
 
-        if Math.random() < gameSpeed(0.005) and not @startCastTime?
+        if Math.random() < Utils.game.speed(0.005) and not @startCastTime?
             @handler.fire Utils.choice(otherPs).p, 'orb'
 
-        if not @startCastTime? and (Math.random() < gameSpeed(0.03) or (@p.equal @destP))
+        chanceToMove = Math.random() < Utils.game.speed(0.03)
+        if not @startCastTime? and (chanceToMove or @p.equal @destP)
             @handler.moveTo @arena.map.randomPoint()
             #@moveTo(
             #    ((@arena.p1.x+@x)/2)+utils.randInt(-250,250),
@@ -322,7 +314,7 @@ class Projectile
 
         msDiff = newTime - @time
 
-        @p = @p.towards @destP, (gameSpeed(@skill.speed) * msDiff)
+        @p = @p.towards @destP, (Utils.game.speed(@skill.speed) * msDiff)
 
         @time = newTime
         return true
