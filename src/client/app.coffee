@@ -122,7 +122,18 @@ class Canvas
                     x = p.x + map.p.x + map.wallSize
                     y = p.y + map.p.y + map.wallSize
                     o.strokeRect x, y, args...
+                fillRect: (p, args...) ->
+                    x = p.x + map.p.x + map.wallSize
+                    y = p.y + map.p.y + map.wallSize
+                    o.fillRect x, y, args...
                 circle: (p, radius) -> translatedContext.arc p, radius, 0, 2 * Math.PI
+                filledCircle: (p, radius, color) ->
+                    translatedContext.beginPath()
+                    translatedContext.circle p, radius
+                    translatedContext.fillStyle color
+                    translatedContext.fill()
+
+
                 beginPath: -> o.beginPath()
                 fillStyle: (arg) -> o.fillStyle = arg
                 fill: o.fill.bind o
@@ -179,10 +190,7 @@ class Player
             ctx.fill()
 
         # Location
-        ctx.beginPath()
-        ctx.circle @p, @radius
-        ctx.fillStyle @arena.teams[@team].color
-        ctx.fill()
+        ctx.filledCircle @p, @radius, @arena.teams[@team].color
 
         # casting circle
 
@@ -245,6 +253,12 @@ class UIPlayer extends Player
 
     constructor: ->
         super
+        @keyBindings =
+            g: 'orb'
+            h: 'flame'
+            b: 'gun'
+            n: 'bomb'
+            j: 'interrupt'
         addEventListener "mousedown", (event) =>
             topLeft = new Point @radius, @radius
             bottomRight = new Point(
@@ -257,18 +271,20 @@ class UIPlayer extends Player
                 @handler.moveTo p
 
         addEventListener "keypress", (event) =>
-            keyBindings =
-                g: 'orb'
-                h: 'flame'
-                b: 'gun'
-                n: 'bomb'
-                j: 'interrupt'
 
-            if skill = keyBindings[String.fromCharCode event.which]
+            if skill = @keyBindings[String.fromCharCode event.which]
                 @handler.fire (@arena.mouseP.mapBound @p, @arena.map), skill
             else
                 console.log event
                 console.log event.which
+
+    draw: (ctx) ->
+        super
+        # Draw the UI
+
+        #
+
+
 
 class LocalHandler
 
@@ -352,10 +368,7 @@ class Projectile
     draw: (ctx) ->
 
         # Location
-        ctx.beginPath()
-        ctx.circle @p, @skill.radius
-        ctx.fillStyle @skill.color
-        ctx.fill()
+        ctx.filledCircle @p, @skill.radius, @skill.color
 
         ctx.beginPath()
         ctx.circle @p, @skill.radius - 1
@@ -440,11 +453,16 @@ class Arena
 
             # draw Map
             # Location
+            wallP = new Point (-@map.wallSize / 2), (-@map.wallSize / 2)
+
+            ctx.beginPath()
+            ctx.fillStyle "#f3f3f3"
+            ctx.fillRect wallP, @map.width + @map.wallSize, @map.height + @map.wallSize
             ctx.beginPath()
             ctx.lineWidth @map.wallSize
             ctx.strokeStyle "#558893"
-            wallP = new Point (-@map.wallSize / 2), (-@map.wallSize / 2)
             ctx.strokeRect wallP, @map.width + @map.wallSize, @map.height + @map.wallSize
+
 
             ctx.fillStyle "#444466"
             ctx.font "20px verdana"
