@@ -43,7 +43,7 @@ projectileRenderer = (projectile, ctx) ->
     ctx.lineWidth 1
     ctx.stroke()
 
-arenaRenderer = (arena, ctx) =>
+arenaRenderer = (arena, ctx) ->
 
     # draw Map
     # Location
@@ -69,7 +69,7 @@ arenaRenderer = (arena, ctx) =>
         ctx.fillText "#{name}: #{team.score}", x, window.innerHeight - 20
         x += 150
 
-    for player in arena.players
+    for id, player of arena.handler.players
         Renderers.player player, ctx
 
     for p in arena.projectiles

@@ -1,5 +1,5 @@
-# TODO: filter / map
-# teams
+# TODO:
+# localhandler
 # interrupt skill with cooldown
 # UI for cooldown / skills
 # refactor websocket stuff
@@ -17,66 +17,6 @@ Utils = require "../lib/utils"
 
 Canvas = require "./canvas"
 Renderers = require "./renderers"
-
-host = "ws://#{location.hostname}:#{Config.ws.port}"
-ws = new WebSocket host
-
-client_uuid = uuid.v4()
-
-localPlayers = {}
-
-registerPlayer = (player) ->
-    localPlayers[player.id] = player
-    player.arena.players.push player
-
-ws.onopen = ->
-    message =
-        action: 'register'
-        id: client_uuid
-    ws.send JSON.stringify message
-
-    canvas = new Canvas 'canvas'
-    arena = new Arena canvas
-
-window.onbeforeunload = ->
-    message =
-        action: 'deregister'
-        id: client_uuid
-    ws.send JSON.stringify message
-
-ws.onmessage = (unparsed) ->
-    message = JSON.parse unparsed.data
-    d = message.data
-    if message.action is "control"
-        position = Point.fromObject d.actionPosition
-        player = localPlayers[d.playerId]
-
-        playerPosition = Point.fromObject d.playerPosition
-        if not player
-            console.log "unregistered player"
-            return
-
-        if d.action is "moveTo"
-            # server corrects us
-            player.p = playerPosition
-            player.moveTo position
-        else if d.action is "fire"
-            player.fire position, Skills[d.skill]
-    else if message.action is "newPlayer"
-        playerPosition = Point.fromObject d.playerPosition
-        player = new Player arena, playerPosition, d.team, d.playerId
-        registerPlayer player
-    else if message.action is "deletePlayer"
-        delete localPlayers[d]
-        arena.players = (p for p in arena.players when p.id isnt d)
-    else
-        console.log "unrecognised message"
-        console.log message
-
-ws.onclose = ->
-    # Server crashed or connection dropped
-    # TODO: more rebust, in the meantime, essentially live reload
-    document.location.reload true
 
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 
@@ -130,31 +70,34 @@ class Player
 
         @time = newTime
 
-class AIPlayer extends Player
+class AIPlayer
+
+    constructor: (@arena, @handler, startP, team) ->
+        @player = new Player @arena, startP, team
 
     update: (newTime) ->
-        super newTime
 
         #if @arena.p1.startCastTime? and not @startCastTime?
         #    @fire @arena.p1.x, @arena.p1.y, skills.disrupt
 
-        otherPs = (p for p in @arena.players when p.team isnt @team)
+        otherPs = (p for id, p of @handler.players when p.team isnt @player.team)
 
-        if Math.random() < Utils.game.speed(0.005) and not @startCastTime?
-            @handler.fire Utils.choice(otherPs).p, 'orb'
+        if Math.random() < Utils.game.speed(0.005) and not @player.startCastTime?
+            @handler.fire @player, Utils.choice(otherPs).p, 'orb'
 
         chanceToMove = Math.random() < Utils.game.speed(0.03)
-        if not @startCastTime? and (chanceToMove or @p.equal @destP)
-            @handler.moveTo @arena.map.randomPoint()
+        if not @player.startCastTime? and (chanceToMove or @player.p.equal @player.destP)
+            @handler.moveTo @player, @arena.map.randomPoint()
             #@moveTo(
             #    ((@arena.p1.x+@x)/2)+utils.randInt(-250,250),
             #    ((@arena.p1.y+@y)/2)+utils.randInt(-250,250)
             #)
 
-class UIPlayer extends Player
+class UIPlayer
 
-    constructor: ->
-        super
+    constructor: (@arena, @handler, startP, team) ->
+        @player = new Player @arena, startP, team
+
         @keyBindings =
             g: 'orb'
             h: 'flame'
@@ -162,96 +105,151 @@ class UIPlayer extends Player
             n: 'bomb'
             j: 'interrupt'
         addEventListener "mousedown", (event) =>
-            topLeft = new Point @radius, @radius
+            topLeft = new Point @player.radius, @player.radius
             bottomRight = new Point(
-                @arena.map.width - @radius,
-                @arena.map.height - @radius)
+                @arena.map.width - @player.radius,
+                @arena.map.height - @player.radius)
 
             p = @arena.mouseP.bound topLeft, bottomRight
 
             if event.which is 3
-                @handler.moveTo p
+                @handler.moveTo @player, p
 
         addEventListener "keypress", (event) =>
 
             if skill = @keyBindings[String.fromCharCode event.which]
-                @handler.fire (@arena.mouseP.mapBound @p, @arena.map), skill
+                castP = @arena.mouseP.mapBound @player.p, @arena.map
+                @handler.fire @player, castP, skill
             else
                 console.log event
                 console.log event.which
 
+    update: (newTime) ->
+
 class LocalHandler
+    constructor: (readycb) ->
+        @players = {}
+        @locallyProcessed = []
+        readycb()
 
-    constructor: (@player) ->
+    registerLocal: (processor) ->
+        player = processor.player
+        @players[player.id] = player
+        @locallyProcessed.push processor
 
-    moveTo: (p) ->
-        @player.moveTo p
+    register: (player) ->
+        @players[player.id] = player
 
-    fire: (p, skillName) ->
-        @player.fire p, Skills[skillName]
+    removePlayer: (playerId) ->
+        delete @players[playerId]
+
+    moveTo: (player, destP) ->
+        player.moveTo destP
+
+    fire: (player, castP, skillName) ->
+        player.fire castP, skillName
 
 class NetworkHandler
+    constructor: (readycb) ->
+        @players = {}
+        @locallyProcessed = []
 
-    constructor: (@player) ->
-        registerPlayer @player
+        @host = "ws://#{location.hostname}:#{Config.ws.port}"
+        @ws = new WebSocket @host
+
+        @client_uuid = uuid.v4()
+
+        @ws.onopen = =>
+            message =
+                action: 'register'
+                id: @client_uuid
+            @ws.send JSON.stringify message
+            readycb()
+
+
+        window.onbeforeunload = =>
+            message =
+                action: 'deregister'
+                id: @client_uuid
+            @ws.send JSON.stringify message
+
+        @ws.onmessage = (unparsed) =>
+            message = JSON.parse unparsed.data
+            d = message.data
+            if message.action is "control"
+                position = Point.fromObject d.actionPosition
+                player = @players[d.playerId]
+
+                playerPosition = Point.fromObject d.playerPosition
+                if not player
+                    console.log "unregistered player"
+                    return
+
+                if d.action is "moveTo"
+                    # server corrects us
+                    player.p = playerPosition
+                    player.moveTo position
+                else if d.action is "fire"
+                    player.fire position, Skills[d.skill]
+            else if message.action is "newPlayer"
+                playerPosition = Point.fromObject d.playerPosition
+                player = new Player arena, playerPosition, d.team, d.playerId
+                @register player
+            else if message.action is "deletePlayer"
+                @removePlayer d
+            else
+                console.log "unrecognised message"
+                console.log message
+
+        @ws.onclose = ->
+            # Server crashed or connection dropped
+            # TODO: more rebust, in the meantime, essentially live reload
+            document.location.reload true
+
+    registerLocal: (processor) ->
+        player = processor.player
+        @players[player.id] = player
+        @locallyProcessed.push processor
+
         message =
             action: 'newPlayer'
             data:
-                playerId: @player.id
-                playerPosition: @player.p.toObject()
-                team: @player.team
-            id: client_uuid
-        ws.send JSON.stringify message
+                playerId: player.id
+                playerPosition: player.p.toObject()
+                team: player.team
+            id: @client_uuid
+        @ws.send JSON.stringify message
 
-    moveTo: (p) ->
+    register: (player) ->
+        @players[player.id] = player
+
+    removePlayer: (playerId) ->
+        delete @players[playerId]
+
+    moveTo: (player, destP) ->
         message =
             action: 'control'
             data:
-                playerId: @player.id
+                playerId: player.id
                 action: 'moveTo'
-                actionPosition: p.toObject()
-                playerPosition: @player.p.toObject()
-                team: @player.team
-            id: client_uuid
-        ws.send JSON.stringify message
+                actionPosition: destP.toObject()
+                playerPosition: player.p.toObject()
+                team: player.team
+            id: @client_uuid
+        @ws.send JSON.stringify message
 
-    fire: (p, skillName) ->
+    fire: (player, castP, skillName) ->
         message =
             action: 'control'
             data:
-                playerId: @player.id
+                playerId: player.id
                 action: 'fire'
-                actionPosition: p.toObject()
-                playerPosition: @player.p.toObject()
+                actionPosition: castP.toObject()
+                playerPosition: player.p.toObject()
                 skill: skillName
-                team: @player.team
-            id: client_uuid
-        ws.send JSON.stringify message
-
-# TODO: refactor
-class LocalAIPlayer extends AIPlayer
-
-    constructor: ->
-        super
-        @handler = new LocalHandler @
-
-class LocalUIPlayer extends UIPlayer
-
-    constructor: ->
-        super
-        @handler = new LocalHandler @
-
-class NetworkAIPlayer extends AIPlayer
-
-    constructor: ->
-        super
-        @handler = new NetworkHandler @
-
-class NetworkUIPlayer extends UIPlayer
-
-    constructor: ->
-        super
-        @handler = new NetworkHandler @
+                team: player.team
+            id: @client_uuid
+        @ws.send JSON.stringify message
 
 class Projectile
 
@@ -271,7 +269,6 @@ class Projectile
         @time = newTime
         return true
 
-
 # TODO pull out update parts of arena and player to allow running on the server
 class Arena
 
@@ -286,8 +283,6 @@ class Arena
             randomPoint: =>
                 new Point(Utils.randInt(0, @map.width), Utils.randInt(0, @map.height))
 
-        @players = []
-
         @teams =
             red:
                 color: "#aa3333"
@@ -296,31 +291,13 @@ class Arena
                 color: "#3333aa"
                 score: 0
 
-        rp = @map.randomPoint()
-
-        new NetworkUIPlayer @, rp, Utils.choice(name for name, r of @teams)
-
-        numais = 1
-
-        if numais > 0
-            @teams.ai1 =
-                color: "#33aa33"
-                score: 0
-            @teams.ai2 =
-                color: "#ddaa44"
-                score: 0
-
-        for a in [0...numais]
-            new NetworkAIPlayer @, @map.randomPoint(), "ai2"
-            new NetworkAIPlayer @, @map.randomPoint(), "ai1"
-
         @projectiles = []
         @cameraSpeed = 0.3
 
         @mouseP = new Point 0, 0
 
-
-        @mapMiddle = @mapToGo = new Point window.innerWidth / 2, window.innerHeight / 2
+        @mapMiddle = new Point window.innerWidth / 2, window.innerHeight / 2
+        @mapToGo = @mapMiddle
 
         addEventListener "mousemove", (event) =>
             @mouseP = new Point(
@@ -334,7 +311,31 @@ class Arena
         # well this is ugly...
         @render = @canvas.withMap @map, (ctx) => Renderers.arena @, ctx
 
-        @loop()
+        # TODO: this callback is ugly.
+        @handler = new NetworkHandler =>
+
+            rp = @map.randomPoint()
+
+            uip = new UIPlayer @, @handler, rp, Utils.choice(name for name, r of @teams)
+            @handler.registerLocal uip
+
+            numais = 1
+
+            if numais > 0
+                @teams.ai1 =
+                    color: "#33aa33"
+                    score: 0
+                @teams.ai2 =
+                    color: "#ddaa44"
+                    score: 0
+
+            for a in [0...numais]
+                aip1 = new AIPlayer @, @handler, @map.randomPoint(), "ai1"
+                @handler.registerLocal aip1
+                aip2 = new AIPlayer @, @handler, @map.randomPoint(), "ai2"
+                @handler.registerLocal aip2
+
+            @loop()
 
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
@@ -346,8 +347,9 @@ class Arena
 
         currentUnallowed = 0
         newUnallowed = 0
-        for otherPlayer in @players
-            if otherPlayer.id isnt player.id
+
+        for otherId, otherPlayer of @handler.players
+            if otherId isnt player.id
                 currentD = player.p.distance otherPlayer.p
                 newD = newP.distance otherPlayer.p
                 minimum = player.radius + otherPlayer.radius
@@ -369,7 +371,7 @@ class Arena
         # check if projectile hits a player
         # if so increment owner of projechtile score
         # otherwise add to newProjectiles
-        for player in @players
+        for id, player of @handler.players
             if p.team isnt player.team
                 return player if p.p.within player.p, p.skill.radius + player.radius
         return false
@@ -393,7 +395,10 @@ class Arena
 
         @map.p = @map.p.subtract moveVector
 
-        for player in @players
+        for processor in @handler.locallyProcessed
+            processor.update updateTime
+
+        for id, player of @handler.players
             player.update updateTime
 
         newProjectiles = []
@@ -419,3 +424,7 @@ class Arena
         @projectiles = newProjectiles
 
         @time = updateTime
+
+#TODO:
+canvas = new Canvas 'canvas'
+arena = new Arena canvas
