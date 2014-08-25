@@ -5,6 +5,7 @@ uuid = require 'node-uuid'
 
 Point = require "../lib/point"
 Skills = require "../lib/skills"
+Player = require "../lib/player"
 
 class LocalHandler
     constructor: ->
@@ -33,7 +34,7 @@ class LocalHandler
     ready: -> @_readyDeferred.promise
 
 class NetworkHandler
-    constructor: ->
+    constructor: (@arena) ->
         @players = {}
         @locallyProcessed = []
 
@@ -77,7 +78,7 @@ class NetworkHandler
                     player.fire position, Skills[d.skill]
             else if message.action is "newPlayer"
                 playerPosition = Point.fromObject d.playerPosition
-                player = new Player arena, playerPosition, d.team, d.playerId
+                player = new Player @arena, playerPosition, d.team, d.playerId
                 @register player
             else if message.action is "deletePlayer"
                 @removePlayer d
