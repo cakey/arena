@@ -1,6 +1,9 @@
 # Wanted: sprayArc effect - but it's random which is bad
 # also hard to coordinate over network.
 
+Point = require "../lib/point"
+
+
 skills =
     orb:
         cone: Math.PI / 5
@@ -47,13 +50,27 @@ skills =
             # TODO
             # There are likely issues with network syncronisation
             #   (this needs to be calculated server side too...)
-            # Also, probably bug with knockback out of arena...
+            # The arena should handle the knockback bounding
 
             # knockback
             angle = projectile.p.angle hitPlayer.p
-            hitPlayer.p = hitPlayer.p.bearing angle, 45
+
+            knockbackP = hitPlayer.p.bearing angle, 45
+
+            radiusP = new Point hitPlayer.radius, hitPlayer.radius
+
+            map = hitPlayer.arena.map
+
+            limitP = new Point(map.width, map.height).subtract radiusP
+
+            boundedKnockbackP = knockbackP.bound radiusP, limitP
+
+            hitPlayer.p = boundedKnockbackP
             # cancel cast
             hitPlayer.startCastTime = null
+
+            hitPlayer.destP = hitPlayer.p
+
 
 
     interrupt:
