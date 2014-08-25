@@ -16,6 +16,7 @@ Config = require "../lib/config"
 Utils = require "../lib/utils"
 
 Canvas = require "./canvas"
+Renderers = require "./renderers"
 
 host = "ws://#{location.hostname}:#{Config.ws.port}"
 ws = new WebSocket host
@@ -102,36 +103,6 @@ class Player
             @destP = @p
         @startCastTime = @time # needs to be passed through
 
-    draw: (ctx) ->
-
-        # Cast
-        if @startCastTime?
-            radiusMs = @radius / Utils.game.speedInverse(@castedSkill.castTime)
-            radius = (radiusMs * (@time - @startCastTime)) + @radius
-
-            angle = @p.angle @castP
-            halfCone = @castedSkill.cone / 2
-
-            ctx.beginPath()
-            ctx.moveTo @p
-            ctx.arc @p, radius, angle - halfCone, angle + halfCone
-            ctx.moveTo @p
-            ctx.fillStyle @castedSkill.color
-            ctx.fill()
-
-        # Location
-        ctx.filledCircle @p, @radius, @arena.teams[@team].color
-
-        # casting circle
-
-        ctx.beginPath()
-        ctx.circle @p, @maxCastRadius
-        ctx.lineWidth 1
-        ctx.setLineDash [3,12]
-        ctx.strokeStyle "#777777"
-        ctx.stroke()
-        ctx.setLineDash []
-
     update: (newTime) ->
         msDiff = newTime - @time
 
@@ -208,14 +179,6 @@ class UIPlayer extends Player
             else
                 console.log event
                 console.log event.which
-
-    draw: (ctx) ->
-        super
-        # Draw the UI
-
-        #
-
-
 
 class LocalHandler
 
@@ -296,17 +259,6 @@ class Projectile
         angle = @p.angle dirP
         @destP = @p.bearing angle, @skill.range
 
-    draw: (ctx) ->
-
-        # Location
-        ctx.filledCircle @p, @skill.radius, @skill.color
-
-        ctx.beginPath()
-        ctx.circle @p, @skill.radius - 1
-        ctx.strokeStyle @arena.teams[@team].color
-        ctx.lineWidth 1
-        ctx.stroke()
-
     update: (newTime) ->
 
         if @p.equal @destP
@@ -380,34 +332,7 @@ class Arena
                 @mapToGo = @mapMiddle.towards new Point(event.x, event.y), 100
 
         # well this is ugly...
-        @render = @canvas.withMap @map, (ctx) =>
-
-            # draw Map
-            # Location
-            wallP = new Point (-@map.wallSize / 2), (-@map.wallSize / 2)
-
-            ctx.beginPath()
-            ctx.fillStyle "#f3f3f3"
-            ctx.fillRect wallP, @map.width + @map.wallSize, @map.height + @map.wallSize
-            ctx.beginPath()
-            ctx.lineWidth @map.wallSize
-            ctx.strokeStyle "#558893"
-            ctx.strokeRect wallP, @map.width + @map.wallSize, @map.height + @map.wallSize
-
-
-            ctx.fillStyle "#444466"
-            ctx.font "20px verdana"
-
-            x = 50
-            for name, team of @teams
-                ctx.fillText "#{name}: #{team.score}", x, window.innerHeight - 20
-                x += 150
-
-            for player in @players
-                player.draw ctx
-
-            for p in @projectiles
-                p.draw ctx
+        @render = @canvas.withMap @map, (ctx) => Renderers.arena @, ctx
 
         @loop()
 
