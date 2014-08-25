@@ -9,6 +9,7 @@
 
 WebSocket = require 'ws'
 uuid = require 'node-uuid'
+RSVP = require 'rsvp'
 
 Point = require "../lib/point"
 Skills = require "../lib/skills"
@@ -127,10 +128,11 @@ class UIPlayer
     update: (newTime) ->
 
 class LocalHandler
-    constructor: (readycb) ->
+    constructor: ->
         @players = {}
         @locallyProcessed = []
-        readycb()
+        @_readyDeferred = RSVP.defer()
+        @_readyDeferred.resolve()
 
     registerLocal: (processor) ->
         player = processor.player
@@ -147,10 +149,12 @@ class LocalHandler
         player.moveTo destP
 
     fire: (player, castP, skillName) ->
-        player.fire castP, skillName
+        player.fire castP, Skills[skillName]
+
+    ready: -> @_readyDeferred.promise
 
 class NetworkHandler
-    constructor: (readycb) ->
+    constructor: ->
         @players = {}
         @locallyProcessed = []
 
@@ -159,13 +163,14 @@ class NetworkHandler
 
         @client_uuid = uuid.v4()
 
+        @_readyDeferred = RSVP.defer()
+
         @ws.onopen = =>
             message =
                 action: 'register'
                 id: @client_uuid
             @ws.send JSON.stringify message
-            readycb()
-
+            @_readyDeferred.resolve()
 
         window.onbeforeunload = =>
             message =
@@ -205,6 +210,8 @@ class NetworkHandler
             # Server crashed or connection dropped
             # TODO: more rebust, in the meantime, essentially live reload
             document.location.reload true
+
+    ready: -> @_readyDeferred.promise
 
     registerLocal: (processor) ->
         player = processor.player
@@ -311,8 +318,9 @@ class Arena
         # well this is ugly...
         @render = @canvas.withMap @map, (ctx) => Renderers.arena @, ctx
 
-        # TODO: this callback is ugly.
-        @handler = new NetworkHandler =>
+        @handler = new NetworkHandler()
+        readyPromise = @handler.ready()
+        readyPromise.then =>
 
             rp = @map.randomPoint()
 
