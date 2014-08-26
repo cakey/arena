@@ -83,17 +83,18 @@ arenaRenderer = (arena, canvas) ->
 uiRenderer = (processor, ctx, staticCtx) ->
 
     rows = [
+        ['1','2','3','4','5','6','7','8','9','0','-','=']
         ['q','w','e','r','t','y','u','i','o','p','[',']']
         ['a','s','d','f','g','h','j','k','l',';','\'']
         ['z','x','c','v','b','n','m',',','.','/']
     ]
-    rowOffsets = [0,15,55]
+    rowOffsets = [0,35,50,90]
 
-    keySize = 60
+    keySize = 50
     keyBorder = 12
     leftMargin = keySize
-    topMargin = window.innerHeight - (keySize * 4 + keyBorder * 2)
-    fontSize = 16
+    topMargin = window.innerHeight - (keySize * 5 + keyBorder * 3)
+    fontSize = 14
 
     for row, rIndex in rows
         for key, cIndex in row
@@ -108,7 +109,7 @@ uiRenderer = (processor, ctx, staticCtx) ->
                 staticCtx.fillRect keyP, keySize, keySize
                 staticCtx.beginPath()
                 staticCtx.strokeStyle "#558893"
-                staticCtx.lineWidth 2
+                staticCtx.lineWidth 1
                 staticCtx.strokeRect keyP, keySize, keySize
 
                 projectileOffset = new Point (keySize / 2), (keySize / 3)
