@@ -5,8 +5,6 @@
 # heal
 # shield / reversal
 
-uuid = require 'node-uuid'
-
 Point = require "../lib/point"
 Config = require "../lib/config"
 Utils = require "../lib/utils"
@@ -129,7 +127,7 @@ class Arena
 
         addEventListener "mousedown", (event) =>
             if event.which is 1
-                @mapToGo = @mapMiddle.towards new Point(event.x, event.y), 100
+                @mapToGo = @mapMiddle.towards Point.fromObject(event), 100
 
         @handler = new Handlers.Network @
         readyPromise = @handler.ready()

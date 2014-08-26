@@ -69,7 +69,7 @@ arenaRenderer = (arena, canvas) ->
 
     x = 50
     for name, team of arena.teams
-        ctx.fillText "#{name}: #{team.score}", x, window.innerHeight - 20
+        staticCtx.fillText "#{name}: #{team.score}", new Point(x, window.innerHeight - 20)
         x += 150
 
     for processor in arena.handler.locallyProcessed

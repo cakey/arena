@@ -1,3 +1,5 @@
+Point = require "../lib/point"
+
 class Canvas
     constructor: (@id) ->
         @canvas = document.getElementById @id
@@ -33,14 +35,16 @@ class Canvas
                 translatedContext.fillStyle color
                 translatedContext.fill()
 
-
             beginPath: -> o.beginPath()
             fillStyle: (arg) -> o.fillStyle = arg
             fill: o.fill.bind o
             lineWidth: (arg) -> o.lineWidth = arg
             setLineDash: o.setLineDash.bind o
             stroke: o.stroke.bind o
-            fillText: o.fillText.bind o
+            fillText: (arg, p) ->
+                x = p.x + map.p.x + map.wallSize
+                y = p.y + map.p.y + map.wallSize
+                o.fillText arg, x, y
             font: (arg) -> o.font = arg
             strokeStyle: (arg) -> o.strokeStyle = arg
 
@@ -49,6 +53,9 @@ class Canvas
 
     end: ->
 
-    context: -> {}
+    context: ->
+        @mapContext
+            p: new Point 0, 0
+            wallSize: 0
 
 module.exports = Canvas

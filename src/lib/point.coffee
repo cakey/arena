@@ -1,8 +1,6 @@
 
 class Point
 
-
-
     # Immutable point.
     constructor: (@x,@y) ->
 
