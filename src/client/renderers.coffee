@@ -43,10 +43,13 @@ projectileRenderer = (projectile, ctx) ->
     ctx.lineWidth 1
     ctx.stroke()
 
-arenaRenderer = (arena, ctx) ->
+arenaRenderer = (arena, canvas) ->
 
     # draw Map
     # Location
+
+    ctx = canvas.mapContext(arena.map)
+    staticCtx = canvas.context()
 
     map = arena.map
 
@@ -69,15 +72,23 @@ arenaRenderer = (arena, ctx) ->
         ctx.fillText "#{name}: #{team.score}", x, window.innerHeight - 20
         x += 150
 
+    for processor in arena.handler.locallyProcessed
+        Renderers.ui processor, ctx
+
     for id, player of arena.handler.players
         Renderers.player player, ctx
 
     for p in arena.projectiles
         Renderers.projectile p, ctx
 
+uiRenderer = (processor, ctx) ->
+
+    console.log "yoyoyo"
+
 Renderers =
     player: playerRenderer
     projectile: projectileRenderer
     arena: arenaRenderer
+    ui: uiRenderer
 
 module.exports = Renderers

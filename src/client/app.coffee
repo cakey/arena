@@ -131,9 +131,6 @@ class Arena
             if event.which is 1
                 @mapToGo = @mapMiddle.towards new Point(event.x, event.y), 100
 
-        # well this is ugly...
-        @render = @canvas.withMap @map, (ctx) => Renderers.arena @, ctx
-
         @handler = new Handlers.Network @
         readyPromise = @handler.ready()
         readyPromise.then =>
@@ -160,6 +157,11 @@ class Arena
                 @handler.registerLocal aip2
 
             @loop()
+
+    render: ->
+        @canvas.begin()
+        Renderers.arena @, @canvas
+        @canvas.end()
 
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
