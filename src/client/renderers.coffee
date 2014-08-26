@@ -82,32 +82,46 @@ arenaRenderer = (arena, canvas) ->
 
 uiRenderer = (processor, ctx, staticCtx) ->
 
-    upperRow = ['q','w','e','r','t','y','u','i','o','p','[',']']
-    homeRow = ['a','s','d','f','g','h','j','k','l',';','\'']
-    bottomRow = ['z','x','c','v','b','n','m',',','.','/']
+    rows = [
+        ['q','w','e','r','t','y','u','i','o','p','[',']']
+        ['a','s','d','f','g','h','j','k','l',';','\'']
+        ['z','x','c','v','b','n','m',',','.','/']
+    ]
+    rowOffsets = [0,15,55]
 
-    keySize = 50
-    keyBorder = 20
-    leftMargin = 50
-    for key, index in homeRow
-        if skill = Skills[processor.keyBindings[key]]
-            staticCtx.beginPath()
-            staticCtx.fillStyle "#f3f3f3"
-            keyOffsetX = index * (keySize + keyBorder)
-            keyP = new Point(leftMargin + keyOffsetX, window.innerHeight - 100)
-            staticCtx.fillRect keyP, keySize, keySize
-            staticCtx.beginPath()
-            staticCtx.strokeStyle "#558893"
-            staticCtx.lineWidth 2
-            staticCtx.strokeRect keyP, 50, 50
+    keySize = 60
+    keyBorder = 12
+    leftMargin = keySize
+    topMargin = window.innerHeight - (keySize * 4 + keyBorder * 2)
+    fontSize = 16
 
-            projectileOffset = new Point 24, 15
-            staticCtx.filledCircle (keyP.add projectileOffset), skill.radius, skill.color
+    for row, rIndex in rows
+        for key, cIndex in row
+            if skill = Skills[processor.keyBindings[key]]
+                staticCtx.beginPath()
+                staticCtx.fillStyle "#f3f3f3"
+                keyOffsetX = cIndex * (keySize + keyBorder)
+                keyX = leftMargin + keyOffsetX + rowOffsets[rIndex]
+                keyOffsetY = rIndex * (keySize + keyBorder)
+                keyY = topMargin + keyOffsetY
+                keyP = new Point keyX, keyY
+                staticCtx.fillRect keyP, keySize, keySize
+                staticCtx.beginPath()
+                staticCtx.strokeStyle "#558893"
+                staticCtx.lineWidth 2
+                staticCtx.strokeRect keyP, keySize, keySize
 
-            staticCtx.fillStyle "#444466"
-            staticCtx.font "16px verdana"
-            textOffset = new Point 21, 45
-            staticCtx.fillText key, (keyP.add textOffset)
+                projectileOffset = new Point (keySize / 2), (keySize / 3)
+                projectileLocation = keyP.add projectileOffset
+                staticCtx.filledCircle projectileLocation, skill.radius, skill.color
+
+                staticCtx.fillStyle "#444466"
+                staticCtx.font "#{fontSize}px verdana"
+                textOffset = new Point(
+                    ((keySize / 2) - fontSize / 4),
+                    (keySize - fontSize / 2)
+                )
+                staticCtx.fillText key, (keyP.add textOffset)
 
 Renderers =
     player: playerRenderer
