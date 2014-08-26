@@ -82,25 +82,32 @@ arenaRenderer = (arena, canvas) ->
 
 uiRenderer = (processor, ctx, staticCtx) ->
 
-    staticCtx.beginPath()
-    staticCtx.fillStyle "#f3f3f3"
-    staticCtx.fillRect new Point(300, window.innerHeight - 100), 50, 50
-    staticCtx.beginPath()
-    staticCtx.strokeStyle "#558893"
-    staticCtx.lineWidth 2
-    staticCtx.strokeRect new Point(300, window.innerHeight - 100), 50, 50
+    upperRow = ['q','w','e','r','t','y','u','i','o','p','[',']']
+    homeRow = ['a','s','d','f','g','h','j','k','l',';','\'']
+    bottomRow = ['z','x','c','v','b','n','m',',','.','/']
 
-    skillName = processor.keyBindings['g']
-    skill = Skills[skillName]
+    keySize = 50
+    keyBorder = 20
+    leftMargin = 50
+    for key, index in homeRow
+        if skill = Skills[processor.keyBindings[key]]
+            staticCtx.beginPath()
+            staticCtx.fillStyle "#f3f3f3"
+            keyOffsetX = index * (keySize + keyBorder)
+            keyP = new Point(leftMargin + keyOffsetX, window.innerHeight - 100)
+            staticCtx.fillRect keyP, keySize, keySize
+            staticCtx.beginPath()
+            staticCtx.strokeStyle "#558893"
+            staticCtx.lineWidth 2
+            staticCtx.strokeRect keyP, 50, 50
 
-    location = new Point 324, window.innerHeight - 85
-    staticCtx.filledCircle location, skill.radius, skill.color
+            projectileOffset = new Point 24, 15
+            staticCtx.filledCircle (keyP.add projectileOffset), skill.radius, skill.color
 
-    staticCtx.fillStyle "#444466"
-    staticCtx.font "20px verdana"
-    staticCtx.fillText "g", new Point(318, window.innerHeight - 58)
-
-
+            staticCtx.fillStyle "#444466"
+            staticCtx.font "16px verdana"
+            textOffset = new Point 21, 45
+            staticCtx.fillText key, (keyP.add textOffset)
 
 Renderers =
     player: playerRenderer
