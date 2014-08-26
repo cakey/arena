@@ -100,7 +100,7 @@ class Arena
             p: new Point 25, 25
             width: Config.game.width
             height: Config.game.height
-            wallSize: 10
+            wallSize: 6
             randomPoint: =>
                 new Point(Utils.randInt(0, @map.width), Utils.randInt(0, @map.height))
 
@@ -133,10 +133,11 @@ class Arena
         readyPromise = @handler.ready()
         readyPromise.then =>
 
-            rp = @map.randomPoint()
+            randomPoint = @map.randomPoint()
+            randomTeam = Utils.choice(name for name, r of @teams)
 
-            uip = new UIPlayer @, @handler, rp, Utils.choice(name for name, r of @teams)
-            @handler.registerLocal uip
+            @focusedUIPlayer = new UIPlayer @, @handler, randomPoint, randomTeam
+            @handler.registerLocal @focusedUIPlayer
 
             numais = 1
 

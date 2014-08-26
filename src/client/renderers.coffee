@@ -1,6 +1,6 @@
 Utils = require "../lib/utils"
 Point = require "../lib/point"
-
+Skills = require "../lib/skills"
 
 playerRenderer = (player, ctx) ->
 
@@ -64,26 +64,43 @@ arenaRenderer = (arena, canvas) ->
     ctx.strokeRect wallP, map.width + map.wallSize, map.height + map.wallSize
 
 
-    ctx.fillStyle "#444466"
-    ctx.font "20px verdana"
+    staticCtx.fillStyle "#444466"
+    staticCtx.font "20px verdana"
 
     x = 50
     for name, team of arena.teams
         staticCtx.fillText "#{name}: #{team.score}", new Point(x, window.innerHeight - 20)
         x += 150
 
-    for processor in arena.handler.locallyProcessed
-        Renderers.ui processor, ctx
+    Renderers.ui arena.focusedUIPlayer, ctx, staticCtx
 
     for id, player of arena.handler.players
-        Renderers.player player, ctx
+        Renderers.player player, ctx, staticCtx
 
     for p in arena.projectiles
-        Renderers.projectile p, ctx
+        Renderers.projectile p, ctx, staticCtx
 
-uiRenderer = (processor, ctx) ->
+uiRenderer = (processor, ctx, staticCtx) ->
 
-    console.log "yoyoyo"
+    staticCtx.beginPath()
+    staticCtx.fillStyle "#f3f3f3"
+    staticCtx.fillRect new Point(300, window.innerHeight - 100), 50, 50
+    staticCtx.beginPath()
+    staticCtx.strokeStyle "#558893"
+    staticCtx.lineWidth 2
+    staticCtx.strokeRect new Point(300, window.innerHeight - 100), 50, 50
+
+    skillName = processor.keyBindings['g']
+    skill = Skills[skillName]
+
+    location = new Point 324, window.innerHeight - 85
+    staticCtx.filledCircle location, skill.radius, skill.color
+
+    staticCtx.fillStyle "#444466"
+    staticCtx.font "20px verdana"
+    staticCtx.fillText "g", new Point(318, window.innerHeight - 58)
+
+
 
 Renderers =
     player: playerRenderer
