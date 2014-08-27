@@ -19,6 +19,7 @@ actions =
                     ws.send JSON.stringify
                         data: p
                         action: "newPlayer"
+        return
 
     deregister: (ws, message) ->
         console.log "deregister - #{message.id}"
@@ -44,6 +45,7 @@ actions =
         for client_id, client of clients
             if message.id isnt client_id
                 client.send JSON.stringify message
+        return
 
 wss.on 'connection', (ws) ->
     ws.on 'message', (unparsed) ->
