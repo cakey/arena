@@ -83,6 +83,8 @@ arenaRenderer = (arena, canvas) ->
 
 uiRenderer = (processor, ctx, staticCtx) ->
 
+    # TODO: This needs a refactor!!
+
     # Draw skill icons
 
     rows = [
@@ -112,7 +114,7 @@ uiRenderer = (processor, ctx, staticCtx) ->
                 keyP = new Point keyX, keyY
                 iconsLocations[skillName] = [keyP, keyP.add(new Point keySize, keySize)]
 
-                staticCtx.globalAlpha 0.5
+                staticCtx.globalAlpha 0.7
 
                 # background
                 staticCtx.beginPath()
@@ -141,10 +143,62 @@ uiRenderer = (processor, ctx, staticCtx) ->
                 )
                 staticCtx.fillText key, (keyP.add textOffset)
 
+    overlaySize = new Point 150, 170
+    border = new Point 0, keyBorder
+
     # Draw skill overlay if hovered.
     for skillName, locs of iconsLocations
         if processor.arena.mouseP.inside locs[0], locs[1]
+
             console.log skillName
+            skill = Skills[skillName]
+
+            staticCtx.globalAlpha 0.7
+
+            topLeft = locs[0]
+                .subtract(new Point (overlaySize.x / 2), overlaySize.y)
+                .add(new Point (keySize / 2), 0)
+                .subtract(border)
+
+            # background
+            staticCtx.beginPath()
+            staticCtx.fillStyle "#ffffff"
+            staticCtx.fillRect topLeft, overlaySize.x, overlaySize.y
+
+            staticCtx.globalAlpha 1
+
+
+
+            staticCtx.font "#{fontSize}px verdana"
+            labelOffset = new Point(
+                20
+                fontSize * 2
+            )
+            staticCtx.fillStyle skill.color
+            staticCtx.fillText skillName, (topLeft.add labelOffset)
+
+            # text
+            for textType, i in ["castTime", "speed", "range", "score"]
+                staticCtx.font "#{fontSize}px verdana"
+                labelOffset = new Point(
+                    20
+                    fontSize * 2 * (i + 2)
+                )
+                staticCtx.fillStyle "#444466"
+                staticCtx.fillText textType, (topLeft.add labelOffset)
+                numberOffset = new Point(
+                    100
+                    fontSize * 2 * (i + 2)
+                )
+                staticCtx.fillStyle "#009944"
+                staticCtx.fillText skill[textType], (topLeft.add numberOffset)
+
+            # border
+            staticCtx.beginPath()
+            staticCtx.strokeStyle "#558893"
+            staticCtx.lineWidth 1
+            staticCtx.strokeRect topLeft, overlaySize.x, overlaySize.y
+
 
     return # stupid implicit returns
 
