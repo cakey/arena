@@ -39,22 +39,16 @@ Utils =
                     if maxChars - currentLine.length < 3 # " -c"
                         # no space left on the line
                         wrappedLines.push currentLine
-                        currentLine = ""
                     else if currentLine.length is 0
                         # empty line
-                        currentLine = word[...(maxChars - 1)]
-                        wrappedLines.push "#{currentLine}-"
-                        currentLine = ""
+                        wrappedLines.push "#{word[...(maxChars - 1)]}-"
                         word = word[(maxChars - 1)..]
                     else
                         # squeeze as much of the word as you can on the line
                         availableChars = maxChars - currentLine.length - 2
-                        currentLine += " "
-                        currentLine += word[...availableChars]
-                        currentLine += "-"
+                        wrappedLines.push " #{word[...availableChars]}-"
                         word = word[availableChars..]
-                        wrappedLines.push currentLine
-                        currentLine = ""
+                    currentLine = ""
 
                 if word.length > 0
                     if currentLine.length + 1 + word.length > maxChars
