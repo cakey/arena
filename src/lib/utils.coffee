@@ -28,5 +28,46 @@ Utils =
         speedInverse: (arg, speedup = Config.game.speedup) ->
             arg / speedup
 
+    string:
+        wordWrap: (str, maxChars) ->
+            words = str.split " "
+            wrappedLines = []
+            currentLine = ""
+            for word in words
+                # handle words larger than maxChars
+                while word.length > maxChars
+                    if maxChars - currentLine.length < 3 # " -c"
+                        # no space left on the line
+                        wrappedLines.push currentLine
+                        currentLine = ""
+                    else if currentLine.length is 0
+                        # empty line
+                        currentLine = word[...(maxChars - 1)]
+                        wrappedLines.push "#{currentLine}-"
+                        currentLine = ""
+                        word = word[(maxChars - 1)..]
+                    else
+                        # squeeze as much of the word as you can on the line
+                        availableChars = maxChars - currentLine.length - 2
+                        currentLine += " "
+                        currentLine += word[...availableChars]
+                        currentLine += "-"
+                        word = word[availableChars..]
+                        wrappedLines.push currentLine
+                        currentLine = ""
+
+                if word.length > 0
+                    if currentLine.length + 1 + word.length > maxChars
+                        if currentLine.length > 0
+                            wrappedLines.push currentLine
+                        currentLine = word
+                    else
+                        if currentLine.length > 0
+                            currentLine += " "
+                        currentLine += word
+                        currentLine.length += word.length + 1
+
+            wrappedLines.push currentLine
+            return wrappedLines
 
 module.exports = Utils
