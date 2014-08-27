@@ -143,15 +143,23 @@ uiRenderer = (processor, ctx, staticCtx) ->
                 )
                 staticCtx.fillText key, (keyP.add textOffset)
 
-    overlaySize = new Point 150, 170
-    border = new Point 0, keyBorder
-
     # Draw skill overlay if hovered.
     for skillName, locs of iconsLocations
         if processor.arena.mouseP.inside locs[0], locs[1]
 
-            console.log skillName
             skill = Skills[skillName]
+
+            overLayX = 220
+
+            # need to calculate description length for Y size of overlay
+            maxChars = ((overLayX * 2) / fontSize) - 6
+            descLines = Utils.string.wordWrap skill.description, maxChars
+            skillKeys = ["castTime", "speed", "range", "score"]
+
+            overLayY = (skillKeys.length + descLines.length + 2) * fontSize * 2
+
+            overlaySize = new Point overLayX, overLayY
+            border = new Point 0, keyBorder
 
             staticCtx.globalAlpha 0.7
 
@@ -167,31 +175,39 @@ uiRenderer = (processor, ctx, staticCtx) ->
 
             staticCtx.globalAlpha 1
 
-
-
             staticCtx.font "#{fontSize}px verdana"
             labelOffset = new Point(
-                20
+                fontSize
                 fontSize * 2
             )
             staticCtx.fillStyle skill.color
             staticCtx.fillText skillName, (topLeft.add labelOffset)
 
             # text
-            for textType, i in ["castTime", "speed", "range", "score"]
+            for textType, i in skillKeys
                 staticCtx.font "#{fontSize}px verdana"
                 labelOffset = new Point(
-                    20
+                    fontSize
                     fontSize * 2 * (i + 2)
                 )
                 staticCtx.fillStyle "#444466"
                 staticCtx.fillText textType, (topLeft.add labelOffset)
                 numberOffset = new Point(
-                    100
+                    overLayX - fontSize * 4
                     fontSize * 2 * (i + 2)
                 )
                 staticCtx.fillStyle "#009944"
                 staticCtx.fillText skill[textType], (topLeft.add numberOffset)
+
+            # description
+            for line, i in descLines
+                staticCtx.font "#{fontSize}px verdana"
+                labelOffset = new Point(
+                    fontSize
+                    fontSize * 2 * (i + 2 + skillKeys.length)
+                )
+                staticCtx.fillStyle "#444466"
+                staticCtx.fillText line, (topLeft.add labelOffset)
 
             # border
             staticCtx.beginPath()
