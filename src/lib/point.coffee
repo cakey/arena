@@ -72,6 +72,12 @@ class Point
 
         new Point x, y
 
+    inside: (topLeft, bottomRight) ->
+        ((@x >= topLeft.x) and
+            (@x <= bottomRight.x) and
+            (@y >= topLeft.y) and
+            (@y <= bottomRight.y))
+
     angleBound: (from, topLeft, bottomRight) ->
         # if @ is outside the boundingBox, then return
         # where it intersects, otherwise just return @

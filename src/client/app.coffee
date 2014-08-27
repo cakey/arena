@@ -56,7 +56,7 @@ class UIPlayer
                 @arena.map.width - @player.radius,
                 @arena.map.height - @player.radius)
 
-            p = @arena.mouseP.bound topLeft, bottomRight
+            p = @arena.mapMouseP.bound topLeft, bottomRight
 
             if event.which is 3
                 @handler.moveTo @player, p
@@ -64,7 +64,7 @@ class UIPlayer
         addEventListener "keypress", (event) =>
 
             if skill = @keyBindings[String.fromCharCode event.which]
-                castP = @arena.mouseP.mapBound @player.p, @arena.map
+                castP = @arena.mapMouseP.mapBound @player.p, @arena.map
                 @handler.fire @player, castP, skill
             else
                 console.log event
@@ -115,15 +115,17 @@ class Arena
         @projectiles = []
         @cameraSpeed = 0.3
 
+        @mapMouseP = new Point 0, 0
         @mouseP = new Point 0, 0
 
         @mapMiddle = new Point window.innerWidth / 2, window.innerHeight / 2
         @mapToGo = @mapMiddle
 
         addEventListener "mousemove", (event) =>
-            @mouseP = new Point(
+            @mapMouseP = new Point(
                 event.x - (@map.p.x + @map.wallSize),
                 event.y - (@map.p.y + @map.wallSize))
+            @mouseP = Point.fromObject event
 
         addEventListener "mousedown", (event) =>
             if event.which is 1
@@ -139,9 +141,7 @@ class Arena
             @focusedUIPlayer = new UIPlayer @, @handler, randomPoint, randomTeam
             @handler.registerLocal @focusedUIPlayer
 
-            numais = 1
-
-            if numais > 0
+            if Config.game.numAIs > 0
                 @teams.greenAI =
                     color: "#33aa33"
                     score: 0
@@ -149,7 +149,7 @@ class Arena
                     color: "#ddaa44"
                     score: 0
 
-            for a in [0...numais]
+            for a in [0...Config.game.numAIs]
                 aip1 = new AIPlayer @, @handler, @map.randomPoint(), "yellowAI"
                 @handler.registerLocal aip1
                 aip2 = new AIPlayer @, @handler, @map.randomPoint(), "greenAI"

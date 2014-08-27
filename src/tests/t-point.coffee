@@ -72,6 +72,15 @@ describe "Points", ->
         distanceP = new Point 3,4
         expect(p.distance(distanceP)).to.be 5
 
+    it "should have inside functions", ->
+        p = new Point 2,7
+        topLeft = new Point 0,5
+        badBottomRight = new Point 1,6
+        goodBottomRight = new Point 3,8
+
+        expect(p.inside(topLeft, badBottomRight)).to.be false
+        expect(p.inside(topLeft, goodBottomRight)).to.be true
+
     # TODO:
     # bound
     # map bound

@@ -8,7 +8,6 @@ class Canvas
         @canvas.height = window.innerHeight
         @ctx = @canvas.getContext '2d'
 
-
     mapContext: (map) ->
         o = @ctx
         translatedContext =
@@ -37,6 +36,7 @@ class Canvas
 
             beginPath: -> o.beginPath()
             fillStyle: (arg) -> o.fillStyle = arg
+            globalAlpha: (arg) -> o.globalAlpha = arg
             fill: o.fill.bind o
             lineWidth: (arg) -> o.lineWidth = arg
             setLineDash: o.setLineDash.bind o

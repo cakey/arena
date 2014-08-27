@@ -4,7 +4,10 @@ config =
 
     game:
         width: 1000
-        height: 500
+        height: 300
         speedup: 1
+        numAIs: 1
+    UI:
+        castingCircles: false
 
 module.exports = config
