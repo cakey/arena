@@ -65,14 +65,6 @@ arenaRenderer = (arena, canvas) ->
     ctx.strokeRect wallP, map.width + map.wallSize, map.height + map.wallSize
 
 
-    staticCtx.fillStyle "#444466"
-    staticCtx.font "20px verdana"
-
-    x = 50
-    for name, team of arena.teams
-        staticCtx.fillText "#{name}: #{team.score}", new Point(x, window.innerHeight - 20)
-        x += 150
-
     for id, player of arena.handler.players
         Renderers.player player, ctx, staticCtx
 
@@ -80,6 +72,42 @@ arenaRenderer = (arena, canvas) ->
         Renderers.projectile p, ctx, staticCtx
 
     Renderers.ui arena.focusedUIPlayer, ctx, staticCtx
+
+    staticCtx.globalAlpha 0.8
+
+    backLoc = new Point (window.innerWidth - 220), 20
+
+    # background
+    staticCtx.beginPath()
+    staticCtx.fillStyle "#f3f3f3"
+    staticCtx.fillRect backLoc, 200, (Object.keys(arena.teams).length * 32) + 20
+
+    # border
+    staticCtx.beginPath()
+    staticCtx.strokeStyle "#558893"
+    staticCtx.lineWidth 1
+    staticCtx.strokeRect backLoc, 200, (Object.keys(arena.teams).length * 32) + 20
+
+    staticCtx.font "16px verdana"
+
+    teamKeys = Object.keys(arena.teams)
+    teamKeys.sort (a,b) -> arena.teams[b].score - arena.teams[a].score
+
+    y = 50
+    for name in teamKeys
+        location = new Point(window.innerWidth - 200, y)
+
+        staticCtx.fillStyle "#222233"
+        staticCtx.fillText name, location
+
+        location = new Point(window.innerWidth - 100, y)
+
+        staticCtx.fillStyle "#444466"
+        staticCtx.fillText arena.teams[name].score, location
+
+        y += 32
+
+    staticCtx.globalAlpha 1
 
 uiRenderer = (processor, ctx, staticCtx) ->
 
@@ -98,7 +126,7 @@ uiRenderer = (processor, ctx, staticCtx) ->
     keySize = 48
     keyBorder = 6
     leftMargin = keySize
-    topMargin = window.innerHeight - (keySize * 5 + keyBorder * 3)
+    topMargin = window.innerHeight - (keySize * 4 + keyBorder * 5)
     fontSize = 14
 
     iconsLocations = {} # Skill: [topleft, bottomright]
@@ -114,7 +142,7 @@ uiRenderer = (processor, ctx, staticCtx) ->
                 keyP = new Point keyX, keyY
                 iconsLocations[skillName] = [keyP, keyP.add(new Point keySize, keySize)]
 
-                staticCtx.globalAlpha 0.7
+                staticCtx.globalAlpha 0.8
 
                 # background
                 staticCtx.beginPath()
@@ -161,7 +189,7 @@ uiRenderer = (processor, ctx, staticCtx) ->
             overlaySize = new Point overLayX, overLayY
             border = new Point 0, keyBorder
 
-            staticCtx.globalAlpha 0.7
+            staticCtx.globalAlpha 0.8
 
             topLeft = locs[0]
                 .subtract(new Point (overlaySize.x / 2), overlaySize.y)
@@ -170,7 +198,7 @@ uiRenderer = (processor, ctx, staticCtx) ->
 
             # background
             staticCtx.beginPath()
-            staticCtx.fillStyle "#ffffff"
+            staticCtx.fillStyle "#f3f3f3"
             staticCtx.fillRect topLeft, overlaySize.x, overlaySize.y
 
             staticCtx.globalAlpha 1

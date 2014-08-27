@@ -45,6 +45,10 @@ class Canvas
                 x = p.x + map.p.x + map.wallSize
                 y = p.y + map.p.y + map.wallSize
                 o.fillText arg, x, y
+            strokeText: (arg, p) ->
+                x = p.x + map.p.x + map.wallSize
+                y = p.y + map.p.y + map.wallSize
+                o.strokeText arg, x, y
             font: (arg) -> o.font = arg
             strokeStyle: (arg) -> o.strokeStyle = arg
 
