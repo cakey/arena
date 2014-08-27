@@ -43,3 +43,12 @@ describe  "wordWrap", ->
             "estoavoid",
             "overflow",
         ]
+
+    it "not have a trailing empty string if last overflowed word is flush to a line", ->
+        testString = "should break wordsthataretoolonginto"
+        resultArr = Utils.string.wordWrap testString, 12
+        expect(resultArr).to.eql [
+            "should break",
+            "wordsthatar-",
+            "etoolonginto",
+        ]
