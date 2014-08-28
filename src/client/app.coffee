@@ -5,6 +5,8 @@
 # heal
 # shield / reversal
 
+_ = require 'lodash'
+
 Point = require "../lib/point"
 Config = require "../lib/config"
 Utils = require "../lib/utils"
@@ -23,21 +25,14 @@ class AIPlayer
 
     update: (newTime) ->
 
-        #if @arena.p1.startCastTime? and not @startCastTime?
-        #    @fire @arena.p1.x, @arena.p1.y, skills.disrupt
-
-        otherPs = (p for id, p of @handler.players when p.team isnt @player.team)
+        otherPs = _.reject _.values(@handler.players), team: @player.team
 
         if Math.random() < Utils.game.speed(0.005) and not @player.startCastTime?
-            @handler.fire @player, Utils.choice(otherPs).p, 'orb'
+            @handler.fire @player, _.sample(otherPs).p, 'orb'
 
         chanceToMove = Math.random() < Utils.game.speed(0.03)
         if not @player.startCastTime? and (chanceToMove or @player.p.equal @player.destP)
             @handler.moveTo @player, @arena.map.randomPoint()
-            #@moveTo(
-            #    ((@arena.p1.x+@x)/2)+utils.randInt(-250,250),
-            #    ((@arena.p1.y+@y)/2)+utils.randInt(-250,250)
-            #)
 
 class UIPlayer
 
@@ -102,7 +97,7 @@ class Arena
             height: Config.game.height
             wallSize: 6
             randomPoint: =>
-                new Point(Utils.randInt(0, @map.width), Utils.randInt(0, @map.height))
+                new Point _.random(0, @map.width), _.random(0, @map.height)
 
         @teams =
             red:
@@ -136,7 +131,7 @@ class Arena
         readyPromise.then =>
 
             randomPoint = @map.randomPoint()
-            randomTeam = Utils.choice(name for name, r of @teams)
+            randomTeam = _.sample(name for name, r of @teams)
 
             @focusedUIPlayer = new UIPlayer @, @handler, randomPoint, randomTeam
             @handler.registerLocal @focusedUIPlayer
