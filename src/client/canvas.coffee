@@ -1,3 +1,5 @@
+_ = require 'lodash'
+
 Point = require "../lib/point"
 
 class Canvas
@@ -7,6 +9,12 @@ class Canvas
         @canvas.width = window.innerWidth
         @canvas.height = window.innerHeight
         @ctx = @canvas.getContext '2d'
+
+        onResize = =>
+            @canvas.width = window.innerWidth
+            @canvas.height = window.innerHeight
+
+        window.onresize = _.throttle onResize, 50
 
     mapContext: (map) ->
         o = @ctx
