@@ -76,17 +76,8 @@ arenaRenderer = (arena, canvas) ->
     staticCtx.globalAlpha 0.8
 
     backLoc = new Point (window.innerWidth - 220), 20
-
-    # background
-    staticCtx.beginPath()
-    staticCtx.fillStyle "#f3f3f3"
-    staticCtx.fillRect backLoc, 200, (Object.keys(arena.teams).length * 32) + 20
-
-    # border
-    staticCtx.beginPath()
-    staticCtx.strokeStyle "#558893"
-    staticCtx.lineWidth 1
-    staticCtx.strokeRect backLoc, 200, (Object.keys(arena.teams).length * 32) + 20
+    scoreBoxSize = new Point(200, (Object.keys(arena.teams).length * 32) + 20)
+    uiBoxRenderer backLoc, scoreBoxSize, staticCtx
 
     staticCtx.font "16px verdana"
 
@@ -108,6 +99,18 @@ arenaRenderer = (arena, canvas) ->
         y += 32
 
     staticCtx.globalAlpha 1
+
+uiBoxRenderer = (topLeft, size, staticCtx) ->
+    # background
+    staticCtx.beginPath()
+    staticCtx.fillStyle "#f3f3f3"
+    staticCtx.fillRect topLeft, size.x, size.y
+
+    # border
+    staticCtx.beginPath()
+    staticCtx.strokeStyle "#558893"
+    staticCtx.lineWidth 1
+    staticCtx.strokeRect topLeft, size.x, size.y
 
 uiRenderer = (processor, ctx, staticCtx) ->
 
@@ -144,23 +147,12 @@ uiRenderer = (processor, ctx, staticCtx) ->
 
                 staticCtx.globalAlpha 0.8
 
-                # background
-                staticCtx.beginPath()
-                staticCtx.fillStyle "#f3f3f3"
-                staticCtx.fillRect keyP, keySize, keySize
+                uiBoxRenderer keyP, new Point(keySize, keySize), staticCtx
 
                 # projectile
                 projectileOffset = new Point (keySize / 2), (keySize / 3)
                 projectileLocation = keyP.add projectileOffset
                 staticCtx.filledCircle projectileLocation, skill.radius, skill.color
-
-                staticCtx.globalAlpha 1
-
-                # border
-                staticCtx.beginPath()
-                staticCtx.strokeStyle "#558893"
-                staticCtx.lineWidth 1
-                staticCtx.strokeRect keyP, keySize, keySize
 
                 # text
                 staticCtx.fillStyle "#444466"
@@ -170,6 +162,8 @@ uiRenderer = (processor, ctx, staticCtx) ->
                     (keySize - fontSize / 2)
                 )
                 staticCtx.fillText key, (keyP.add textOffset)
+
+                staticCtx.globalAlpha 1
 
     # Draw skill overlay if hovered.
     for skillName, locs of iconsLocations
@@ -182,7 +176,7 @@ uiRenderer = (processor, ctx, staticCtx) ->
             # need to calculate description length for Y size of overlay
             maxChars = ((overLayX * 2) / fontSize) - 6
             descLines = Utils.string.wordWrap skill.description, maxChars
-            skillKeys = ["castTime", "speed", "range", "score"]
+            skillKeys = ["castTime", "speed", "range", "score", "cooldown"]
 
             overLayY = (skillKeys.length + descLines.length + 2) * fontSize * 2
 
@@ -196,12 +190,7 @@ uiRenderer = (processor, ctx, staticCtx) ->
                 .add(new Point (keySize / 2), 0)
                 .subtract(border)
 
-            # background
-            staticCtx.beginPath()
-            staticCtx.fillStyle "#f3f3f3"
-            staticCtx.fillRect topLeft, overlaySize.x, overlaySize.y
-
-            staticCtx.globalAlpha 1
+            uiBoxRenderer topLeft, overlaySize, staticCtx
 
             staticCtx.font "#{fontSize}px verdana"
             labelOffset = new Point(
@@ -237,12 +226,7 @@ uiRenderer = (processor, ctx, staticCtx) ->
                 staticCtx.fillStyle "#444466"
                 staticCtx.fillText line, (topLeft.add labelOffset)
 
-            # border
-            staticCtx.beginPath()
-            staticCtx.strokeStyle "#558893"
-            staticCtx.lineWidth 1
-            staticCtx.strokeRect topLeft, overlaySize.x, overlaySize.y
-
+            staticCtx.globalAlpha 1
 
     return # stupid implicit returns
 

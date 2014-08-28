@@ -15,6 +15,7 @@ skills =
         channeled: true
         score: 50
         description: "Standard range projectile, all rounder."
+        cooldown: 0
 
     gun:
         cone: Math.PI / 10
@@ -26,6 +27,7 @@ skills =
         channeled: false
         score: 1
         description: "High rate, low damage, long range machine gun."
+        cooldown: 0
 
     bomb:
         cone: Math.PI / 1.5
@@ -37,6 +39,7 @@ skills =
         channeled: false
         score: 500
         description: "Extremely high damage, close range, slow casting bomb."
+        cooldown: 4
 
         # TODO: smaller over time?
 
@@ -51,6 +54,7 @@ skills =
         score: 3
         continue: true
         description: "Close range, low damage. Knocks back targets."
+        cooldown: 0
         hitPlayer: (hitPlayer, projectile) ->
             # TODO
             # There are likely issues with network syncronisation
@@ -88,7 +92,7 @@ skills =
         channeled: false
         score: 0
         description: "Instant projectile that interrupts targets. No damage."
-
+        cooldown: 6
         hitPlayer: (hitPlayer) ->
             hitPlayer.startCastTime = null
 
