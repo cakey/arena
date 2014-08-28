@@ -47,9 +47,7 @@ class UIPlayer
             j: 'interrupt'
         addEventListener "mousedown", (event) =>
             topLeft = new Point @player.radius, @player.radius
-            bottomRight = new Point(
-                @arena.map.width - @player.radius,
-                @arena.map.height - @player.radius)
+            bottomRight = @arena.map.size.subtract topLeft
 
             p = @arena.mapMouseP.bound topLeft, bottomRight
 
@@ -93,11 +91,10 @@ class Arena
 
         @map =
             p: new Point 25, 25
-            width: Config.game.width
-            height: Config.game.height
-            wallSize: 6
+            size: new Point Config.game.width, Config.game.height
+            wallSize: new Point 6, 6
             randomPoint: =>
-                new Point _.random(0, @map.width), _.random(0, @map.height)
+                new Point _.random(0, @map.size.x), _.random(0, @map.size.y)
 
         @teams =
             red:
@@ -117,10 +114,8 @@ class Arena
         @mapToGo = @mapMiddle
 
         addEventListener "mousemove", (event) =>
-            @mapMouseP = new Point(
-                event.x - (@map.p.x + @map.wallSize),
-                event.y - (@map.p.y + @map.wallSize))
             @mouseP = Point.fromObject event
+            @mapMouseP = @mouseP.subtract(@map.p).subtract(@map.wallSize)
 
         addEventListener "mousedown", (event) =>
             if event.which is 1
@@ -208,6 +203,8 @@ class Arena
 
         msDiff = updateTime - @time
 
+        @mapMiddle = new Point window.innerWidth / 2, window.innerHeight / 2
+
         newCamP = @mapMiddle.towards @mapToGo, @cameraSpeed * msDiff
 
         moveVector = newCamP.subtract @mapMiddle
@@ -227,8 +224,8 @@ class Arena
             withinMap = (
                 projectile.p.x > 0 and
                 projectile.p.y > 0 and
-                projectile.p.x < @map.width and
-                projectile.p.y < @map.height)
+                projectile.p.x < @map.size.x and
+                projectile.p.y < @map.size.y)
             if alive and withinMap
                 if hitPlayer = @projectileCollide projectile
                     skill = projectile.skill

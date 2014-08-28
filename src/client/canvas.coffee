@@ -18,26 +18,25 @@ class Canvas
 
     mapContext: (map) ->
         o = @ctx
-
-        _withMap = (func) ->
-            (p, args...) ->
-                x = p.x + map.p.x + map.wallSize
-                y = p.y + map.p.y + map.wallSize
-                o[func] x, y, args...
-
-        _flippedWithMap = (func) ->
-            (arg, p, args...) ->
-                x = p.x + map.p.x + map.wallSize
-                y = p.y + map.p.y + map.wallSize
-                o[func] arg, x, y, args...
-
         translatedContext =
-            moveTo: _withMap 'moveTo'
-            arc: _withMap 'arc'
-            strokeRect: _withMap 'strokeRect'
-            fillRect: _withMap 'fillRect'
-            fillText: _flippedWithMap 'fillText'
-            strokeText: _flippedWithMap 'strokeText'
+            moveTo: (p) ->
+                mappedP = p.add(map.p).add(map.wallSize)
+                o.moveTo mappedP.x, mappedP.y
+            arc: (p, args...) ->
+                mappedP = p.add(map.p).add(map.wallSize)
+                o.arc mappedP.x, mappedP.y, args...
+            strokeRect: (p, size) ->
+                mappedP = p.add(map.p).add(map.wallSize)
+                o.strokeRect mappedP.x, mappedP.y, size.x, size.y
+            fillRect: (p, size) ->
+                mappedP = p.add(map.p).add(map.wallSize)
+                o.fillRect mappedP.x, mappedP.y, size.x, size.y
+            fillText: (arg, p) ->
+                mappedP = p.add(map.p).add(map.wallSize)
+                o.fillText arg, mappedP.x, mappedP.y
+            strokeText: (arg, p) ->
+                mappedP = p.add(map.p).add(map.wallSize)
+                o.strokeText arg, mappedP.x, mappedP.y
 
             circle: (p, radius) -> translatedContext.arc p, radius, 0, 2 * Math.PI
             filledCircle: (p, radius, color) ->
@@ -64,6 +63,6 @@ class Canvas
     context: ->
         @mapContext
             p: new Point 0, 0
-            wallSize: 0
+            wallSize: new Point 0, 0
 
 module.exports = Canvas

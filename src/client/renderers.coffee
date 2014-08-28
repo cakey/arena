@@ -54,15 +54,15 @@ arenaRenderer = (arena, canvas) ->
 
     map = arena.map
 
-    wallP = new Point (-map.wallSize / 2), (-map.wallSize / 2)
+    wallP = new Point (-map.wallSize.x / 2), (-map.wallSize.y / 2)
 
     ctx.beginPath()
     ctx.fillStyle "#f3f3f3"
-    ctx.fillRect wallP, map.width + map.wallSize, map.height + map.wallSize
+    ctx.fillRect wallP, map.size.add(map.wallSize)
     ctx.beginPath()
-    ctx.lineWidth map.wallSize
+    ctx.lineWidth map.wallSize.x
     ctx.strokeStyle "#558893"
-    ctx.strokeRect wallP, map.width + map.wallSize, map.height + map.wallSize
+    ctx.strokeRect wallP, map.size.add(map.wallSize)
 
 
     for id, player of arena.handler.players
@@ -104,13 +104,13 @@ uiBoxRenderer = (topLeft, size, staticCtx) ->
     # background
     staticCtx.beginPath()
     staticCtx.fillStyle "#f3f3f3"
-    staticCtx.fillRect topLeft, size.x, size.y
+    staticCtx.fillRect topLeft, size
 
     # border
     staticCtx.beginPath()
     staticCtx.strokeStyle "#558893"
     staticCtx.lineWidth 1
-    staticCtx.strokeRect topLeft, size.x, size.y
+    staticCtx.strokeRect topLeft, size
 
 uiRenderer = (processor, ctx, staticCtx) ->
 

@@ -107,9 +107,8 @@ class Point
 
     mapBound: (from, map) ->
         topLeft = new Point 0, 0
-        bottomRight = new Point map.width, map.height
 
-        return @angleBound from, topLeft, bottomRight
+        return @angleBound from, topLeft, map.size
 
     subtract: (otherP) ->
         new Point (@x - otherP.x), (@y - otherP.y)

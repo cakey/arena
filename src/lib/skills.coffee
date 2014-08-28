@@ -70,7 +70,7 @@ skills =
 
             map = hitPlayer.arena.map
 
-            limitP = new Point(map.width, map.height).subtract radiusP
+            limitP = map.size.subtract radiusP
 
             boundedKnockbackP = knockbackP.bound radiusP, limitP
 
