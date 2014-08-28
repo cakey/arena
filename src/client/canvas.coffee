@@ -18,23 +18,27 @@ class Canvas
 
     mapContext: (map) ->
         o = @ctx
+
+        _withMap = (func) ->
+            (p, args...) ->
+                x = p.x + map.p.x + map.wallSize
+                y = p.y + map.p.y + map.wallSize
+                o[func] x, y, args...
+
+        _flippedWithMap = (func) ->
+            (arg, p, args...) ->
+                x = p.x + map.p.x + map.wallSize
+                y = p.y + map.p.y + map.wallSize
+                o[func] arg, x, y, args...
+
         translatedContext =
-            moveTo: (p) ->
-                x = p.x + map.p.x + map.wallSize
-                y = p.y + map.p.y + map.wallSize
-                o.moveTo x, y
-            arc: (p, args...) ->
-                x = p.x + map.p.x + map.wallSize
-                y = p.y + map.p.y + map.wallSize
-                o.arc x, y, args...
-            strokeRect: (p, args...) ->
-                x = p.x + map.p.x + map.wallSize
-                y = p.y + map.p.y + map.wallSize
-                o.strokeRect x, y, args...
-            fillRect: (p, args...) ->
-                x = p.x + map.p.x + map.wallSize
-                y = p.y + map.p.y + map.wallSize
-                o.fillRect x, y, args...
+            moveTo: _withMap 'moveTo'
+            arc: _withMap 'arc'
+            strokeRect: _withMap 'strokeRect'
+            fillRect: _withMap 'fillRect'
+            fillText: _flippedWithMap 'fillText'
+            strokeText: _flippedWithMap 'strokeText'
+
             circle: (p, radius) -> translatedContext.arc p, radius, 0, 2 * Math.PI
             filledCircle: (p, radius, color) ->
                 translatedContext.beginPath()
@@ -49,14 +53,6 @@ class Canvas
             lineWidth: (arg) -> o.lineWidth = arg
             setLineDash: o.setLineDash.bind o
             stroke: o.stroke.bind o
-            fillText: (arg, p) ->
-                x = p.x + map.p.x + map.wallSize
-                y = p.y + map.p.y + map.wallSize
-                o.fillText arg, x, y
-            strokeText: (arg, p) ->
-                x = p.x + map.p.x + map.wallSize
-                y = p.y + map.p.y + map.wallSize
-                o.strokeText arg, x, y
             font: (arg) -> o.font = arg
             strokeStyle: (arg) -> o.strokeStyle = arg
 
