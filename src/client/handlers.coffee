@@ -29,7 +29,7 @@ class LocalHandler
         player.moveTo destP
 
     fire: (player, castP, skillName) ->
-        player.fire castP, Skills[skillName]
+        player.fire castP, skillName
 
     ready: -> @_readyDeferred.promise
 
@@ -75,7 +75,7 @@ class NetworkHandler
                     player.p = playerPosition
                     player.moveTo position
                 else if d.action is "fire"
-                    player.fire position, Skills[d.skill]
+                    player.fire position, d.skill
             else if message.action is "newPlayer"
                 playerPosition = Point.fromObject d.playerPosition
                 player = new Player @arena, playerPosition, d.team, d.playerId

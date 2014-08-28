@@ -7,17 +7,18 @@ playerRenderer = (player, ctx) ->
 
     # Cast
     if player.startCastTime?
-        radiusMs = player.radius / Utils.game.speedInverse(player.castedSkill.castTime)
+        realCastTime = Utils.game.speedInverse(Skills[player.castedSkill].castTime)
+        radiusMs = player.radius / realCastTime
         radius = (radiusMs * (player.time - player.startCastTime)) + player.radius
 
         angle = player.p.angle player.castP
-        halfCone = player.castedSkill.cone / 2
+        halfCone = Skills[player.castedSkill].cone / 2
 
         ctx.beginPath()
         ctx.moveTo player.p
         ctx.arc player.p, radius, angle - halfCone, angle + halfCone
         ctx.moveTo player.p
-        ctx.fillStyle player.castedSkill.color
+        ctx.fillStyle Skills[player.castedSkill].color
         ctx.fill()
 
     # Location

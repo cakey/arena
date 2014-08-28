@@ -39,7 +39,7 @@ skills =
         channeled: false
         score: 500
         description: "Extremely high damage, close range, slow casting bomb."
-        cooldown: 4
+        cooldown: 4000
 
         # TODO: smaller over time?
 
@@ -92,7 +92,7 @@ skills =
         channeled: false
         score: 0
         description: "Instant projectile that interrupts targets. No damage."
-        cooldown: 6
+        cooldown: 6000
         hitPlayer: (hitPlayer) ->
             hitPlayer.startCastTime = null
 

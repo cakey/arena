@@ -1,5 +1,6 @@
 uuid = require 'node-uuid'
 Utils = require "../lib/utils"
+Skills = require "../lib/skills"
 
 class Player
 
@@ -11,18 +12,27 @@ class Player
         @speed = 0.2 # pixels/ms
         @startCastTime = null
         @castP = null
+
+        @_lastCasted = {}
+
         if not @id?
             @id = uuid.v4()
 
     moveTo: (@destP) ->
-        if @startCastTime isnt null and @castedSkill.channeled
+        if @startCastTime isnt null and Skills[@castedSkill].channeled
             @startCastTime = null
 
     fire: (@castP, @castedSkill) ->
-        # stop moving to fire
-        if @castedSkill.channeled
-            @destP = @p
-        @startCastTime = @time # needs to be passed through
+        # first check cool down
+        cooldown = Skills[@castedSkill].cooldown
+        realCooldown = Utils.game.speedInverse Skills[@castedSkill].cooldown
+
+        lastCasted = @_lastCasted[@castedSkill]
+        if (not lastCasted?) or (realCooldown < (@time - lastCasted))
+            # stop moving to fire
+            if Skills[@castedSkill].channeled
+                @destP = @p
+            @startCastTime = @time # needs to be passed through
 
     update: (newTime) ->
         msDiff = newTime - @time
@@ -36,7 +46,8 @@ class Player
         # Cast
 
         if @startCastTime?
-            if newTime - @startCastTime > Utils.game.speedInverse(@castedSkill.castTime)
+            realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
+            if newTime - @startCastTime > realCastTime
                 @startCastTime = null
 
                 castAngle = @p.angle @castP
@@ -47,7 +58,9 @@ class Player
                 if @castP.within @p, @maxCastRadius
                     @castP = edgeP.bearing castAngle, 0.1
 
-                @arena.addProjectile edgeP, @castP, @castedSkill, @team
+                @arena.addProjectile edgeP, @castP, Skills[@castedSkill], @team
+
+                @_lastCasted[@castedSkill] = newTime
 
         @time = newTime
 
