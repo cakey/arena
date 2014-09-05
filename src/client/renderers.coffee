@@ -3,6 +3,8 @@ Point = require "../lib/point"
 Skills = require "../lib/skills"
 Config = require "../lib/config"
 
+# half this crap should just be css/html
+
 playerRenderer = (player, ctx) ->
 
     # Cast
@@ -174,9 +176,9 @@ uiRenderer = (processor, ctx, staticCtx) ->
                 pctCooldown = processor.player.pctCooldown skillName
                 if pctCooldown < 1
                     # background
-                    staticCtx.globalAlpha 0.7
+                    staticCtx.globalAlpha 0.8
                     staticCtx.beginPath()
-                    staticCtx.fillStyle "#444477"
+                    staticCtx.fillStyle "#222255"
                     ySize = keySize * (1 - pctCooldown)
 
                     staticCtx.fillRect(
@@ -191,15 +193,18 @@ uiRenderer = (processor, ctx, staticCtx) ->
                     secs = Math.round(num / 10)
                     txt = "#{secs}.#{point}"
 
-                    staticCtx.fillStyle "#222255"
+                    staticCtx.fillStyle "#ffffff"
+                    staticCtx.strokeStyle "#222255"
                     staticCtx.font "16px verdana"
                     textOffset = new Point(
-                        keySize - 8*(txt.length) - 4,
-                        14
+                        keySize / 2 - 8 * (txt.length) / 2,
+                        keySize / 2 + 8
                     )
+                    staticCtx.lineWidth 3
+                    staticCtx.strokeText txt, (keyP.add textOffset)
+                    staticCtx.globalAlpha 1
                     staticCtx.fillText txt, (keyP.add textOffset)
 
-                    staticCtx.globalAlpha 1
 
     # Draw skill overlay if hovered.
     for skillName, locs of iconsLocations
