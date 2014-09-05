@@ -74,6 +74,8 @@ arenaRenderer = (arena, canvas) ->
 
     Renderers.ui arena.focusedUIPlayer, ctx, staticCtx
 
+    # score
+
     staticCtx.globalAlpha 0.8
 
     backLoc = new Point (window.innerWidth - 220), 20
@@ -132,6 +134,7 @@ uiRenderer = (processor, ctx, staticCtx) ->
     leftMargin = keySize
     topMargin = window.innerHeight - (keySize * 4 + keyBorder * 5)
     fontSize = 14
+    keySizeP = new Point(keySize, keySize)
 
     iconsLocations = {} # Skill: [topleft, bottomright]
 
@@ -144,11 +147,11 @@ uiRenderer = (processor, ctx, staticCtx) ->
                 keyOffsetY = rIndex * (keySize + keyBorder)
                 keyY = topMargin + keyOffsetY
                 keyP = new Point keyX, keyY
-                iconsLocations[skillName] = [keyP, keyP.add(new Point keySize, keySize)]
+                iconsLocations[skillName] = [keyP, keyP.add keySizeP]
 
                 staticCtx.globalAlpha 0.8
 
-                uiBoxRenderer keyP, new Point(keySize, keySize), staticCtx
+                uiBoxRenderer keyP, keySizeP, staticCtx
 
                 # projectile
                 projectileOffset = new Point (keySize / 2), (keySize / 3)
@@ -156,7 +159,7 @@ uiRenderer = (processor, ctx, staticCtx) ->
                 staticCtx.filledCircle projectileLocation, skill.radius, skill.color
 
                 # text
-                staticCtx.fillStyle "#444466"
+                staticCtx.fillStyle "#444477"
                 staticCtx.font "#{fontSize}px verdana"
                 textOffset = new Point(
                     ((keySize / 2) - fontSize / 4),
@@ -165,6 +168,38 @@ uiRenderer = (processor, ctx, staticCtx) ->
                 staticCtx.fillText key, (keyP.add textOffset)
 
                 staticCtx.globalAlpha 1
+
+                # draw cooldown if necessary
+
+                pctCooldown = processor.player.pctCooldown skillName
+                if pctCooldown < 1
+                    # background
+                    staticCtx.globalAlpha 0.7
+                    staticCtx.beginPath()
+                    staticCtx.fillStyle "#444477"
+                    ySize = keySize * (1 - pctCooldown)
+
+                    staticCtx.fillRect(
+                        new Point(keyX, keyY + (keySize - ySize)),
+                        new Point keySize, ySize
+                    )
+
+
+                    # text
+                    num = Math.round(skill.cooldown * (1 - pctCooldown) / 100)
+                    point = num % 10
+                    secs = Math.round(num / 10)
+                    txt = "#{secs}.#{point}"
+
+                    staticCtx.fillStyle "#222255"
+                    staticCtx.font "16px verdana"
+                    textOffset = new Point(
+                        keySize - 8*(txt.length) - 4,
+                        14
+                    )
+                    staticCtx.fillText txt, (keyP.add textOffset)
+
+                    staticCtx.globalAlpha 1
 
     # Draw skill overlay if hovered.
     for skillName, locs of iconsLocations

@@ -22,13 +22,27 @@ class Player
         if @startCastTime isnt null and Skills[@castedSkill].channeled
             @startCastTime = null
 
+    pctCooldown: (castedSkill) ->
+        realCooldown = Utils.game.speedInverse Skills[castedSkill].cooldown
+
+        lastCasted = @_lastCasted[castedSkill]
+
+        if realCooldown is 0
+            return 1
+
+        if not lastCasted?
+            return 1
+
+        if lastCasted is @time
+            return 0
+
+        return Math.min ((@time - lastCasted) / realCooldown), 1
+
     fire: (@castP, @castedSkill) ->
         # first check cool down
-        cooldown = Skills[@castedSkill].cooldown
-        realCooldown = Utils.game.speedInverse Skills[@castedSkill].cooldown
+        pctCooldown = @pctCooldown @castedSkill
 
-        lastCasted = @_lastCasted[@castedSkill]
-        if (not lastCasted?) or (realCooldown < (@time - lastCasted))
+        if pctCooldown >= 1
             # stop moving to fire
             if Skills[@castedSkill].channeled
                 @destP = @p
