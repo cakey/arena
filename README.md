@@ -1,7 +1,6 @@
 ## setup
     # 1. Install node
-    npm install -g gulp
-    npm install -g nodemon
+    npm i -g gulp nodemon coffee-script
     npm install
 
 
