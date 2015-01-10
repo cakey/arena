@@ -38,8 +38,10 @@
     "mocha": "^1.21.4"
   },
   "dependencies": {
+    "coffee-reactify": "^2.1.0",
     "lodash": "^2.4.1",
     "node-uuid": "^1.4.1",
+    "react": "^0.12.2",
     "rsvp": "^3.0.13",
     "ws": "^0.4.32"
   }

@@ -11,7 +11,6 @@ Point = require "../lib/point"
 Config = require "../lib/config"
 Utils = require "../lib/utils"
 
-Canvas = require "./canvas"
 Renderers = require "./renderers"
 Handlers = require "./handlers"
 Player = require "../lib/player"
@@ -86,7 +85,7 @@ class Projectile
 # TODO pull out update parts of arena and player to allow running on the server
 class Arena
 
-    constructor: (@canvas) ->
+    constructor: ->
         @time = new Date().getTime()
 
         @map =
@@ -148,9 +147,7 @@ class Arena
             @loop()
 
     render: ->
-        @canvas.begin()
-        Renderers.arena @, @canvas
-        @canvas.end()
+        Renderers.arena @
 
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
@@ -243,5 +240,4 @@ class Arena
         @time = updateTime
 
 #TODO:
-canvas = new Canvas 'canvas'
-arena = new Arena canvas
+arena = new Arena
