@@ -19,6 +19,25 @@ Player = React.createClass
 
         <div className="player" style={style} />
 
+Projectile = React.createClass
+    render: ->
+        p = @props.projectile
+        style =
+            width: p.skill.radius * 2
+            height: p.skill.radius * 2
+            left: p.p.x
+            top: p.p.y
+            position: "absolute"
+            background: p.skill.color
+            transform: "translate(-50%, -50%)"
+            borderRadius: "50%"
+            borderWidth: 1
+            borderStyle: "solid"
+            borderColor: p.arena.teams[p.team].color
+
+        <div className="projectile" style={style} />
+
+
 ScoreBoard = React.createClass
     render: ->
         teamKeys = Object.keys(@props.teams)
@@ -52,6 +71,9 @@ ArenaMap = React.createClass
             {for k, v of @props.arena.handler.players
                 <Player player={v} key={k} />
             }
+            {for k, v of @props.arena.projectiles
+                <Projectile projectile={v} key={k} />
+            }
         </div>
 
 Arena = React.createClass
@@ -66,8 +88,6 @@ arenaRenderer = (arena) ->
         <Arena arena={arena} />
         document.getElementById('arena')
     )
-
-
 
 # playerRenderer = (player, ctx) ->
 
