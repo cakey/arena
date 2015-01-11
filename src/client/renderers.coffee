@@ -5,6 +5,20 @@
 
 React = require "react/addons"
 
+Player = React.createClass
+    render: ->
+        style =
+            width: @props.player.radius * 2
+            height: @props.player.radius * 2
+            left: @props.player.p.x
+            top: @props.player.p.y
+            position: "absolute"
+            background: @props.player.arena.teams[@props.player.team].color
+            transform: "translate(-50%, -50%)"
+            borderRadius: "50%"
+
+        <div className="player" style={style} />
+
 ScoreBoard = React.createClass
     render: ->
         teamKeys = Object.keys(@props.teams)
@@ -27,18 +41,23 @@ ArenaMap = React.createClass
     render: ->
 
         style =
-            left: @props.map.p.x
-            top: @props.map.p.y
-            width: @props.map.size.x
-            height: @props.map.size.y
+            left: @props.arena.map.p.x
+            top: @props.arena.map.p.y
+            width: @props.arena.map.size.x
+            height: @props.arena.map.size.y
             position: "fixed"
-            borderWidth: @props.map.wallSize.x
-        <div style={style} className="baseMap" />
+            borderWidth: @props.arena.map.wallSize.x
+
+        <div style={style} className="baseMap" >
+            {for k, v of @props.arena.handler.players
+                <Player player={v} key={k} />
+            }
+        </div>
 
 Arena = React.createClass
     render: ->
         <div>
-            <ArenaMap map={@props.arena.map} />
+            <ArenaMap arena={@props.arena} />
             <ScoreBoard teams={@props.arena.teams} />
         </div>
 
