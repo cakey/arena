@@ -14,56 +14,44 @@ Arc = React.createClass
         circleStyle =
             width: "#{radius * 2}px"
             height: "#{radius * 2}px"
-            position: "absolute"
             left: @props.center.x
             top: @props.center.y
+            position: "absolute"
             transform: "translate(-50%, -50%)"
             zIndex: "-5"
 
-        arcOuterStyle =
-            overflow: "hidden"
-            position: "absolute"
-            top: 0
-            left: 0
-            right: "50%"
-            bottom: "50%"
-            transformOrigin: "100% 100%"
-
-        arcInnerStyle =
-            display: "block"
-            borderColor: "blue"
-            borderStyle: "solid"
-            borderWidth: radius
-            border: "solid #{radius}px #{@props.color}"
-            borderRadius: "50%"
-
         arcS = []
+        borderV = "solid #{radius}px #{@props.color}"
         # I would clean this up if this wasn't a stupid long term plan (Ben Shaw Jan 2015 ;P)
         if @props.cone < Math.PI / 2
             realCone = (Math.PI / 2) - @props.cone
-            arcO0 = _.cloneDeep arcOuterStyle
-            arcO0.transform = "rotate(#{startAngle}rad) skewX(#{realCone}rad)"
-            arcI0 = _.cloneDeep arcInnerStyle
-            arcI0.transform = "skewX(-#{realCone}rad)"
+            arcO0 =
+                transform: "rotate(#{startAngle}rad) skewX(#{realCone}rad)"
+            arcI0 =
+                transform: "skewX(-#{realCone}rad)"
+                border: borderV
             arcS.push [arcO0, arcI0]
         else if @props.cone < Math.PI
-            arcO0 = _.cloneDeep arcOuterStyle
-            arcO0.transform = "rotate(#{startAngle}rad) skewX(0rad)"
-            arcI0 = _.cloneDeep arcInnerStyle
-            arcI0.transform = "skewX(-0rad)"
+            arcO0 =
+                transform: "rotate(#{startAngle}rad) skewX(0rad)"
+            arcI0 =
+                transform: "skewX(-0rad)"
+                border: borderV
             arcS.push [arcO0, arcI0]
-            arcO1 = _.cloneDeep arcOuterStyle
+
             realCone = Math.PI/2 - (@props.cone - Math.PI/2)
-            arcO1.transform = "rotate(#{startAngle + Math.PI/2 }rad) skewX(#{realCone}rad)"
-            arcI1 = _.cloneDeep arcInnerStyle
-            arcI1.transform = "skewX(-#{realCone}rad)"
+            arcO1 =
+                transform: "rotate(#{startAngle + Math.PI/2 }rad) skewX(#{realCone}rad)"
+            arcI1 =
+                transform: "skewX(-#{realCone}rad)"
+                border: borderV
             arcS.push [arcO1, arcI1]
         # else if > 180deg...
         <div style={circleStyle}>
             {
                 for [arcOuterStyle, arcInnerStyle], i in arcS
-                    <div style={arcOuterStyle} key={i} >
-                        <div style={arcInnerStyle} />
+                    <div style={arcOuterStyle} className="arcOuter" key={i} >
+                        <div style={arcInnerStyle} className="arcInner" />
                     </div>
             }
         </div>

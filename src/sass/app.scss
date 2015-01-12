@@ -46,3 +46,18 @@ canvas {
   float: right;
   color: #444466;
 }
+
+.arcOuter {
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 50%;
+  bottom: 50%;
+  transform-origin: 100% 100%;
+}
+
+.arcInner {
+  display: block;
+  border-radius: 50%;
+}
