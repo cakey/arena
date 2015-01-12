@@ -19,19 +19,19 @@ canvas {
 
 
 .baseMap {
-    background: #f3f3f3;
-    border-color: #558893;
-    border-style: solid;
+  background: #f3f3f3;
+  border-color: #558893;
+  border-style: solid;
 }
 
 .scoreBox {
-    background: rgba(243,243,243,0.75);
-    border: 1px solid #558893;
-    width: 200px;
-    right: 20px;
-    top: 20px;
-    position: fixed;
-    z-index: 2
+  background: rgba(243,243,243,0.75);
+  border: 1px solid #558893;
+  width: 200px;
+  right: 20px;
+  top: 20px;
+  position: fixed;
+  z-index: 2
 }
 
 .scoreRow {

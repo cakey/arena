@@ -1,23 +1,106 @@
-# Utils = require "../lib/utils"
+Utils = require "../lib/utils"
 # Point = require "../lib/point"
-# Skills = require "../lib/skills"
+Skills = require "../lib/skills"
 # Config = require "../lib/config"
 
+_ = require 'lodash'
 React = require "react/addons"
+
+Arc = React.createClass
+    render: ->
+
+        radius = @props.radius
+        startAngle = (@props.angle) + Math.PI - (@props.cone / 2)
+        circleStyle =
+            width: "#{radius * 2}px"
+            height: "#{radius * 2}px"
+            position: "absolute"
+            left: @props.center.x
+            top: @props.center.y
+            transform: "translate(-50%, -50%)"
+            zIndex: "-5"
+
+        arcOuterStyle =
+            overflow: "hidden"
+            position: "absolute"
+            top: 0
+            left: 0
+            right: "50%"
+            bottom: "50%"
+            transformOrigin: "100% 100%"
+
+        arcInnerStyle =
+            display: "block"
+            borderColor: "blue"
+            borderStyle: "solid"
+            borderWidth: radius
+            border: "solid #{radius}px #{@props.color}"
+            borderRadius: "50%"
+
+        arcS = []
+        # I would clean this up if this wasn't a stupid long term plan (Ben Shaw Jan 2015 ;P)
+        if @props.cone < Math.PI / 2
+            realCone = (Math.PI / 2) - @props.cone
+            arcO0 = _.cloneDeep arcOuterStyle
+            arcO0.transform = "rotate(#{startAngle}rad) skewX(#{realCone}rad)"
+            arcI0 = _.cloneDeep arcInnerStyle
+            arcI0.transform = "skewX(-#{realCone}rad)"
+            arcS.push [arcO0, arcI0]
+        else if @props.cone < Math.PI
+            arcO0 = _.cloneDeep arcOuterStyle
+            arcO0.transform = "rotate(#{startAngle}rad) skewX(0rad)"
+            arcI0 = _.cloneDeep arcInnerStyle
+            arcI0.transform = "skewX(-0rad)"
+            arcS.push [arcO0, arcI0]
+            arcO1 = _.cloneDeep arcOuterStyle
+            realCone = Math.PI/2 - (@props.cone - Math.PI/2)
+            arcO1.transform = "rotate(#{startAngle + Math.PI/2 }rad) skewX(#{realCone}rad)"
+            arcI1 = _.cloneDeep arcInnerStyle
+            arcI1.transform = "skewX(-#{realCone}rad)"
+            arcS.push [arcO1, arcI1]
+        # else if > 180deg...
+        <div style={circleStyle}>
+            {
+                for [arcOuterStyle, arcInnerStyle], i in arcS
+                    <div style={arcOuterStyle} key={i} >
+                        <div style={arcInnerStyle} />
+                    </div>
+            }
+        </div>
 
 Player = React.createClass
     render: ->
+        player = @props.player
         style =
-            width: @props.player.radius * 2
-            height: @props.player.radius * 2
-            left: @props.player.p.x
-            top: @props.player.p.y
+            width: player.radius * 2
+            height: player.radius * 2
+            left: player.p.x
+            top: player.p.y
             position: "absolute"
-            background: @props.player.arena.teams[@props.player.team].color
+            background: player.arena.teams[player.team].color
             transform: "translate(-50%, -50%)"
             borderRadius: "50%"
+        <div>
+            <div className="player" style={style} />
+            {
+                if player.startCastTime?
+                    realCastTime = Utils.game.speedInverse(Skills[player.castedSkill].castTime)
+                    radiusMs = player.radius / realCastTime
+                    radius = (radiusMs * (player.time - player.startCastTime)) + player.radius
 
-        <div className="player" style={style} />
+                    angle = angle = player.p.angle player.castP
+                    cone = Skills[player.castedSkill].cone
+
+                    <Arc
+                        angle={angle}
+                        cone={cone}
+                        radius={radius}
+                        color={Skills[player.castedSkill].color}
+                        center={player.p}
+                    />
+            }
+
+        </div>
 
 Projectile = React.createClass
     render: ->
@@ -88,48 +171,6 @@ arenaRenderer = (arena) ->
         <Arena arena={arena} />
         document.getElementById('arena')
     )
-
-# playerRenderer = (player, ctx) ->
-
-    #     # Cast
-    #     if player.startCastTime?
-    #         realCastTime = Utils.game.speedInverse(Skills[player.castedSkill].castTime)
-    #         radiusMs = player.radius / realCastTime
-    #         radius = (radiusMs * (player.time - player.startCastTime)) + player.radius
-
-    #         angle = player.p.angle player.castP
-    #         halfCone = Skills[player.castedSkill].cone / 2
-
-    #         ctx.beginPath()
-    #         ctx.moveTo player.p
-    #         ctx.arc player.p, radius, angle - halfCone, angle + halfCone
-    #         ctx.moveTo player.p
-    #         ctx.fillStyle Skills[player.castedSkill].color
-    #         ctx.fill()
-
-    #     # Location
-    #     ctx.filledCircle player.p, player.radius, player.arena.teams[player.team].color
-
-    #     # casting circle
-    #     if Config.UI.castingCircles
-    #         ctx.beginPath()
-    #         ctx.circle player.p, player.maxCastRadius
-    #         ctx.lineWidth 1
-    #         ctx.setLineDash [3,12]
-    #         ctx.strokeStyle "#777777"
-    #         ctx.stroke()
-    #         ctx.setLineDash []
-
-# projectileRenderer = (projectile, ctx) ->
-
-    #     # Location
-    #     ctx.filledCircle projectile.p, projectile.skill.radius, projectile.skill.color
-
-    #     ctx.beginPath()
-    #     ctx.circle projectile.p, projectile.skill.radius - 1
-    #     ctx.strokeStyle projectile.arena.teams[projectile.team].color
-    #     ctx.lineWidth 1
-    #     ctx.stroke()
 
 # arenaRenderer = (arena, canvas) ->
 
