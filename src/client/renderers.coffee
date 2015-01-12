@@ -3,6 +3,8 @@ Utils = require "../lib/utils"
 Skills = require "../lib/skills"
 # Config = require "../lib/config"
 
+# pull out circle
+
 _ = require 'lodash'
 React = require "react/addons"
 
@@ -108,7 +110,6 @@ Projectile = React.createClass
 
         <div className="projectile" style={style} />
 
-
 ScoreBoard = React.createClass
     render: ->
         teamKeys = Object.keys(@props.teams)
@@ -147,11 +148,49 @@ ArenaMap = React.createClass
             }
         </div>
 
+
+SkillUI = React.createClass
+    render: ->
+        rows = [
+            ['1','2','3','4','5','6','7','8','9','0','-','=']
+            ['q','w','e','r','t','y','u','i','o','p','[',']']
+            ['a','s','d','f','g','h','j','k','l',';','\'']
+            ['z','x','c','v','b','n','m',',','.','/']
+        ]
+        rowOffsets = [0,0.5,0.8,1.2]
+        <div>
+            { for row, ri in rows
+                <div key={ri} style={{bottom: (rows.length - ri) *60, position: "fixed"}}>
+                    { for k, ki in row
+                        skillName = @props.UIplayer.keyBindings[k]
+                        if skill = Skills[skillName]
+                            projStyle =
+                                top: 52/2
+                                left: 52/2
+                                transform: "translate(-50%, -50%)"
+                                borderRadius: "50%"
+                                position: "absolute"
+                                background: skill.color
+                                width: skill.radius * 2
+                                height: skill.radius * 2
+
+                            <div key={ki} className="keyBox" style={{
+                                left: (rowOffsets[ri]+ki)*(60+5), position: "absolute",
+                                }}>
+                                <div style={projStyle} />
+                                <div className="keyText" > {k} </div>
+                            </div>
+                    }
+                </div>
+            }
+        </div>
+
 Arena = React.createClass
     render: ->
         <div>
             <ArenaMap arena={@props.arena} />
             <ScoreBoard teams={@props.arena.teams} />
+            <SkillUI UIplayer={@props.arena.focusedUIPlayer}/>
         </div>
 
 arenaRenderer = (arena) ->
@@ -160,15 +199,6 @@ arenaRenderer = (arena) ->
         document.getElementById('arena')
     )
 
-# arenaRenderer = (arena, canvas) ->
-
-#     for id, player of arena.handler.players
-#         Renderers.player player, ctx, staticCtx
-
-#     for p in arena.projectiles
-#         Renderers.projectile p, ctx, staticCtx
-
-#     Renderers.ui arena.focusedUIPlayer, ctx, staticCtx
 
 # uiRenderer = (processor, ctx, staticCtx) ->
 
@@ -176,20 +206,8 @@ arenaRenderer = (arena) ->
 
 #     # Draw skill icons
 
-#     rows = [
-#         ['1','2','3','4','5','6','7','8','9','0','-','=']
-#         ['q','w','e','r','t','y','u','i','o','p','[',']']
-#         ['a','s','d','f','g','h','j','k','l',';','\'']
-#         ['z','x','c','v','b','n','m',',','.','/']
-#     ]
 #     rowOffsets = [0,35,50,90]
 
-#     keySize = 48
-#     keyBorder = 6
-#     leftMargin = keySize
-#     topMargin = window.innerHeight - (keySize * 4 + keyBorder * 5)
-#     fontSize = 14
-#     keySizeP = new Point(keySize, keySize)
 
 #     iconsLocations = {} # Skill: [topleft, bottomright]
 

@@ -31,7 +31,25 @@ canvas {
   right: 20px;
   top: 20px;
   position: fixed;
-  z-index: 2
+  z-index: 2;
+}
+
+.keyBox {
+  z-index: -2;
+  background: rgba(243,243,243,0.75);
+  border: 1px solid #558893;
+  width: 44px;
+  height: 44px;
+  padding: 4px;
+  z-index: 2;
+}
+
+.keyText {
+  color: #444477;
+  position: absolute;
+  bottom: 1px;
+  z-index: 5;
+  left: 23px;
 }
 
 .scoreRow {

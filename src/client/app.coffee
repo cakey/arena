@@ -239,5 +239,4 @@ class Arena
 
         @time = updateTime
 
-#TODO:
 arena = new Arena
