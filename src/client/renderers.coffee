@@ -20,21 +20,15 @@ Circle = React.createClass
             background: @props.color
             borderRadius: "50%"
         _.assign style, @props.extraStyle
-        <div style={style} />
+        <div style={style}>
+            {@props.children}
+        </div>
 
 Arc = React.createClass
     render: ->
 
         radius = @props.radius
         startAngle = (@props.angle) + Math.PI - (@props.cone / 2)
-        circleStyle =
-            width: "#{radius * 2}px"
-            height: "#{radius * 2}px"
-            left: @props.center.x
-            top: @props.center.y
-            position: "absolute"
-            transform: "translate(-50%, -50%)"
-            zIndex: "-5"
 
         arcS = []
         borderV = "solid #{radius}px #{@props.color}"
@@ -63,14 +57,14 @@ Arc = React.createClass
                 border: borderV
             arcS.push [arcO1, arcI1]
         # else if > 180deg...
-        <div style={circleStyle}>
-            {
-                for [arcOuterStyle, arcInnerStyle], i in arcS
-                    <div style={arcOuterStyle} className="arcOuter" key={i} >
-                        <div style={arcInnerStyle} className="arcInner" />
-                    </div>
+
+        <Circle radius={radius} center={@props.center} extraStyle={{zIndex: "-5"}}>
+            { for [arcOuterStyle, arcInnerStyle], i in arcS
+                <div style={arcOuterStyle} className="arcOuter" key={i} >
+                    <div style={arcInnerStyle} className="arcInner" />
+                </div>
             }
-        </div>
+        </Circle>
 
 Player = React.createClass
     render: ->
