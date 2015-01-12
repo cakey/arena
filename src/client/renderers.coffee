@@ -1,5 +1,5 @@
 Utils = require "../lib/utils"
-# Point = require "../lib/point"
+Point = require "../lib/point"
 Skills = require "../lib/skills"
 # Config = require "../lib/config"
 
@@ -7,6 +7,20 @@ Skills = require "../lib/skills"
 
 _ = require 'lodash'
 React = require "react/addons"
+
+Circle = React.createClass
+    render: ->
+        style =
+            width: "#{@props.radius * 2}px"
+            height: "#{@props.radius * 2}px"
+            left: @props.center.x
+            top: @props.center.y
+            position: "absolute"
+            transform: "translate(-50%, -50%)"
+            background: @props.color
+            borderRadius: "50%"
+        _.assign style, @props.extraStyle
+        <div style={style} />
 
 Arc = React.createClass
     render: ->
@@ -61,17 +75,12 @@ Arc = React.createClass
 Player = React.createClass
     render: ->
         player = @props.player
-        style =
-            width: player.radius * 2
-            height: player.radius * 2
-            left: player.p.x
-            top: player.p.y
-            position: "absolute"
-            background: player.arena.teams[player.team].color
-            transform: "translate(-50%, -50%)"
-            borderRadius: "50%"
         <div>
-            <div className="player" style={style} />
+            <Circle
+                radius={player.radius}
+                center={player.p}
+                color={player.arena.teams[player.team].color}
+            />
             {
                 if player.startCastTime?
                     realCastTime = Utils.game.speedInverse(Skills[player.castedSkill].castTime)
@@ -95,20 +104,17 @@ Player = React.createClass
 Projectile = React.createClass
     render: ->
         p = @props.projectile
-        style =
-            width: p.skill.radius * 2
-            height: p.skill.radius * 2
-            left: p.p.x
-            top: p.p.y
-            position: "absolute"
-            background: p.skill.color
-            transform: "translate(-50%, -50%)"
-            borderRadius: "50%"
+        extraStyle =
             borderWidth: 1
             borderStyle: "solid"
             borderColor: p.arena.teams[p.team].color
 
-        <div className="projectile" style={style} />
+        <Circle
+            radius={p.skill.radius}
+            center={p.p}
+            color={p.skill.color}
+            extraStyle={extraStyle}
+        />
 
 ScoreBoard = React.createClass
     render: ->
@@ -164,20 +170,14 @@ SkillUI = React.createClass
                     { for k, ki in row
                         skillName = @props.UIplayer.keyBindings[k]
                         if skill = Skills[skillName]
-                            projStyle =
-                                top: 52/2
-                                left: 52/2
-                                transform: "translate(-50%, -50%)"
-                                borderRadius: "50%"
-                                position: "absolute"
-                                background: skill.color
-                                width: skill.radius * 2
-                                height: skill.radius * 2
-
                             <div key={ki} className="keyBox" style={{
                                 left: (rowOffsets[ri]+ki)*(60+5), position: "absolute",
                                 }}>
-                                <div style={projStyle} />
+                                <Circle
+                                    center={new Point 26,26}
+                                    color={skill.color}
+                                    radius={skill.radius}
+                                />
                                 <div className="keyText" > {k} </div>
                             </div>
                     }
