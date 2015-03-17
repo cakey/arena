@@ -150,8 +150,20 @@ SkillBoxUI = React.createClass
                 color={@props.skill.color}
                 radius={@props.skill.radius}
             />
+            {
+                if @props.pctCooldown < 1
+                    cooldownStyle =
+                        width: "100%"
+                        left: "0%"
+                        top: "#{(@props.pctCooldown) * 100}%"
+                        height: "#{(1 - @props.pctCooldown) * 100}%"
+                        background: "rgba(34,34,85,0.8)"
+                        position: "absolute"
+                    <div className="cooldown" style={cooldownStyle}></div>
+            }
             <div className="keyText" > {@props.boundKey} </div>
         </div>
+
 SkillUI = React.createClass
     render: ->
         rows = [
@@ -167,8 +179,15 @@ SkillUI = React.createClass
                     { for boundKey, ki in row
                         skillName = @props.UIplayer.keyBindings[boundKey]
                         if skill = Skills[skillName]
+                            pctCooldown = @props.UIplayer.player.pctCooldown skillName
                             left = (rowOffsets[ri]+ki)*(60+5)
-                            <SkillBoxUI skill={skill} boundKey={boundKey} left={left} key={ki} />
+                            <SkillBoxUI
+                                skill={skill}
+                                boundKey={boundKey}
+                                left={left}
+                                key={ki}
+                                pctCooldown={pctCooldown}
+                            />
                     }
                 </div>
             }
