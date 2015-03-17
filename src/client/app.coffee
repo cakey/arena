@@ -126,7 +126,7 @@ class Arena
         readyPromise.then =>
 
             randomPoint = @map.randomPoint()
-            randomTeam = _.sample(name for name, r of @teams)
+            randomTeam = _.sample((name for name, r of @teams))
 
             @focusedUIPlayer = new UIPlayer @, @handler, randomPoint, randomTeam
             @handler.registerLocal @focusedUIPlayer
