@@ -140,6 +140,18 @@ ScoreBoard = React.createClass
             }
         </div>
 
+SkillBoxUI = React.createClass
+    render: ->
+        <div className="keyBox" style={{
+            left: @props.left, position: "absolute",
+            }}>
+            <Circle
+                center={new Point 26,26}
+                color={@props.skill.color}
+                radius={@props.skill.radius}
+            />
+            <div className="keyText" > {@props.boundKey} </div>
+        </div>
 SkillUI = React.createClass
     render: ->
         rows = [
@@ -152,19 +164,11 @@ SkillUI = React.createClass
         <div>
             { for row, ri in rows
                 <div key={ri} style={{bottom: (rows.length - ri) *60, position: "fixed"}}>
-                    { for k, ki in row
-                        skillName = @props.UIplayer.keyBindings[k]
+                    { for boundKey, ki in row
+                        skillName = @props.UIplayer.keyBindings[boundKey]
                         if skill = Skills[skillName]
-                            <div key={ki} className="keyBox" style={{
-                                left: (rowOffsets[ri]+ki)*(60+5), position: "absolute",
-                                }}>
-                                <Circle
-                                    center={new Point 26,26}
-                                    color={skill.color}
-                                    radius={skill.radius}
-                                />
-                                <div className="keyText" > {k} </div>
-                            </div>
+                            left = (rowOffsets[ri]+ki)*(60+5)
+                            <SkillBoxUI skill={skill} boundKey={boundKey} left={left} key={ki} />
                     }
                 </div>
             }
