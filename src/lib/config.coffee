@@ -3,7 +3,7 @@ config =
         port: 8001
 
     game:
-        width: 400
+        width: 1000
         height: 300
         speedup: 1
         numAIs: 1
