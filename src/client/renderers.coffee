@@ -8,6 +8,34 @@ Skills = require "../lib/skills"
 _ = require 'lodash'
 React = require "react/addons"
 
+PlayerRenderer = (player, ctx) ->
+        # Cast
+        if player.startCastTime?
+            realCastTime = Utils.game.speedInverse(Skills[player.castedSkill].castTime)
+            radiusMs = player.radius / realCastTime
+            radius = (radiusMs * (player.time - player.startCastTime)) + player.radius
+
+            angle = player.p.angle player.castP
+            halfCone = Skills[player.castedSkill].cone / 2
+
+            ctx.beginPath()
+            ctx.moveTo player.p
+            ctx.arc player.p, radius, angle - halfCone, angle + halfCone
+            ctx.moveTo player.p
+            ctx.fillStyle Skills[player.castedSkill].color
+            ctx.fill()
+
+        ctx.filledCircle player.p, player.radius, player.arena.teams[player.team].color
+
+ProjectileRenderer = (projectile, ctx) ->
+    ctx.filledCircle projectile.p, projectile.skill.radius, projectile.skill.color
+
+    ctx.beginPath()
+    ctx.circle projectile.p, projectile.skill.radius - 1
+    ctx.strokeStyle projectile.arena.teams[projectile.team].color
+    ctx.lineWidth 1
+    ctx.stroke()
+
 Circle = React.createClass
     render: ->
         style =
@@ -65,34 +93,6 @@ Arc = React.createClass
                 </div>
             }
         </Circle>
-
-PlayerRenderer = (player, ctx) ->
-        # Cast
-        if player.startCastTime?
-            realCastTime = Utils.game.speedInverse(Skills[player.castedSkill].castTime)
-            radiusMs = player.radius / realCastTime
-            radius = (radiusMs * (player.time - player.startCastTime)) + player.radius
-
-            angle = player.p.angle player.castP
-            halfCone = Skills[player.castedSkill].cone / 2
-
-            ctx.beginPath()
-            ctx.moveTo player.p
-            ctx.arc player.p, radius, angle - halfCone, angle + halfCone
-            ctx.moveTo player.p
-            ctx.fillStyle Skills[player.castedSkill].color
-            ctx.fill()
-
-        ctx.filledCircle player.p, player.radius, player.arena.teams[player.team].color
-
-ProjectileRenderer = (projectile, ctx) ->
-    ctx.filledCircle projectile.p, projectile.skill.radius, projectile.skill.color
-
-    ctx.beginPath()
-    ctx.circle projectile.p, projectile.skill.radius - 1
-    ctx.strokeStyle projectile.arena.teams[projectile.team].color
-    ctx.lineWidth 1
-    ctx.stroke()
 
 ScoreBoard = React.createClass
     render: ->
