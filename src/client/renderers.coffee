@@ -69,46 +69,38 @@ Arc = React.createClass
 Player = React.createClass
     render: ->
         player = @props.player
-        <div>
-            <Circle
-                radius={player.radius}
-                center={player.p}
-                color={player.arena.teams[player.team].color}
-            />
-            {
-                if player.startCastTime?
-                    realCastTime = Utils.game.speedInverse(Skills[player.castedSkill].castTime)
-                    radiusMs = player.radius / realCastTime
-                    radius = (radiusMs * (player.time - player.startCastTime)) + player.radius
+        ctx = @props.ctx
+        # Cast
+        if player.startCastTime?
+            realCastTime = Utils.game.speedInverse(Skills[player.castedSkill].castTime)
+            radiusMs = player.radius / realCastTime
+            radius = (radiusMs * (player.time - player.startCastTime)) + player.radius
 
-                    angle = angle = player.p.angle player.castP
-                    cone = Skills[player.castedSkill].cone
+            angle = player.p.angle player.castP
+            halfCone = Skills[player.castedSkill].cone / 2
 
-                    <Arc
-                        angle={angle}
-                        cone={cone}
-                        radius={radius}
-                        color={Skills[player.castedSkill].color}
-                        center={player.p}
-                    />
-            }
+            ctx.beginPath()
+            ctx.moveTo player.p
+            ctx.arc player.p, radius, angle - halfCone, angle + halfCone
+            ctx.moveTo player.p
+            ctx.fillStyle Skills[player.castedSkill].color
+            ctx.fill()
 
-        </div>
+        ctx.filledCircle player.p, player.radius, player.arena.teams[player.team].color
+        <div></div> # not ideal?
 
 Projectile = React.createClass
     render: ->
-        p = @props.projectile
-        extraStyle =
-            borderWidth: 1
-            borderStyle: "solid"
-            borderColor: p.arena.teams[p.team].color
+        projectile = @props.projectile
+        ctx = @props.ctx
+        ctx.filledCircle projectile.p, projectile.skill.radius, projectile.skill.color
 
-        <Circle
-            radius={p.skill.radius}
-            center={p.p}
-            color={p.skill.color}
-            extraStyle={extraStyle}
-        />
+        ctx.beginPath()
+        ctx.circle projectile.p, projectile.skill.radius - 1
+        ctx.strokeStyle projectile.arena.teams[projectile.team].color
+        ctx.lineWidth 1
+        ctx.stroke()
+        <div></div> # not ideal?
 
 ScoreBoard = React.createClass
     render: ->
@@ -131,20 +123,24 @@ ScoreBoard = React.createClass
 ArenaMap = React.createClass
     render: ->
 
-        style =
-            left: @props.arena.map.p.x
-            top: @props.arena.map.p.y
-            width: @props.arena.map.size.x
-            height: @props.arena.map.size.y
-            position: "fixed"
-            borderWidth: @props.arena.map.wallSize.x
+        map = @props.arena.map
 
-        <div style={style} className="baseMap" >
+        wallP = new Point (-map.wallSize.x / 2), (-map.wallSize.y / 2)
+
+        @props.ctx.beginPath()
+        @props.ctx.fillStyle "#f3f3f3"
+        @props.ctx.fillRect wallP, map.size.add(map.wallSize)
+        @props.ctx.beginPath()
+        @props.ctx.lineWidth map.wallSize.x
+        @props.ctx.strokeStyle "#558893"
+        @props.ctx.strokeRect wallP, map.size.add(map.wallSize)
+
+        <div>
             {for k, v of @props.arena.handler.players
-                <Player player={v} key={k} />
+                <Player player={v} key={k} ctx={@props.ctx} />
             }
             {for k, v of @props.arena.projectiles
-                <Projectile projectile={v} key={k} />
+                <Projectile projectile={v} key={k} ctx={@props.ctx} />
             }
         </div>
 
@@ -181,15 +177,16 @@ SkillUI = React.createClass
 
 Arena = React.createClass
     render: ->
+        ctx = @props.canvas.mapContext(@props.arena.map)
         <div>
-            <ArenaMap arena={@props.arena} />
+            <ArenaMap arena={@props.arena} ctx={ctx} />
             <ScoreBoard teams={@props.arena.teams} />
             <SkillUI UIplayer={@props.arena.focusedUIPlayer}/>
         </div>
 
-arenaRenderer = (arena) ->
+arenaRenderer = (arena, canvas) ->
     React.render(
-        <Arena arena={arena} />
+        <Arena arena={arena} canvas={canvas} />
         document.getElementById('arena')
     )
 
