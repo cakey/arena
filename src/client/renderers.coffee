@@ -46,23 +46,23 @@ projectileRenderer = (projectile, ctx) ->
     ctx.stroke()
 
 arenaMapRenderer = (arena, ctx) ->
-        map = arena.map
+    map = arena.map
 
-        wallP = new Point (-map.wallSize.x / 2), (-map.wallSize.y / 2)
+    wallP = new Point (-map.wallSize.x / 2), (-map.wallSize.y / 2)
 
-        ctx.beginPath()
-        ctx.fillStyle "#f3f3f3"
-        ctx.fillRect wallP, map.size.add(map.wallSize)
-        ctx.beginPath()
-        ctx.lineWidth map.wallSize.x
-        ctx.strokeStyle "#558893"
-        ctx.strokeRect wallP, map.size.add(map.wallSize)
+    ctx.beginPath()
+    ctx.fillStyle "#f3f3f3"
+    ctx.fillRect wallP, map.size.add(map.wallSize)
+    ctx.beginPath()
+    ctx.lineWidth map.wallSize.x
+    ctx.strokeStyle "#558893"
+    ctx.strokeRect wallP, map.size.add(map.wallSize)
 
-        for k, v of arena.handler.players
-            playerRenderer v, ctx
+    for k, v of arena.handler.players
+        playerRenderer v, ctx
 
-        for k, v of arena.projectiles
-            projectileRenderer v, ctx
+    for k, v of arena.projectiles
+        projectileRenderer v, ctx
 
 Circle = React.createClass
     render: ->

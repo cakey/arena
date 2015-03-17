@@ -230,7 +230,7 @@ class Arena
                 if hitPlayer = @projectileCollide projectile
                     skill = projectile.skill
                     @teams[projectile.team].score += skill.score
-                    @teams[hitPlayer.   team].score -= skill.score
+                    @teams[hitPlayer.team].score -= skill.score
                     if skill.hitPlayer?
                         skill.hitPlayer hitPlayer, projectile
                     if skill.continue
