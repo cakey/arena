@@ -159,7 +159,23 @@ SkillBoxUI = React.createClass
                         height: "#{(1 - @props.pctCooldown) * 100}%"
                         background: "rgba(34,34,85,0.8)"
                         position: "absolute"
-                    <div className="cooldown" style={cooldownStyle}></div>
+                    cooldownTextStyle =
+                        position: "absolute"
+                        textAlign: "center"
+                        fontSize: "16px"
+                        fontFamily: "Verdana"
+                        color: "#ffffff"
+                        width: "80%"
+                        top: "30%"
+                        background: "rgba(34,34,85,0.65)"
+
+                    num = Math.round(@props.skill.cooldown * (1 - @props.pctCooldown) / 100)
+                    point = num % 10
+                    secs = Math.round(num / 10)
+                    <div>
+                        <div className="cooldown" style={cooldownStyle}></div>
+                        <div style={cooldownTextStyle}>{"#{secs}.#{point}"}</div>
+                    </div>
             }
             <div className="keyText" > {@props.boundKey} </div>
         </div>
