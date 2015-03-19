@@ -79,7 +79,7 @@ class NetworkHandler
                     player.fire position, d.skill
             else if message.action is "newPlayer"
                 playerPosition = Point.fromObject d.playerPosition
-                player = new Player @arena, playerPosition, d.team, d.playerId
+                player = new Player.ProtoPlayer @arena, playerPosition, d.team, d.playerId
                 @register player
             else if message.action is "deletePlayer"
                 @removePlayer d

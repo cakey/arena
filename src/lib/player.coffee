@@ -1,9 +1,12 @@
+_ = require 'lodash'
+
 uuid = require 'node-uuid'
 Utils = require "../lib/utils"
 Skills = require "../lib/skills"
+UIElement = require "../lib/ui-element"
+Point = require "../lib/point"
 
-class Player
-
+class ProtoPlayer extends UIElement
     constructor: (@arena, @p, @team, @id) ->
         @time = @arena.time
         @radius = 20
@@ -17,6 +20,8 @@ class Player
 
         if not @id?
             @id = uuid.v4()
+
+        super(@id)
 
     moveTo: (@destP) ->
         if @startCastTime isnt null and Skills[@castedSkill].channeled
@@ -78,4 +83,93 @@ class Player
 
         @time = newTime
 
-module.exports = Player
+    render: ->
+        super()
+
+    clear: ->
+        super()
+
+class AIPlayer extends ProtoPlayer
+    constructor: (@arena, @handler, startP, team) ->
+        super @arena, startP, team
+
+    update: (newTime) ->
+        super newTime
+        otherPs = _.reject _.values(@handler.players), team: @team
+
+        if Math.random() < Utils.game.speed(0.005) and not @startCastTime?
+            @handler.fire @, _.sample(otherPs).p, 'orb'
+
+        chanceToMove = Math.random() < Utils.game.speed(0.03)
+        if not @startCastTime? and (chanceToMove or @p.equal @destP)
+            @handler.moveTo @, @arena.map.randomPoint()
+
+    moveTo: (@destP) ->
+        super @destP
+
+    pctCooldown: (castedSkill) ->
+        super castedSkill
+
+    fire: (@castP, @castedSkill) ->
+        super @castP, @castedSkill
+
+    # No place actually uses the update from Player?
+    # update: (newTime) ->
+    #     super newTime
+
+    render: ->
+        super()
+
+    clear: ->
+        super()
+
+class UIPlayer extends ProtoPlayer
+    constructor: (@arena, @handler, startP, team) ->
+        super @arena, startP, team
+
+        @keyBindings =
+            g: 'orb'
+            h: 'flame'
+            b: 'gun'
+            n: 'bomb'
+            j: 'interrupt'
+        addEventListener "mousedown", (event) =>
+            topLeft = new Point @radius, @radius
+            bottomRight = @arena.map.size.subtract topLeft
+
+            p = @arena.mapMouseP.bound topLeft, bottomRight
+
+            if event.which is 3
+                @handler.moveTo @, p
+
+        addEventListener "keypress", (event) =>
+
+            if skill = @keyBindings[String.fromCharCode event.which]
+                castP = @arena.mapMouseP.mapBound @p, @arena.map
+                @handler.fire @, castP, skill
+            else
+                console.log event
+                console.log event.which
+
+    update: (newTime) ->
+        super newTime
+
+    moveTo: (@destP) ->
+        super @destP
+
+    pctCooldown: (castedSkill) ->
+        super castedSkill
+
+    fire: (@castP, @castedSkill) ->
+        super @castP, @castedSkill
+
+    render: ->
+        super()
+
+    clear: ->
+        super()
+
+module.exports = {
+    AIPlayer,
+    UIPlayer
+}
