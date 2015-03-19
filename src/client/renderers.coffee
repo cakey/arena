@@ -173,7 +173,7 @@ uiRenderer = (processor, ctx, staticCtx) ->
 
                 # draw cooldown if necessary
 
-                pctCooldown = processor.player.pctCooldown skillName
+                pctCooldown = processor.pctCooldown skillName
                 if pctCooldown < 1
                     # background
                     staticCtx.globalAlpha 0.8

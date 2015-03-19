@@ -15,7 +15,8 @@ class LocalHandler
         @_readyDeferred.resolve()
 
     registerLocal: (processor) ->
-        player = processor.player
+        console.log processor
+        player = processor
         @players[player.id] = player
         @locallyProcessed.push processor
 
@@ -94,8 +95,8 @@ class NetworkHandler
     ready: -> @_readyDeferred.promise
 
     registerLocal: (processor) ->
-        player = processor.player
-        @players[player.id] = player
+        player = processor
+        @players[player.id] = processor
         @locallyProcessed.push processor
 
         message =
