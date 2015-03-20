@@ -165,7 +165,7 @@ class UIPlayer extends ProtoPlayer
             topLeft = new Point @radius, @radius
             bottomRight = @arena.map.size.subtract topLeft
 
-            p = @arena.mapMouseP.bound topLeft, bottomRight
+            p = @arena.map.mapMouseP.bound topLeft, bottomRight
 
             if event.which is 3
                 @handler.moveTo @, p
@@ -173,7 +173,7 @@ class UIPlayer extends ProtoPlayer
         addEventListener "keypress", (event) =>
 
             if skill = @keyBindings[String.fromCharCode event.which]
-                castP = @arena.mapMouseP.mapBound @p, @arena.map
+                castP = @arena.map.mapMouseP.mapBound @p, @arena.map
                 @handler.fire @, castP, skill
             else
                 console.log event

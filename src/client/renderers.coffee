@@ -14,6 +14,7 @@ arenaRenderer = (arena, canvas) ->
     staticCtx = canvas.context()
 
     map = arena.map
+    # console.log map
 
     wallP = new Point (-map.wallSize.x / 2), (-map.wallSize.y / 2)
 
@@ -166,7 +167,7 @@ uiRenderer = (processor, ctx, staticCtx) ->
 
     # Draw skill overlay if hovered.
     for skillName, locs of iconsLocations
-        if processor.arena.mouseP.inside locs[0], locs[1]
+        if processor.arena.map.mouseP.inside locs[0], locs[1]
 
             skill = Skills[skillName]
 
@@ -231,7 +232,7 @@ uiRenderer = (processor, ctx, staticCtx) ->
 
 Renderers =
     # player: playerRenderer
-    projectile: projectileRenderer
+    # projectile: projectileRenderer
     arena: arenaRenderer
     ui: uiRenderer
 
