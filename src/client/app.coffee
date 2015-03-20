@@ -13,30 +13,13 @@ Utils = require "../lib/utils"
 Player = require "../lib/player"
 UIPlayer = Player.UIPlayer
 AIPlayer = Player.AIPlayer
+Projectile = require "../lib/projectile"
 
 Canvas = require "./canvas"
 Renderers = require "./renderers"
 Handlers = require "./handlers"
 
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
-
-class Projectile
-
-    constructor: (@arena, @time, @p, dirP, @skill, @team) ->
-        angle = @p.angle dirP
-        @destP = @p.bearing angle, @skill.range
-
-    update: (newTime) ->
-
-        if @p.equal @destP
-            return false
-
-        msDiff = newTime - @time
-
-        @p = @p.towards @destP, (Utils.game.speed(@skill.speed) * msDiff)
-
-        @time = newTime
-        return true
 
 # TODO pull out update parts of arena and player to allow running on the server
 class Arena
