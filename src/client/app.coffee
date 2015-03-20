@@ -22,6 +22,7 @@ Handlers = require "./handlers"
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 
 # TODO pull out update parts of arena and player to allow running on the server
+# TODO: separate out the game loop logic from the arena logic.
 class Arena
 
     constructor: (@canvas) ->

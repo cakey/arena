@@ -17,8 +17,15 @@ class Projectile extends UIElement
         @time = newTime
         return true
 
-    render: ->
-        super()
+    render: (ctx) ->
+        # Location
+        ctx.filledCircle @p, @skill.radius, @skill.color
+
+        ctx.beginPath()
+        ctx.circle @p, @skill.radius - 1
+        ctx.strokeStyle @arena.teams[@team].color
+        ctx.lineWidth 1
+        ctx.stroke()
 
     clear: ->
         super()

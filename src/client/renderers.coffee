@@ -5,48 +5,6 @@ Config = require "../lib/config"
 
 # half this crap should just be css/html
 
-playerRenderer = (player, ctx) ->
-
-    # Cast
-    if player.startCastTime?
-        realCastTime = Utils.game.speedInverse(Skills[player.castedSkill].castTime)
-        radiusMs = player.radius / realCastTime
-        radius = (radiusMs * (player.time - player.startCastTime)) + player.radius
-
-        angle = player.p.angle player.castP
-        halfCone = Skills[player.castedSkill].cone / 2
-
-        ctx.beginPath()
-        ctx.moveTo player.p
-        ctx.arc player.p, radius, angle - halfCone, angle + halfCone
-        ctx.moveTo player.p
-        ctx.fillStyle Skills[player.castedSkill].color
-        ctx.fill()
-
-    # Location
-    ctx.filledCircle player.p, player.radius, player.arena.teams[player.team].color
-
-    # casting circle
-    if Config.UI.castingCircles
-        ctx.beginPath()
-        ctx.circle player.p, player.maxCastRadius
-        ctx.lineWidth 1
-        ctx.setLineDash [3,12]
-        ctx.strokeStyle "#777777"
-        ctx.stroke()
-        ctx.setLineDash []
-
-projectileRenderer = (projectile, ctx) ->
-
-    # Location
-    ctx.filledCircle projectile.p, projectile.skill.radius, projectile.skill.color
-
-    ctx.beginPath()
-    ctx.circle projectile.p, projectile.skill.radius - 1
-    ctx.strokeStyle projectile.arena.teams[projectile.team].color
-    ctx.lineWidth 1
-    ctx.stroke()
-
 arenaRenderer = (arena, canvas) ->
 
     # draw Map
@@ -69,10 +27,10 @@ arenaRenderer = (arena, canvas) ->
 
 
     for id, player of arena.handler.players
-        Renderers.player player, ctx, staticCtx
+        player.render ctx
 
     for p in arena.projectiles
-        Renderers.projectile p, ctx, staticCtx
+        p.render ctx
 
     Renderers.ui arena.focusedUIPlayer, ctx, staticCtx
 
@@ -272,7 +230,7 @@ uiRenderer = (processor, ctx, staticCtx) ->
     return # stupid implicit returns
 
 Renderers =
-    player: playerRenderer
+    # player: playerRenderer
     projectile: projectileRenderer
     arena: arenaRenderer
     ui: uiRenderer

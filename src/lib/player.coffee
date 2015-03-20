@@ -5,6 +5,7 @@ Utils = require "../lib/utils"
 Skills = require "../lib/skills"
 UIElement = require "../lib/ui-element"
 Point = require "../lib/point"
+Config = require "../lib/config"
 
 class ProtoPlayer extends UIElement
     constructor: (@arena, @p, @team, @id) ->
@@ -83,8 +84,35 @@ class ProtoPlayer extends UIElement
 
         @time = newTime
 
-    render: ->
-        super()
+    render: (ctx) ->
+        # Cast
+        if @startCastTime?
+            realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
+            radiusMs = @radius / realCastTime
+            radius = (radiusMs * (@time - @startCastTime)) + @radius
+
+            angle = @p.angle @castP
+            halfCone = Skills[@castedSkill].cone / 2
+
+            ctx.beginPath()
+            ctx.moveTo @p
+            ctx.arc @p, radius, angle - halfCone, angle + halfCone
+            ctx.moveTo @p
+            ctx.fillStyle Skills[@castedSkill].color
+            ctx.fill()
+
+        # Location
+        ctx.filledCircle @p, @radius, @arena.teams[@team].color
+
+        # casting circle
+        if Config.UI.castingCircles
+            ctx.beginPath()
+            ctx.circle @p, @maxCastRadius
+            ctx.lineWidth 1
+            ctx.setLineDash [3,12]
+            ctx.strokeStyle "#777777"
+            ctx.stroke()
+            ctx.setLineDash []
 
     clear: ->
         super()
@@ -117,8 +145,8 @@ class AIPlayer extends ProtoPlayer
     # update: (newTime) ->
     #     super newTime
 
-    render: ->
-        super()
+    render: (ctx) ->
+        super ctx
 
     clear: ->
         super()
@@ -163,8 +191,8 @@ class UIPlayer extends ProtoPlayer
     fire: (@castP, @castedSkill) ->
         super @castP, @castedSkill
 
-    render: ->
-        super()
+    render: (ctx) ->
+        super ctx
 
     clear: ->
         super()
