@@ -67,23 +67,24 @@ class GameState
         #Start
         @canvas.begin()
 
-        # Get contexts for rendering.
-        ctx = @canvas.mapContext @map
-        staticCtx = @canvas.context()
+        # # Get contexts for rendering.
+        # ctx = @canvas.mapContext @map
+        # staticCtx = @canvas.context()
 
-        # Render map.
-        @map.render ctx
+        # # Render map.
+        # @map.render ctx
 
-        # Render Players.
-        for id, player of @handler.players
-            player.render ctx
+        # # Render Players.
+        # for id, player of @handler.players
+        #     player.render ctx
 
-        # Render projectiles.
-        for p in @projectiles
-            p.render ctx
+        # # Render projectiles.
+        # for p in @projectiles
+        #     p.render ctx
 
         # Render other UI (skills/score etc)
-        Renderers.ui @focusedUIPlayer, @teams, ctx, staticCtx
+        # Renderers.ui @focusedUIPlayer, @teams, ctx, staticCtx
+        Renderers.arena @, @canvas
 
         # End
         @canvas.end()
