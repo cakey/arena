@@ -22,6 +22,7 @@ class UIArena
 
     constructor: (@canvas) ->
         @arena = new Engine.Arena
+        console.log "Arena: #{@arena.loop}"
 
         addEventListener "mousemove", (event) =>
             @arena.mouseP = Point.fromObject event
@@ -35,7 +36,9 @@ class UIArena
         @handler = new Handlers.Network @arena
         @arena.handler = @handler
         readyPromise = @handler.ready()
+        console.log 'UI Arena constructor called'
         readyPromise.then =>
+            console.log 'Calling arena onReady...'
             @player = new UIPlayer @arena, @handler
             @arena.onReady @player, @render
 
@@ -77,7 +80,40 @@ class UIPlayer
     update: (newTime) ->
 
 
+<<<<<<< Updated upstream
+        @handler = new Handlers.Network @
+        readyPromise = @handler.ready()
+        readyPromise.then =>
+
+            randomPoint = @map.randomPoint()
+            randomTeam = _.sample((name for name, r of @teams))
+
+            @focusedUIPlayer = new UIPlayer @, @handler, randomPoint, randomTeam
+            @handler.registerLocal @focusedUIPlayer
+
+            if Config.game.numAIs > 0
+                @teams.greenAI =
+                    color: "#33aa33"
+                    score: 0
+                @teams.yellowAI =
+                    color: "#ddaa44"
+                    score: 0
+
+            for a in [0...Config.game.numAIs]
+                aip1 = new AIPlayer @, @handler, @map.randomPoint(), "yellowAI"
+                @handler.registerLocal aip1
+                aip2 = new AIPlayer @, @handler, @map.randomPoint(), "greenAI"
+                @handler.registerLocal aip2
+
+            @loop()
+
+    render: ->
+        @canvas.begin()
+        Renderers.arena @, @canvas
+        @canvas.end()
+=======
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
+>>>>>>> Stashed changes
 
 canvas = new Canvas 'canvas'
 arena = new UIArena canvas

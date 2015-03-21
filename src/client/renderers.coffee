@@ -47,7 +47,7 @@ projectileRenderer = (projectile, ctx) ->
     ctx.lineWidth 1
     ctx.stroke()
 
-arenaRenderer = (arena, canvas) ->
+arenaRenderer = (arena, canvas, uiPlayer) ->
 
     # draw Map
     # Location
@@ -74,7 +74,7 @@ arenaRenderer = (arena, canvas) ->
     for p in arena.projectiles
         Renderers.projectile p, ctx, staticCtx
 
-    Renderers.ui arena.focusedUIPlayer, ctx, staticCtx
+    Renderers.ui uiPlayer, ctx, staticCtx
 
     # score
 

@@ -4,7 +4,7 @@ Skills = require "../lib/skills"
 
 class Player
 
-    constructor: (@arena, @p, @team, @id) ->
+    constructor: (@arena, @p = null, @team = null, @id) ->
         @time = @arena.time
         @radius = 20
         @maxCastRadius = @radius * 2

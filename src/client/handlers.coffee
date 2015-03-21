@@ -1,37 +1,12 @@
 Config = require "../lib/config"
 WebSocket = require 'ws'
-RSVP = require 'rsvp'
 uuid = require 'node-uuid'
+RSVP = require 'rsvp'
 
 Point = require "../lib/point"
 Skills = require "../lib/skills"
 Player = require "../lib/player"
-
-class LocalHandler
-    constructor: ->
-        @players = {}
-        @locallyProcessed = []
-        @_readyDeferred = RSVP.defer()
-        @_readyDeferred.resolve()
-
-    registerLocal: (processor) ->
-        player = processor.player
-        @players[player.id] = player
-        @locallyProcessed.push processor
-
-    register: (player) ->
-        @players[player.id] = player
-
-    removePlayer: (playerId) ->
-        delete @players[playerId]
-
-    moveTo: (player, destP) ->
-        player.moveTo destP
-
-    fire: (player, castP, skillName) ->
-        player.fire castP, skillName
-
-    ready: -> @_readyDeferred.promise
+LocalHandler = require "../lib/local_handler"
 
 class NetworkHandler
     constructor: (@arena) ->
