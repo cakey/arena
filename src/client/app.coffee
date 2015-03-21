@@ -67,47 +67,24 @@ class GameState
         #Start
         @canvas.begin()
 
+        # Get contexts for rendering.
         ctx = @canvas.mapContext @map
         staticCtx = @canvas.context()
 
+        # Render map.
         @map.render ctx
 
+        # Render Players.
         for id, player of @handler.players
             player.render ctx
 
+        # Render projectiles.
         for p in @projectiles
             p.render ctx
 
-        # Leave UI crap here as it's going in favour of react stuff anyway.
-        Renderers.ui @focusedUIPlayer, ctx, staticCtx
+        # Render other UI (skills/score etc)
+        Renderers.ui @focusedUIPlayer, @teams, ctx, staticCtx
 
-        # Score
-        staticCtx.globalAlpha 0.8
-
-        backLoc = new Point (window.innerWidth - 220), 20
-        scoreBoxSize = new Point(200, (Object.keys(@teams).length * 32) + 20)
-        Renderers.box backLoc, scoreBoxSize, staticCtx
-
-        staticCtx.font "16px verdana"
-
-        teamKeys = Object.keys(@teams)
-        teamKeys.sort (a,b) => @teams[b].score - @teams[a].score
-
-        y = 50
-        for name in teamKeys
-            location = new Point(window.innerWidth - 200, y)
-
-            staticCtx.fillStyle "#222233"
-            staticCtx.fillText name, location
-
-            location = new Point(window.innerWidth - 100, y)
-
-            staticCtx.fillStyle "#444466"
-            staticCtx.fillText @teams[name].score, location
-
-            y += 32
-
-        staticCtx.globalAlpha 1
         # End
         @canvas.end()
 

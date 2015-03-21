@@ -17,9 +17,36 @@ uiBoxRenderer = (topLeft, size, staticCtx) ->
     staticCtx.lineWidth 1
     staticCtx.strokeRect topLeft, size
 
-uiRenderer = (processor, ctx, staticCtx) ->
+uiRenderer = (processor, teams, ctx, staticCtx) ->
 
     # TODO: This needs a refactor!!
+
+    staticCtx.globalAlpha 0.8
+
+    backLoc = new Point (window.innerWidth - 220), 20
+    scoreBoxSize = new Point(200, (Object.keys(teams).length * 32) + 20)
+    uiBoxRenderer backLoc, scoreBoxSize, staticCtx
+
+    staticCtx.font "16px verdana"
+
+    teamKeys = Object.keys(teams)
+    teamKeys.sort (a,b) -> teams[b].score - teams[a].score
+
+    y = 50
+    for name in teamKeys
+        location = new Point(window.innerWidth - 200, y)
+
+        staticCtx.fillStyle "#222233"
+        staticCtx.fillText name, location
+
+        location = new Point(window.innerWidth - 100, y)
+
+        staticCtx.fillStyle "#444466"
+        staticCtx.fillText teams[name].score, location
+
+        y += 32
+
+    staticCtx.globalAlpha 1
 
     # Draw skill icons
 
