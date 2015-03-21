@@ -8,7 +8,6 @@ class Arena
     constructor: ->
         @p = new Point 25, 25
         @size = new Point Config.game.width, Config.game.height
-        console.log @size
         @wallSize = new Point 6, 6
 
         @mapMouseP = new Point 0, 0
@@ -45,8 +44,6 @@ class Arena
 
         ctx.beginPath()
         ctx.fillStyle "#f3f3f3"
-        # console.log @size
-        # console.log @wallSize
         ctx.fillRect wallP, @size.add(@wallSize)
         ctx.beginPath()
         ctx.lineWidth @wallSize.x

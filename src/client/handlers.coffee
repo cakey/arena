@@ -15,7 +15,6 @@ class LocalHandler
         @_readyDeferred.resolve()
 
     registerLocal: (processor) ->
-        console.log processor
         player = processor
         @players[player.id] = player
         @locallyProcessed.push processor

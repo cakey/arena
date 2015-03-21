@@ -36,7 +36,6 @@ class GameState
 
         @projectiles = []
         @map = new Arena
-        console.log @map
 
         @handler = new Handlers.Network @
         readyPromise = @handler.ready()
