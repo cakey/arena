@@ -8,6 +8,7 @@ class Arena
     constructor: ->
         @p = new Point 25, 25
         @size = new Point Config.game.width, Config.game.height
+        console.log @size
         @wallSize = new Point 6, 6
 
         @mapMouseP = new Point 0, 0
@@ -39,6 +40,17 @@ class Arena
 
         @p = @p.subtract moveVector
 
-    render: ->
+    render: (ctx) ->
+        wallP = new Point (-@wallSize.x / 2), (-@wallSize.y / 2)
+
+        ctx.beginPath()
+        ctx.fillStyle "#f3f3f3"
+        # console.log @size
+        # console.log @wallSize
+        ctx.fillRect wallP, @size.add(@wallSize)
+        ctx.beginPath()
+        ctx.lineWidth @wallSize.x
+        ctx.strokeStyle "#558893"
+        ctx.strokeRect wallP, @size.add(@wallSize)
 
 module.exports = Arena

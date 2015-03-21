@@ -114,6 +114,8 @@ class Point
         new Point (@x - otherP.x), (@y - otherP.y)
 
     add: (otherP) ->
+        if not otherP?
+            console.log "doh"
         new Point (@x + otherP.x), (@y + otherP.y)
 
 module.exports = Point

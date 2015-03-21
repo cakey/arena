@@ -5,64 +5,64 @@ Config = require "../lib/config"
 
 # half this crap should just be css/html
 
-arenaRenderer = (arena, canvas) ->
+# arenaRenderer = (arena, canvas) ->
 
-    # draw Map
-    # Location
+#     # draw Map
+#     # Location
 
-    ctx = canvas.mapContext(arena.map)
-    staticCtx = canvas.context()
+#     ctx = canvas.mapContext(arena.map)
+#     staticCtx = canvas.context()
 
-    map = arena.map
-    # console.log map
+#     map = arena.map
+#     # console.log map
 
-    wallP = new Point (-map.wallSize.x / 2), (-map.wallSize.y / 2)
+#     wallP = new Point (-map.wallSize.x / 2), (-map.wallSize.y / 2)
 
-    ctx.beginPath()
-    ctx.fillStyle "#f3f3f3"
-    ctx.fillRect wallP, map.size.add(map.wallSize)
-    ctx.beginPath()
-    ctx.lineWidth map.wallSize.x
-    ctx.strokeStyle "#558893"
-    ctx.strokeRect wallP, map.size.add(map.wallSize)
+#     ctx.beginPath()
+#     ctx.fillStyle "#f3f3f3"
+#     ctx.fillRect wallP, map.size.add(map.wallSize)
+#     ctx.beginPath()
+#     ctx.lineWidth map.wallSize.x
+#     ctx.strokeStyle "#558893"
+#     ctx.strokeRect wallP, map.size.add(map.wallSize)
 
 
-    for id, player of arena.handler.players
-        player.render ctx
+#     for id, player of arena.handler.players
+#         player.render ctx
 
-    for p in arena.projectiles
-        p.render ctx
+#     for p in arena.projectiles
+#         p.render ctx
 
-    Renderers.ui arena.focusedUIPlayer, ctx, staticCtx
+#     Renderers.ui arena.focusedUIPlayer, ctx, staticCtx
 
-    # score
+#     # score
 
-    staticCtx.globalAlpha 0.8
+#     staticCtx.globalAlpha 0.8
 
-    backLoc = new Point (window.innerWidth - 220), 20
-    scoreBoxSize = new Point(200, (Object.keys(arena.teams).length * 32) + 20)
-    uiBoxRenderer backLoc, scoreBoxSize, staticCtx
+#     backLoc = new Point (window.innerWidth - 220), 20
+#     scoreBoxSize = new Point(200, (Object.keys(arena.teams).length * 32) + 20)
+#     uiBoxRenderer backLoc, scoreBoxSize, staticCtx
 
-    staticCtx.font "16px verdana"
+#     staticCtx.font "16px verdana"
 
-    teamKeys = Object.keys(arena.teams)
-    teamKeys.sort (a,b) -> arena.teams[b].score - arena.teams[a].score
+#     teamKeys = Object.keys(arena.teams)
+#     teamKeys.sort (a,b) -> arena.teams[b].score - arena.teams[a].score
 
-    y = 50
-    for name in teamKeys
-        location = new Point(window.innerWidth - 200, y)
+#     y = 50
+#     for name in teamKeys
+#         location = new Point(window.innerWidth - 200, y)
 
-        staticCtx.fillStyle "#222233"
-        staticCtx.fillText name, location
+#         staticCtx.fillStyle "#222233"
+#         staticCtx.fillText name, location
 
-        location = new Point(window.innerWidth - 100, y)
+#         location = new Point(window.innerWidth - 100, y)
 
-        staticCtx.fillStyle "#444466"
-        staticCtx.fillText arena.teams[name].score, location
+#         staticCtx.fillStyle "#444466"
+#         staticCtx.fillText arena.teams[name].score, location
 
-        y += 32
+#         y += 32
 
-    staticCtx.globalAlpha 1
+#     staticCtx.globalAlpha 1
 
 uiBoxRenderer = (topLeft, size, staticCtx) ->
     # background
@@ -233,7 +233,8 @@ uiRenderer = (processor, ctx, staticCtx) ->
 Renderers =
     # player: playerRenderer
     # projectile: projectileRenderer
-    arena: arenaRenderer
+    # arena: arenaRenderer
+    box: uiBoxRenderer
     ui: uiRenderer
 
 module.exports = Renderers
