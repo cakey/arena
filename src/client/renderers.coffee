@@ -188,21 +188,31 @@ SkillBoxUI = React.createClass
             </div>
             {
                 if @state.hover
-    #             maxChars = ((overLayX * 2) / fontSize) - 6
-    #             descLines = Utils.string.wordWrap skill.description, maxChars
-    #             skillKeys = ["castTime", "speed", "range", "score", "cooldown"]
+                    overLayX = 200
+                    fontSize = 16
+                    maxChars = ((overLayX * 2) / fontSize) - 6
+                    descLines = Utils.string.wordWrap @props.skill.description, maxChars
+                    skillKeys = ["castTime", "speed", "range", "score", "cooldown"]
 
-    #             overLayY = (skillKeys.length + descLines.length + 2) * fontSize * 2
+                    overLayY = (skillKeys.length + descLines.length) * fontSize * 2
 
-    #             overlaySize = new Point overLayX, overLayY
+                    overlaySize = new Point overLayX, overLayY
                     tooltipstyle =
-                        width: 200
-                        height: 300
+                        width: overLayX
+                        height: overLayY
                         position: "absolute"
-                        top: -325
-                        left: -75
-                    <div className="box" style={tooltipstyle}>
-
+                        top: -(overLayY+75)
+                        left: -((overLayX/2))
+                    <div className="skillTooltip box" style={tooltipstyle}>
+                        { for textType, i in skillKeys
+                            <div key={i} >
+                                <div>{textType}</div>
+                                <div>{@props.skill[textType]}</div>
+                            </div>
+                        }
+                        { for descLine, i in descLines
+                            <div key={i}>{descLine}</div>
+                        }
                     </div>
             }
         </div>
