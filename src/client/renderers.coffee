@@ -204,14 +204,15 @@ SkillBoxUI = React.createClass
                         top: -(overLayY+75)
                         left: -((overLayX/2))
                     <div className="skillTooltip box" style={tooltipstyle}>
+                        <div style={color:@props.skill.color}>{@props.skillName}</div>
                         { for textType, i in skillKeys
                             <div key={i} >
-                                <div>{textType}</div>
-                                <div>{@props.skill[textType]}</div>
+                                <div style={color:"#444466", position:"absolute", top:fontSize*2*(i+1)}>{textType}</div>
+                                <div style={color:"#009944", position:"absolute", top:fontSize*2*(i+1), right:100}>{@props.skill[textType]}</div>
                             </div>
                         }
                         { for descLine, i in descLines
-                            <div key={i}>{descLine}</div>
+                            <div style={color:"#444466", position:"absolute", top:(fontSize*2*(i+1+skillKeys.length))} key={i}>{descLine}</div>
                         }
                     </div>
             }
@@ -236,6 +237,7 @@ SkillUI = React.createClass
                             left = (rowOffsets[ri]+ki)*(60+5)
                             <SkillBoxUI
                                 skill={skill}
+                                skillName={skillName}
                                 boundKey={boundKey}
                                 left={left}
                                 key={ki}
