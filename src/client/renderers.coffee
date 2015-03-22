@@ -194,7 +194,7 @@ SkillBoxUI = React.createClass
                     descLines = Utils.string.wordWrap @props.skill.description, maxChars
                     skillKeys = ["castTime", "speed", "range", "score", "cooldown"]
 
-                    overLayY = (skillKeys.length + descLines.length) * fontSize * 2
+                    overLayY = (skillKeys.length + descLines.length/2 + 1) * fontSize * 2
 
                     overlaySize = new Point overLayX, overLayY
                     tooltipstyle =
@@ -207,12 +207,12 @@ SkillBoxUI = React.createClass
                         <div style={color:@props.skill.color}>{@props.skillName}</div>
                         { for textType, i in skillKeys
                             <div key={i} >
-                                <div style={color:"#444466", position:"absolute", top:fontSize*2*(i+1)}>{textType}</div>
-                                <div style={color:"#009944", position:"absolute", top:fontSize*2*(i+1), right:100}>{@props.skill[textType]}</div>
+                                <div style={color:"#444466", position:"absolute", top:fontSize*2*(i+2)}>{textType}</div>
+                                <div style={color:"#009944", position:"absolute", top:fontSize*2*(i+2), left:overLayX}>{@props.skill[textType]}</div>
                             </div>
                         }
                         { for descLine, i in descLines
-                            <div style={color:"#444466", position:"absolute", top:(fontSize*2*(i+1+skillKeys.length))} key={i}>{descLine}</div>
+                            <div style={color:"#444466", position:"absolute", top:(fontSize*2*((i/2)+2+skillKeys.length)), left: 25} key={i}>{descLine}</div>
                         }
                     </div>
             }
@@ -262,84 +262,6 @@ arenaRenderer = (arena, canvas) ->
         <Arena arena={arena} canvas={canvas} />
         document.getElementById('arena')
     )
-
-
-# uiRenderer = (processor, ctx, staticCtx) ->
-
-#     # TODO: This needs a refactor!!
-
-#     # Draw skill icons
-
-#     rowOffsets = [0,35,50,90]
-
-
-#     iconsLocations = {} # Skill: [topleft, bottomright]
-
-
-#     # Draw skill overlay if hovered.
-#     for skillName, locs of iconsLocations
-#         if processor.arena.mouseP.inside locs[0], locs[1]
-
-#             skill = Skills[skillName]
-
-#             overLayX = 220
-
-#             # need to calculate description length for Y size of overlay
-#             maxChars = ((overLayX * 2) / fontSize) - 6
-#             descLines = Utils.string.wordWrap skill.description, maxChars
-#             skillKeys = ["castTime", "speed", "range", "score", "cooldown"]
-
-#             overLayY = (skillKeys.length + descLines.length + 2) * fontSize * 2
-
-#             overlaySize = new Point overLayX, overLayY
-#             border = new Point 0, keyBorder
-
-#             staticCtx.globalAlpha 0.8
-
-#             topLeft = locs[0]
-#                 .subtract(new Point (overlaySize.x / 2), overlaySize.y)
-#                 .add(new Point (keySize / 2), 0)
-#                 .subtract(border)
-
-#             uiBoxRenderer topLeft, overlaySize, staticCtx
-
-#             staticCtx.font "#{fontSize}px verdana"
-#             labelOffset = new Point(
-#                 fontSize
-#                 fontSize * 2
-#             )
-#             staticCtx.fillStyle skill.color
-#             staticCtx.fillText skillName, (topLeft.add labelOffset)
-
-#             # text
-#             for textType, i in skillKeys
-#                 staticCtx.font "#{fontSize}px verdana"
-#                 labelOffset = new Point(
-#                     fontSize
-#                     fontSize * 2 * (i + 2)
-#                 )
-#                 staticCtx.fillStyle "#444466"
-#                 staticCtx.fillText textType, (topLeft.add labelOffset)
-#                 numberOffset = new Point(
-#                     overLayX - fontSize * 4
-#                     fontSize * 2 * (i + 2)
-#                 )
-#                 staticCtx.fillStyle "#009944"
-#                 staticCtx.fillText skill[textType], (topLeft.add numberOffset)
-
-#             # description
-#             for line, i in descLines
-#                 staticCtx.font "#{fontSize}px verdana"
-#                 labelOffset = new Point(
-#                     fontSize
-#                     fontSize * 2 * (i + 2 + skillKeys.length)
-#                 )
-#                 staticCtx.fillStyle "#444466"
-#                 staticCtx.fillText line, (topLeft.add labelOffset)
-
-#             staticCtx.globalAlpha 1
-
-#     return # stupid implicit returns
 
 Renderers =
     arena: arenaRenderer
