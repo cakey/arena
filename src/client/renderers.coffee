@@ -127,7 +127,7 @@ ScoreBoard = React.createClass
         teamKeys = Object.keys(@props.teams)
         teamKeys.sort (a,b) => @props.teams[b].score - @props.teams[a].score
 
-        <div className="scoreBox" >
+        <div className="scoreBox box" >
             {teamKeys.map (teamKey, i) =>
                 <div className="scoreRow" key={i} >
                     <span className="teamName" >
@@ -141,43 +141,70 @@ ScoreBoard = React.createClass
         </div>
 
 SkillBoxUI = React.createClass
+    getInitialState: ->
+        hover: false
+    mouseIn: ->
+        @setState
+            hover: true
+    mouseOut: ->
+        @setState
+            hover: false
     render: ->
-        <div className="keyBox" style={{
-            left: @props.left, position: "absolute",
-            }}>
-            <Circle
-                center={new Point 26,26}
-                color={@props.skill.color}
-                radius={@props.skill.radius}
-            />
-            {
-                if @props.pctCooldown < 1
-                    cooldownStyle =
-                        width: "100%"
-                        left: "0%"
-                        top: "#{(@props.pctCooldown) * 100}%"
-                        height: "#{(1 - @props.pctCooldown) * 100}%"
-                        background: "rgba(34,34,85,0.8)"
-                        position: "absolute"
-                    cooldownTextStyle =
-                        position: "absolute"
-                        textAlign: "center"
-                        fontSize: "16px"
-                        fontFamily: "Verdana"
-                        color: "#ffffff"
-                        width: "80%"
-                        top: "30%"
-                        background: "rgba(34,34,85,0.65)"
+        <div style={{ left: @props.left, position: "absolute"}}>
+            <div className="keyBox box" onMouseEnter={@mouseIn} onMouseLeave={@mouseOut} >
+                <Circle
+                    center={new Point 26,26}
+                    color={@props.skill.color}
+                    radius={@props.skill.radius}
+                />
+                {
+                    if @props.pctCooldown < 1
+                        cooldownStyle =
+                            width: "100%"
+                            left: "0%"
+                            top: "#{(@props.pctCooldown) * 100}%"
+                            height: "#{(1 - @props.pctCooldown) * 100}%"
+                            background: "rgba(34,34,85,0.8)"
+                            position: "absolute"
+                        cooldownTextStyle =
+                            position: "absolute"
+                            textAlign: "center"
+                            fontSize: "16px"
+                            fontFamily: "Verdana"
+                            color: "#ffffff"
+                            width: "80%"
+                            top: "30%"
+                            background: "rgba(34,34,85,0.65)"
 
-                    num = Math.round(@props.skill.cooldown * (1 - @props.pctCooldown) / 100)
-                    point = num % 10
-                    secs = Math.round(num / 10)
-                    <div>
-                        <div className="cooldown" style={cooldownStyle}></div>
-                        <div style={cooldownTextStyle}>{"#{secs}.#{point}"}</div>
+                        num = Math.round(@props.skill.cooldown * (1 - @props.pctCooldown) / 100)
+                        point = num % 10
+                        secs = Math.round(num / 10)
+                        <div>
+                            <div className="cooldown" style={cooldownStyle}></div>
+                            <div style={cooldownTextStyle}>{"#{secs}.#{point}"}</div>
+                        </div>
+                }
+                <div className="keyText" > {@props.boundKey} </div>
+            </div>
+            {
+                if @state.hover
+    #             maxChars = ((overLayX * 2) / fontSize) - 6
+    #             descLines = Utils.string.wordWrap skill.description, maxChars
+    #             skillKeys = ["castTime", "speed", "range", "score", "cooldown"]
+
+    #             overLayY = (skillKeys.length + descLines.length + 2) * fontSize * 2
+
+    #             overlaySize = new Point overLayX, overLayY
+                    tooltipstyle =
+                        width: 200
+                        height: 300
+                        position: "absolute"
+                        top: -325
+                        left: -75
+                    <div className="box" style={tooltipstyle}>
+
                     </div>
             }
-            <div className="keyText" > {@props.boundKey} </div>
         </div>
 
 SkillUI = React.createClass
@@ -235,71 +262,6 @@ arenaRenderer = (arena, canvas) ->
 
 
 #     iconsLocations = {} # Skill: [topleft, bottomright]
-
-#     for row, rIndex in rows
-#         for key, cIndex in row
-#             skillName = processor.keyBindings[key]
-#             if skill = Skills[skillName]
-#                 keyOffsetX = cIndex * (keySize + keyBorder)
-#                 keyX = leftMargin + keyOffsetX + rowOffsets[rIndex]
-#                 keyOffsetY = rIndex * (keySize + keyBorder)
-#                 keyY = topMargin + keyOffsetY
-#                 keyP = new Point keyX, keyY
-#                 iconsLocations[skillName] = [keyP, keyP.add keySizeP]
-
-#                 staticCtx.globalAlpha 0.8
-
-#                 uiBoxRenderer keyP, keySizeP, staticCtx
-
-#                 # projectile
-#                 projectileOffset = new Point (keySize / 2), (keySize / 3)
-#                 projectileLocation = keyP.add projectileOffset
-#                 staticCtx.filledCircle projectileLocation, skill.radius, skill.color
-
-#                 # text
-#                 staticCtx.fillStyle "#444477"
-#                 staticCtx.font "#{fontSize}px verdana"
-#                 textOffset = new Point(
-#                     ((keySize / 2) - fontSize / 4),
-#                     (keySize - fontSize / 2)
-#                 )
-#                 staticCtx.fillText key, (keyP.add textOffset)
-
-#                 staticCtx.globalAlpha 1
-
-#                 # draw cooldown if necessary
-
-#                 pctCooldown = processor.player.pctCooldown skillName
-#                 if pctCooldown < 1
-#                     # background
-#                     staticCtx.globalAlpha 0.8
-#                     staticCtx.beginPath()
-#                     staticCtx.fillStyle "#222255"
-#                     ySize = keySize * (1 - pctCooldown)
-
-#                     staticCtx.fillRect(
-#                         new Point(keyX, keyY + (keySize - ySize)),
-#                         new Point keySize, ySize
-#                     )
-
-
-#                     # text
-#                     num = Math.round(skill.cooldown * (1 - pctCooldown) / 100)
-#                     point = num % 10
-#                     secs = Math.round(num / 10)
-#                     txt = "#{secs}.#{point}"
-
-#                     staticCtx.fillStyle "#ffffff"
-#                     staticCtx.strokeStyle "#222255"
-#                     staticCtx.font "16px verdana"
-#                     textOffset = new Point(
-#                         keySize / 2 - 8 * (txt.length) / 2,
-#                         keySize / 2 + 8
-#                     )
-#                     staticCtx.lineWidth 3
-#                     staticCtx.strokeText txt, (keyP.add textOffset)
-#                     staticCtx.globalAlpha 1
-#                     staticCtx.fillText txt, (keyP.add textOffset)
 
 
 #     # Draw skill overlay if hovered.
