@@ -112,9 +112,6 @@ class ProtoPlayer extends UIElement
             ctx.stroke()
             ctx.setLineDash []
 
-    clear: ->
-        super()
-
 class AIPlayer extends ProtoPlayer
     constructor: (@arena, @handler, startP, team) ->
         super @arena, startP, team
@@ -129,24 +126,6 @@ class AIPlayer extends ProtoPlayer
         chanceToMove = Math.random() < Utils.game.speed(0.03)
         if not @startCastTime? and (chanceToMove or @p.equal @destP)
             @handler.moveTo @, @arena.map.randomPoint()
-
-    moveTo: (@destP) ->
-        super @destP
-
-    pctCooldown: (castedSkill) ->
-        super castedSkill
-
-    fire: (@castP, @castedSkill) ->
-        super @castP, @castedSkill
-
-    # update: (newTime) ->
-    #     super newTime
-
-    render: (ctx) ->
-        super ctx
-
-    clear: ->
-        super()
 
 class UIPlayer extends ProtoPlayer
     constructor: (@arena, @handler, startP, team) ->
@@ -175,24 +154,6 @@ class UIPlayer extends ProtoPlayer
             else
                 console.log event
                 console.log event.which
-
-    update: (newTime) ->
-        super newTime
-
-    moveTo: (@destP) ->
-        super @destP
-
-    pctCooldown: (castedSkill) ->
-        super castedSkill
-
-    fire: (@castP, @castedSkill) ->
-        super @castP, @castedSkill
-
-    render: (ctx) ->
-        super ctx
-
-    clear: ->
-        super()
 
 module.exports = {
     AIPlayer,

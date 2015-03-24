@@ -27,7 +27,4 @@ class Projectile extends UIElement
         ctx.lineWidth 1
         ctx.stroke()
 
-    clear: ->
-        super()
-
 module.exports = Projectile
