@@ -24,9 +24,12 @@ canvas {
   border-style: solid;
 }
 
-.scoreBox {
+.box {
   background: rgba(243,243,243,0.75);
   border: 1px solid #558893;
+}
+
+.scoreBox {
   width: 200px;
   right: 20px;
   top: 20px;
@@ -34,10 +37,12 @@ canvas {
   z-index: 2;
 }
 
+.skillTooltip {
+  font-size: 16;
+  padding: 25px;
+}
+
 .keyBox {
-  z-index: -2;
-  background: rgba(243,243,243,0.75);
-  border: 1px solid #558893;
   width: 44px;
   height: 44px;
   padding: 4px;

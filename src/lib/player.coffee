@@ -1,6 +1,6 @@
 _ = require 'lodash'
-
 uuid = require 'node-uuid'
+
 Utils = require "../lib/utils"
 Skills = require "../lib/skills"
 UIElement = require "../lib/ui-element"
@@ -58,13 +58,11 @@ class ProtoPlayer extends UIElement
         msDiff = newTime - @time
 
         # Location
-
         newP = @p.towards @destP, (Utils.game.speed(@speed) * msDiff)
         if @arena.allowedMovement newP, @
             @p = newP
 
         # Cast
-
         if @startCastTime?
             realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
             if newTime - @startCastTime > realCastTime
@@ -141,9 +139,8 @@ class AIPlayer extends ProtoPlayer
     fire: (@castP, @castedSkill) ->
         super @castP, @castedSkill
 
-    # No place actually uses the update from Player?
-    # update: (newTime) ->
-    #     super newTime
+    update: (newTime) ->
+        super newTime
 
     render: (ctx) ->
         super ctx

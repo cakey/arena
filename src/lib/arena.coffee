@@ -3,7 +3,7 @@ _ = require 'lodash'
 Point = require "../lib/point"
 Config = require "../lib/config"
 
-# TODO remove the map from the "@mapBlah" variables.
+# TODO remove the "map" from the "@mapBlah" variables.
 class Arena
     constructor: ->
         @p = new Point 25, 25

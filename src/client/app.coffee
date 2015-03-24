@@ -64,29 +64,13 @@ class GameState
             @loop()
 
     render: ->
-        #Start
+        # Clear the canvas.
         @canvas.begin()
 
-        # # Get contexts for rendering.
-        # ctx = @canvas.mapContext @map
-        # staticCtx = @canvas.context()
-
-        # # Render map.
-        # @map.render ctx
-
-        # # Render Players.
-        # for id, player of @handler.players
-        #     player.render ctx
-
-        # # Render projectiles.
-        # for p in @projectiles
-        #     p.render ctx
-
-        # Render other UI (skills/score etc)
-        # Renderers.ui @focusedUIPlayer, @teams, ctx, staticCtx
+        # Render all the things.
         Renderers.arena @, @canvas
 
-        # End
+        # Nothing right now.
         @canvas.end()
 
     addProjectile: (startP, destP, skill, team) ->
@@ -174,6 +158,5 @@ class GameState
 
         @time = updateTime
 
-#TODO:
 canvas = new Canvas 'canvas'
 gameState = new GameState canvas
