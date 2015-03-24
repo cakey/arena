@@ -1,68 +1,9 @@
-Utils = require "../lib/utils"
-Point = require "../lib/point"
-Skills = require "../lib/skills"
-Config = require "../lib/config"
-
 _ = require 'lodash'
 React = require "react/addons"
 
-playerRenderer = (player, ctx) ->
-    # Cast
-    if player.startCastTime?
-        realCastTime = Utils.game.speedInverse(Skills[player.castedSkill].castTime)
-        radiusMs = player.radius / realCastTime
-        radius = (radiusMs * (player.time - player.startCastTime)) + player.radius
-
-        angle = player.p.angle player.castP
-        halfCone = Skills[player.castedSkill].cone / 2
-
-        ctx.beginPath()
-        ctx.moveTo player.p
-        ctx.arc player.p, radius, angle - halfCone, angle + halfCone
-        ctx.moveTo player.p
-        ctx.fillStyle Skills[player.castedSkill].color
-        ctx.fill()
-
-    # Location
-    ctx.filledCircle player.p, player.radius, player.arena.teams[player.team].color
-
-    # casting circle
-    if Config.UI.castingCircles
-        ctx.beginPath()
-        ctx.circle player.p, player.maxCastRadius
-        ctx.lineWidth 1
-        ctx.setLineDash [3,12]
-        ctx.strokeStyle "#777777"
-        ctx.stroke()
-        ctx.setLineDash []
-
-projectileRenderer = (projectile, ctx) ->
-    ctx.filledCircle projectile.p, projectile.skill.radius, projectile.skill.color
-
-    ctx.beginPath()
-    ctx.circle projectile.p, projectile.skill.radius - 1
-    ctx.strokeStyle projectile.arena.teams[projectile.team].color
-    ctx.lineWidth 1
-    ctx.stroke()
-
-arenaMapRenderer = (arena, ctx) ->
-    map = arena.map
-
-    wallP = new Point (-map.wallSize.x / 2), (-map.wallSize.y / 2)
-
-    ctx.beginPath()
-    ctx.fillStyle "#f3f3f3"
-    ctx.fillRect wallP, map.size.add(map.wallSize)
-    ctx.beginPath()
-    ctx.lineWidth map.wallSize.x
-    ctx.strokeStyle "#558893"
-    ctx.strokeRect wallP, map.size.add(map.wallSize)
-
-    for k, v of arena.handler.players
-        playerRenderer v, ctx
-
-    for k, v of arena.projectiles
-        projectileRenderer v, ctx
+Utils = require "../lib/utils"
+Point = require "../lib/point"
+Skills = require "../lib/skills"
 
 Circle = React.createClass
     render: ->
@@ -124,8 +65,9 @@ Arc = React.createClass
 
 ScoreBoard = React.createClass
     render: ->
-        teamKeys = Object.keys(@props.teams)
-        teamKeys.sort (a,b) => @props.teams[b].score - @props.teams[a].score
+        teams = @props.teams
+        teamKeys = Object.keys(teams)
+        teamKeys.sort (a,b) -> teams[b].score - teams[a].score
 
         <div className="scoreBox box" >
             {teamKeys.map (teamKey, i) =>
@@ -233,7 +175,7 @@ SkillUI = React.createClass
                     { for boundKey, ki in row
                         skillName = @props.UIplayer.keyBindings[boundKey]
                         if skill = Skills[skillName]
-                            pctCooldown = @props.UIplayer.player.pctCooldown skillName
+                            pctCooldown = @props.UIplayer.pctCooldown skillName
                             left = (rowOffsets[ri]+ki)*(60+5)
                             <SkillBoxUI
                                 skill={skill}
@@ -250,8 +192,22 @@ SkillUI = React.createClass
 
 Arena = React.createClass
     render: ->
-        ctx = @props.canvas.mapContext(@props.arena.map)
-        arenaMapRenderer @props.arena, ctx
+        # Get contexts for rendering.
+        ctx = @props.arena.canvas.mapContext @props.arena.map
+        staticCtx = @props.arena.canvas.context()
+
+        # Render map.
+        @props.arena.map.render ctx
+
+        # Render Players.
+        for id, player of @props.arena.handler.players
+            player.render ctx
+
+        # Render projectiles.
+        for p in @props.arena.projectiles
+            p.render ctx
+
+        # Render score and skills UI.
         <div>
             <ScoreBoard teams={@props.arena.teams} />
             <SkillUI UIplayer={@props.arena.focusedUIPlayer}/>

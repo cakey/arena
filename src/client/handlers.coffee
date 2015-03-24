@@ -15,7 +15,7 @@ class LocalHandler
         @_readyDeferred.resolve()
 
     registerLocal: (processor) ->
-        player = processor.player
+        player = processor
         @players[player.id] = player
         @locallyProcessed.push processor
 
@@ -78,7 +78,7 @@ class NetworkHandler
                     player.fire position, d.skill
             else if message.action is "newPlayer"
                 playerPosition = Point.fromObject d.playerPosition
-                player = new Player @arena, playerPosition, d.team, d.playerId
+                player = new Player.ProtoPlayer @arena, playerPosition, d.team, d.playerId
                 @register player
             else if message.action is "deletePlayer"
                 @removePlayer d
@@ -94,8 +94,8 @@ class NetworkHandler
     ready: -> @_readyDeferred.promise
 
     registerLocal: (processor) ->
-        player = processor.player
-        @players[player.id] = player
+        player = processor
+        @players[player.id] = processor
         @locallyProcessed.push processor
 
         message =

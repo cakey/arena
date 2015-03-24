@@ -7,94 +7,24 @@
 
 _ = require 'lodash'
 
-Point = require "../lib/point"
 Config = require "../lib/config"
-Utils = require "../lib/utils"
+Point = require "../lib/point"
+Player = require "../lib/player"
+UIPlayer = Player.UIPlayer
+AIPlayer = Player.AIPlayer
+Projectile = require "../lib/projectile"
+Arena = require "../lib/arena"
 
 Canvas = require "./canvas"
 Renderers = require "./renderers"
 Handlers = require "./handlers"
-Player = require "../lib/player"
 
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 
-class AIPlayer
-
-    constructor: (@arena, @handler, startP, team) ->
-        @player = new Player @arena, startP, team
-
-    update: (newTime) ->
-
-        otherPs = _.reject _.values(@handler.players), team: @player.team
-
-        if Math.random() < Utils.game.speed(0.005) and not @player.startCastTime?
-            @handler.fire @player, _.sample(otherPs).p, 'orb'
-
-        chanceToMove = Math.random() < Utils.game.speed(0.03)
-        if not @player.startCastTime? and (chanceToMove or @player.p.equal @player.destP)
-            @handler.moveTo @player, @arena.map.randomPoint()
-
-class UIPlayer
-
-    constructor: (@arena, @handler, startP, team) ->
-        @player = new Player @arena, startP, team
-
-        @keyBindings =
-            g: 'orb'
-            h: 'flame'
-            b: 'gun'
-            n: 'bomb'
-            j: 'interrupt'
-        addEventListener "mousedown", (event) =>
-            topLeft = new Point @player.radius, @player.radius
-            bottomRight = @arena.map.size.subtract topLeft
-
-            p = @arena.mapMouseP.bound topLeft, bottomRight
-
-            if event.which is 3
-                @handler.moveTo @player, p
-
-        addEventListener "keypress", (event) =>
-
-            if skill = @keyBindings[String.fromCharCode event.which]
-                castP = @arena.mapMouseP.mapBound @player.p, @arena.map
-                @handler.fire @player, castP, skill
-            else
-                console.log event
-                console.log event.which
-
-    update: (newTime) ->
-
-class Projectile
-
-    constructor: (@arena, @time, @p, dirP, @skill, @team) ->
-        angle = @p.angle dirP
-        @destP = @p.bearing angle, @skill.range
-
-    update: (newTime) ->
-
-        if @p.equal @destP
-            return false
-
-        msDiff = newTime - @time
-
-        @p = @p.towards @destP, (Utils.game.speed(@skill.speed) * msDiff)
-
-        @time = newTime
-        return true
-
 # TODO pull out update parts of arena and player to allow running on the server
-class Arena
-
+class GameState
     constructor: (@canvas) ->
         @time = new Date().getTime()
-
-        @map =
-            p: new Point 25, 25
-            size: new Point Config.game.width, Config.game.height
-            wallSize: new Point 6, 6
-            randomPoint: =>
-                new Point _.random(0, @map.size.x), _.random(0, @map.size.y)
 
         @teams =
             red:
@@ -105,21 +35,7 @@ class Arena
                 score: 0
 
         @projectiles = []
-        @cameraSpeed = 0.3
-
-        @mapMouseP = new Point 0, 0
-        @mouseP = new Point 0, 0
-
-        @mapMiddle = new Point window.innerWidth / 2, window.innerHeight / 2
-        @mapToGo = @mapMiddle
-
-        addEventListener "mousemove", (event) =>
-            @mouseP = Point.fromObject event
-            @mapMouseP = @mouseP.subtract(@map.p).subtract(@map.wallSize)
-
-        addEventListener "mousedown", (event) =>
-            if event.which is 1
-                @mapToGo = @mapMiddle.towards Point.fromObject(event), 100
+        @map = new Arena
 
         @handler = new Handlers.Network @
         readyPromise = @handler.ready()
@@ -128,7 +44,7 @@ class Arena
             randomPoint = @map.randomPoint()
             randomTeam = _.sample((name for name, r of @teams))
 
-            @focusedUIPlayer = new UIPlayer @, @handler, randomPoint, randomTeam
+            @focusedUIPlayer = new UIPlayer this, @handler, randomPoint, randomTeam
             @handler.registerLocal @focusedUIPlayer
 
             if Config.game.numAIs > 0
@@ -148,8 +64,13 @@ class Arena
             @loop()
 
     render: ->
+        # Clear the canvas.
         @canvas.begin()
+
+        # Render all the things.
         Renderers.arena @, @canvas
+
+        # Nothing right now.
         @canvas.end()
 
     addProjectile: (startP, destP, skill, team) ->
@@ -200,24 +121,19 @@ class Arena
 
     update: ->
         updateTime = new Date().getTime()
-
         msDiff = updateTime - @time
 
-        @mapMiddle = new Point window.innerWidth / 2, window.innerHeight / 2
+        # Map.
+        @map.update msDiff
 
-        newCamP = @mapMiddle.towards @mapToGo, @cameraSpeed * msDiff
-
-        moveVector = newCamP.subtract @mapMiddle
-        @mapToGo = @mapToGo.subtract moveVector
-
-        @map.p = @map.p.subtract moveVector
-
+        # Players.
         for processor in @handler.locallyProcessed
             processor.update updateTime
 
         for id, player of @handler.players
             player.update updateTime
 
+        # Projectiles.
         newProjectiles = []
         for projectile in @projectiles
             alive = projectile.update updateTime
@@ -243,4 +159,4 @@ class Arena
         @time = updateTime
 
 canvas = new Canvas 'canvas'
-arena = new Arena canvas
+gameState = new GameState canvas

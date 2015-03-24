@@ -1,9 +1,13 @@
+_ = require 'lodash'
 uuid = require 'node-uuid'
+
 Utils = require "../lib/utils"
 Skills = require "../lib/skills"
+UIElement = require "../lib/ui-element"
+Point = require "../lib/point"
+Config = require "../lib/config"
 
-class Player
-
+class ProtoPlayer extends UIElement
     constructor: (@arena, @p, @team, @id) ->
         @time = @arena.time
         @radius = 20
@@ -17,6 +21,8 @@ class Player
 
         if not @id?
             @id = uuid.v4()
+
+        super(@id)
 
     moveTo: (@destP) ->
         if @startCastTime isnt null and Skills[@castedSkill].channeled
@@ -52,13 +58,11 @@ class Player
         msDiff = newTime - @time
 
         # Location
-
         newP = @p.towards @destP, (Utils.game.speed(@speed) * msDiff)
         if @arena.allowedMovement newP, @
             @p = newP
 
         # Cast
-
         if @startCastTime?
             realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
             if newTime - @startCastTime > realCastTime
@@ -78,4 +82,80 @@ class Player
 
         @time = newTime
 
-module.exports = Player
+    render: (ctx) ->
+        # Cast
+        if @startCastTime?
+            realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
+            radiusMs = @radius / realCastTime
+            radius = (radiusMs * (@time - @startCastTime)) + @radius
+
+            angle = @p.angle @castP
+            halfCone = Skills[@castedSkill].cone / 2
+
+            ctx.beginPath()
+            ctx.moveTo @p
+            ctx.arc @p, radius, angle - halfCone, angle + halfCone
+            ctx.moveTo @p
+            ctx.fillStyle Skills[@castedSkill].color
+            ctx.fill()
+
+        # Location
+        ctx.filledCircle @p, @radius, @arena.teams[@team].color
+
+        # casting circle
+        if Config.UI.castingCircles
+            ctx.beginPath()
+            ctx.circle @p, @maxCastRadius
+            ctx.lineWidth 1
+            ctx.setLineDash [3,12]
+            ctx.strokeStyle "#777777"
+            ctx.stroke()
+            ctx.setLineDash []
+
+class AIPlayer extends ProtoPlayer
+    constructor: (@arena, @handler, startP, team) ->
+        super @arena, startP, team
+
+    update: (newTime) ->
+        super newTime
+        otherPs = _.reject _.values(@handler.players), team: @team
+
+        if Math.random() < Utils.game.speed(0.005) and not @startCastTime?
+            @handler.fire @, _.sample(otherPs).p, 'orb'
+
+        chanceToMove = Math.random() < Utils.game.speed(0.03)
+        if not @startCastTime? and (chanceToMove or @p.equal @destP)
+            @handler.moveTo @, @arena.map.randomPoint()
+
+class UIPlayer extends ProtoPlayer
+    constructor: (@arena, @handler, startP, team) ->
+        super @arena, startP, team
+
+        @keyBindings =
+            g: 'orb'
+            h: 'flame'
+            b: 'gun'
+            n: 'bomb'
+            j: 'interrupt'
+        addEventListener "mousedown", (event) =>
+            topLeft = new Point @radius, @radius
+            bottomRight = @arena.map.size.subtract topLeft
+
+            p = @arena.map.mapMouseP.bound topLeft, bottomRight
+
+            if event.which is 3
+                @handler.moveTo @, p
+
+        addEventListener "keypress", (event) =>
+
+            if skill = @keyBindings[String.fromCharCode event.which]
+                castP = @arena.map.mapMouseP.mapBound @p, @arena.map
+                @handler.fire @, castP, skill
+            else
+                console.log event
+                console.log event.which
+
+module.exports = {
+    AIPlayer,
+    UIPlayer
+}
