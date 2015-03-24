@@ -242,6 +242,5 @@ class Arena
 
         @time = updateTime
 
-#TODO:
 canvas = new Canvas 'canvas'
 arena = new Arena canvas

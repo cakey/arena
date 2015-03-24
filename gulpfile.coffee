@@ -1,3 +1,5 @@
+# Lint disabled due to react jsx
+
 gulp = require "gulp"
 gutil = require "gulp-util"
 karma = require("karma").server
@@ -7,7 +9,7 @@ express = require 'express'
 gulp.task 'scripts', ->
     return gulp.src('src/client/app.coffee', { read: false })
         .pipe($.browserify({
-          transform: ['coffeeify'],
+          transform: ['coffee-reactify'],
           extensions: ['.coffee']
         })).on("error", gutil.log).on("error", gutil.beep)
         .pipe($.rename('app.js'))
@@ -65,7 +67,7 @@ karmaCommonConf =
 gulp.task "tdd", (done) ->
     karma.start karmaCommonConf, done
 
-gulp.task "default", ["lint", "scripts", "tests", "styles", "jade", "assets"], ->
+gulp.task "default", ["scripts", "tests", "styles", "jade", "assets"], ->
     app = express()
     app.use require('connect-livereload')()
     app.use express.static "#{__dirname}/public"
@@ -76,7 +78,7 @@ gulp.task "default", ["lint", "scripts", "tests", "styles", "jade", "assets"], -
     gutil.log gutil.colors.cyan "=== Listening on port #{port}. ==="
     app.listen port
 
-    gulp.watch("src/**/*.coffee", ["lint", "scripts", "tests"])
+    gulp.watch("src/**/*.coffee", ["scripts", "tests"])
     gulp.watch("src/**/*.scss", ["styles"])
     gulp.watch("src/**/*.jade", ["jade"])
     gulp.watch("src/assets/**/*", ["assets"])

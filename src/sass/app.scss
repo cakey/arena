@@ -14,5 +14,73 @@ h1, h3 {
 }
 
 canvas {
-  border: 1px solid #fff
+  border: 1px solid #fff;
+}
+
+
+.baseMap {
+  background: #f3f3f3;
+  border-color: #558893;
+  border-style: solid;
+}
+
+.box {
+  background: rgba(243,243,243,0.75);
+  border: 1px solid #558893;
+}
+
+.scoreBox {
+  width: 200px;
+  right: 20px;
+  top: 20px;
+  position: fixed;
+  z-index: 2;
+}
+
+.skillTooltip {
+  font-size: 16;
+  padding: 25px;
+}
+
+.keyBox {
+  width: 44px;
+  height: 44px;
+  padding: 4px;
+  z-index: 2;
+}
+
+.keyText {
+  color: #444477;
+  position: absolute;
+  bottom: 1px;
+  z-index: 5;
+  left: 23px;
+}
+
+.scoreRow {
+  padding: 10px;
+}
+
+.teamName {
+  color: #222233;
+}
+
+.scoreValue {
+  float: right;
+  color: #444466;
+}
+
+.arcOuter {
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 50%;
+  bottom: 50%;
+  transform-origin: 100% 100%;
+}
+
+.arcInner {
+  display: block;
+  border-radius: 50%;
 }
