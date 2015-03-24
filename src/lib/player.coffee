@@ -139,8 +139,8 @@ class AIPlayer extends ProtoPlayer
     fire: (@castP, @castedSkill) ->
         super @castP, @castedSkill
 
-    update: (newTime) ->
-        super newTime
+    # update: (newTime) ->
+    #     super newTime
 
     render: (ctx) ->
         super ctx
