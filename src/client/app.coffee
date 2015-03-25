@@ -118,7 +118,8 @@ class GameState
         # TODO: A non sucky game loop...
         # Fixed time updates.
         @update()
-        @render()
+        if @shouldRender
+            @render()
 
     update: ->
         updateTime = new Date().getTime()
