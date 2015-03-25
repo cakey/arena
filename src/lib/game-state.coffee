@@ -13,7 +13,7 @@ Handlers = require "../client/handlers"
 # TODO pull out update parts of arena and player to allow running on the server
 class GameState
     constructor: (options) ->
-        {@shouldRender, @canvas} = options
+        {@shouldRender, @canvas, @camera} = options
         @time = new Date().getTime()
 
         @teams =
@@ -115,7 +115,7 @@ class GameState
         msDiff = updateTime - @time
 
         # Map.
-        @map.update msDiff
+        @camera.update msDiff
 
         for id, player of @handler.players
             player.update updateTime

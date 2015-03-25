@@ -193,7 +193,7 @@ SkillUI = React.createClass
 Arena = React.createClass
     render: ->
         # Get contexts for rendering.
-        ctx = @props.gameState.canvas.mapContext @props.gameState.map
+        ctx = @props.gameState.canvas.mapContext @props.gameState.camera
         staticCtx = @props.gameState.canvas.context()
 
         # Render map.
