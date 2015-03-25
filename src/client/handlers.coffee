@@ -36,7 +36,6 @@ class LocalHandler
 class ClientNetworkHandler
     constructor: (@arena) ->
         @players = {}
-        @locallyProcessed = []
 
         @host = "ws://#{location.hostname}:#{Config.ws.port}"
         @ws = new WebSocket @host
@@ -96,7 +95,6 @@ class ClientNetworkHandler
     registerLocal: (processor) ->
         player = processor
         @players[player.id] = processor
-        @locallyProcessed.push processor
 
         message =
             action: 'newPlayer'

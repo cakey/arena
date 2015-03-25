@@ -34,7 +34,7 @@ class GameState
             randomPoint = @map.randomPoint()
             randomTeam = _.sample((name for name, r of @teams))
 
-            @focusedUIPlayer = new UIPlayer this, @handler, randomPoint, randomTeam
+            @focusedUIPlayer = new UIPlayer @, @handler, randomPoint, randomTeam
             @handler.registerLocal @focusedUIPlayer
 
             if Config.game.numAIs > 0
@@ -116,10 +116,6 @@ class GameState
 
         # Map.
         @map.update msDiff
-
-        # Players.
-        for processor in @handler.locallyProcessed
-            processor.update updateTime
 
         for id, player of @handler.players
             player.update updateTime
