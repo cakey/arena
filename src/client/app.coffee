@@ -23,7 +23,8 @@ document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 
 # TODO pull out update parts of arena and player to allow running on the server
 class GameState
-    constructor: (@canvas) ->
+    constructor: (options) ->
+        {@shouldRender, @canvas} = options
         @time = new Date().getTime()
 
         @teams =
@@ -159,4 +160,6 @@ class GameState
         @time = updateTime
 
 canvas = new Canvas 'canvas'
-gameState = new GameState canvas
+gameState = new GameState
+    shouldRender: true
+    canvas: canvas
