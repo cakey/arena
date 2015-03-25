@@ -8,8 +8,8 @@ Point = require "../lib/point"
 Config = require "../lib/config"
 
 class ProtoPlayer extends UIElement
-    constructor: (@arena, @p, @team, @id) ->
-        @time = @arena.time
+    constructor: (@gameState, @p, @team, @id) ->
+        @time = @gameState.time
         @radius = 20
         @maxCastRadius = @radius * 2
         @destP = @p
@@ -59,7 +59,7 @@ class ProtoPlayer extends UIElement
 
         # Location
         newP = @p.towards @destP, (Utils.game.speed(@speed) * msDiff)
-        if @arena.allowedMovement newP, @
+        if @gameState.allowedMovement newP, @
             @p = newP
 
         # Cast
@@ -76,7 +76,7 @@ class ProtoPlayer extends UIElement
                 if @castP.within @p, @maxCastRadius
                     @castP = edgeP.bearing castAngle, 0.1
 
-                @arena.addProjectile edgeP, @castP, Skills[@castedSkill], @team
+                @gameState.addProjectile edgeP, @castP, Skills[@castedSkill], @team
 
                 @_lastCasted[@castedSkill] = newTime
 
@@ -100,7 +100,7 @@ class ProtoPlayer extends UIElement
             ctx.fill()
 
         # Location
-        ctx.filledCircle @p, @radius, @arena.teams[@team].color
+        ctx.filledCircle @p, @radius, @gameState.teams[@team].color
 
         # casting circle
         if Config.UI.castingCircles
@@ -113,8 +113,8 @@ class ProtoPlayer extends UIElement
             ctx.setLineDash []
 
 class AIPlayer extends ProtoPlayer
-    constructor: (@arena, @handler, startP, team) ->
-        super @arena, startP, team
+    constructor: (@gameState, @handler, startP, team) ->
+        super @gameState, startP, team
 
     update: (newTime) ->
         super newTime
@@ -125,11 +125,11 @@ class AIPlayer extends ProtoPlayer
 
         chanceToMove = Math.random() < Utils.game.speed(0.03)
         if not @startCastTime? and (chanceToMove or @p.equal @destP)
-            @handler.moveTo @, @arena.map.randomPoint()
+            @handler.moveTo @, @gameState.map.randomPoint()
 
 class UIPlayer extends ProtoPlayer
-    constructor: (@arena, @handler, startP, team) ->
-        super @arena, startP, team
+    constructor: (@gameState, @handler, startP, team) ->
+        super @gameState, startP, team
 
         @keyBindings =
             g: 'orb'
@@ -139,9 +139,9 @@ class UIPlayer extends ProtoPlayer
             j: 'interrupt'
         addEventListener "mousedown", (event) =>
             topLeft = new Point @radius, @radius
-            bottomRight = @arena.map.size.subtract topLeft
+            bottomRight = @gameState.map.size.subtract topLeft
 
-            p = @arena.camera.mapMouseP.bound topLeft, bottomRight
+            p = @gameState.camera.mapMouseP.bound topLeft, bottomRight
 
             if event.which is 3
                 @handler.moveTo @, p
@@ -149,7 +149,7 @@ class UIPlayer extends ProtoPlayer
         addEventListener "keypress", (event) =>
 
             if skill = @keyBindings[String.fromCharCode event.which]
-                castP = @arena.camera.mapMouseP.mapBound @p, @arena.map
+                castP = @gameState.camera.mapMouseP.mapBound @p, @gameState.map
                 @handler.fire @, castP, skill
             else
                 console.log event
