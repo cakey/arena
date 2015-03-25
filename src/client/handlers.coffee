@@ -33,7 +33,7 @@ class LocalHandler
 
     ready: -> @_readyDeferred.promise
 
-class NetworkHandler
+class ClientNetworkHandler
     constructor: (@arena) ->
         @players = {}
         @locallyProcessed = []
@@ -140,4 +140,4 @@ class NetworkHandler
 
 module.exports =
     Local: LocalHandler
-    Network: NetworkHandler
+    Client: ClientNetworkHandler
