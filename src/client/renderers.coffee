@@ -173,9 +173,9 @@ SkillUI = React.createClass
             { for row, ri in rows
                 <div key={ri} style={{bottom: (rows.length - ri) *60, position: "fixed"}}>
                     { for boundKey, ki in row
-                        skillName = @props.UIplayer.keyBindings[boundKey]
+                        skillName = @props.UIPlayer.keyBindings[boundKey]
                         if skill = Skills[skillName]
-                            pctCooldown = @props.UIplayer.pctCooldown skillName
+                            pctCooldown = @props.UIPlayer.pctCooldown skillName
                             left = (rowOffsets[ri]+ki)*(60+5)
                             <SkillBoxUI
                                 skill={skill}
@@ -193,29 +193,29 @@ SkillUI = React.createClass
 Arena = React.createClass
     render: ->
         # Get contexts for rendering.
-        ctx = @props.arena.canvas.mapContext @props.arena.map
-        staticCtx = @props.arena.canvas.context()
+        ctx = @props.gameState.canvas.mapContext @props.gameState.map
+        staticCtx = @props.gameState.canvas.context()
 
         # Render map.
-        @props.arena.map.render ctx
+        @props.gameState.map.render ctx
 
         # Render Players.
-        for id, player of @props.arena.handler.players
+        for id, player of @props.gameState.handler.players
             player.render ctx
 
         # Render projectiles.
-        for p in @props.arena.projectiles
+        for p in @props.gameState.projectiles
             p.render ctx
 
         # Render score and skills UI.
         <div>
-            <ScoreBoard teams={@props.arena.teams} />
-            <SkillUI UIplayer={@props.arena.focusedUIPlayer}/>
+            <ScoreBoard teams={@props.gameState.teams} />
+            <SkillUI UIPlayer={@props.gameState.focusedUIPlayer}/>
         </div>
 
-arenaRenderer = (arena, canvas) ->
+arenaRenderer = (gameState, canvas) ->
     React.render(
-        <Arena arena={arena} canvas={canvas} />
+        <Arena gameState={gameState} canvas={canvas} />
         document.getElementById('arena')
     )
 
