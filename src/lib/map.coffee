@@ -4,7 +4,7 @@ Point = require "../lib/point"
 Config = require "../lib/config"
 
 # TODO remove the "map" from the "@mapBlah" variables.
-class Arena
+class Map
     constructor: ->
         @p = new Point 25, 25
         @size = new Point Config.game.width, Config.game.height
@@ -50,4 +50,4 @@ class Arena
         ctx.strokeStyle "#558893"
         ctx.strokeRect wallP, @size.add(@wallSize)
 
-module.exports = Arena
+module.exports = Map

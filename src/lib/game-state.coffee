@@ -6,7 +6,7 @@ Player = require "./player"
 UIPlayer = Player.UIPlayer
 AIPlayer = Player.AIPlayer
 Projectile = require "./projectile"
-Arena = require "./arena"
+Map = require "./map"
 Renderers = require "../client/renderers"
 Handlers = require "../client/handlers"
 
@@ -25,7 +25,7 @@ class GameState
                 score: 0
 
         @projectiles = []
-        @map = new Arena
+        @map = new Map
 
         @handler = new Handlers.Client @
         readyPromise = @handler.ready()
