@@ -20,7 +20,7 @@ class Map
 
         addEventListener "mousemove", (event) =>
             @mouseP = Point.fromObject event
-            @mapMouseP = @mouseP.subtract(@p).subtract(@wallSize)
+            @mapMouseP = @mouseP.subtract(@p)
 
         addEventListener "mousedown", (event) =>
             if event.which is 1
@@ -44,7 +44,7 @@ class Map
 
         ctx.beginPath()
         ctx.fillStyle "#f3f3f3"
-        ctx.fillRect wallP, @size.add(@wallSize)
+        ctx.fillRect new Point(0,0), @size
         ctx.beginPath()
         ctx.lineWidth @wallSize.x
         ctx.strokeStyle "#558893"
