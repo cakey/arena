@@ -34,7 +34,7 @@ class LocalHandler
     ready: -> @_readyDeferred.promise
 
 class ClientNetworkHandler
-    constructor: (@arena) ->
+    constructor: (@gameState) ->
         @players = {}
 
         @host = "ws://#{location.hostname}:#{Config.ws.port}"
@@ -77,7 +77,7 @@ class ClientNetworkHandler
                     player.fire position, d.skill
             else if message.action is "newPlayer"
                 playerPosition = Point.fromObject d.playerPosition
-                player = new Player.ProtoPlayer @arena, playerPosition, d.team, d.playerId
+                player = new Player.ProtoPlayer @gameState, playerPosition, d.team, d.playerId
                 @register player
             else if message.action is "deletePlayer"
                 @removePlayer d
