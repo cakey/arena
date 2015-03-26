@@ -217,5 +217,6 @@ class UIPlayer extends ProtoPlayer
 
 module.exports = {
     AIPlayer,
-    UIPlayer
+    ProtoPlayer,
+    UIPlayer,
 }
