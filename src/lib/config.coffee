@@ -6,7 +6,7 @@ config =
         width: 1000
         height: 300
         speedup: 1
-        numAIs: 1
+        numAIs: 0
     UI:
         castingCircles: false
 

@@ -7,6 +7,7 @@ class Projectile extends UIElement
         @destP = @p.bearing angle, @skill.range
 
     update: (newTime) ->
+        @lastP = @p
         if @p.equal @destP
             return false
 
@@ -26,5 +27,8 @@ class Projectile extends UIElement
         ctx.strokeStyle @arena.teams[@team].color
         ctx.lineWidth 1
         ctx.stroke()
+
+    clear: (ctx) ->
+        ctx.filledCircle @lastP, @skill.radius + 1, "#f3f3f3"
 
 module.exports = Projectile

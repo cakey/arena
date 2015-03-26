@@ -55,7 +55,9 @@ class ProtoPlayer extends UIElement
             @startCastTime = @time # needs to be passed through
 
     update: (newTime) ->
+        console.log "updating player"
         msDiff = newTime - @time
+        @lastP = @p
 
         # Location
         newP = @p.towards @destP, (Utils.game.speed(@speed) * msDiff)
@@ -82,35 +84,93 @@ class ProtoPlayer extends UIElement
 
         @time = newTime
 
-    render: (ctx) ->
+    render: (canvas) ->
+        console.log "rendering player"
+        console.log @p.x + " " + @p.y
         # Cast
-        if @startCastTime?
-            realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
-            radiusMs = @radius / realCastTime
-            radius = (radiusMs * (@time - @startCastTime)) + @radius
+        # if @startCastTime?
+        #     realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
+        #     radiusMs = @radius / realCastTime
+        #     radius = (radiusMs * (@time - @startCastTime)) + @radius
 
-            angle = @p.angle @castP
-            halfCone = Skills[@castedSkill].cone / 2
+        #     angle = @p.angle @castP
+        #     halfCone = Skills[@castedSkill].cone / 2
 
-            ctx.beginPath()
-            ctx.moveTo @p
-            ctx.arc @p, radius, angle - halfCone, angle + halfCone
-            ctx.moveTo @p
-            ctx.fillStyle Skills[@castedSkill].color
-            ctx.fill()
+        #     ctx.beginPath()
+        #     ctx.moveTo @p
+        #     ctx.arc @p, radius, angle - halfCone, angle + halfCone
+        #     ctx.moveTo @p
+        #     ctx.fillStyle Skills[@castedSkill].color
+        #     ctx.fill()
 
         # Location
-        ctx.filledCircle @p, @radius, @arena.teams[@team].color
+        # ctx.filledCircle @p, @radius, @arena.teams[@team].color
 
         # casting circle
-        if Config.UI.castingCircles
-            ctx.beginPath()
-            ctx.circle @p, @maxCastRadius
-            ctx.lineWidth 1
-            ctx.setLineDash [3,12]
-            ctx.strokeStyle "#777777"
-            ctx.stroke()
-            ctx.setLineDash []
+        # if Config.UI.castingCircles
+        #     ctx.beginPath()
+        #     ctx.circle @p, @maxCastRadius
+        #     ctx.lineWidth 1
+        #     ctx.setLineDash [3,12]
+        #     ctx.strokeStyle "#777777"
+        #     ctx.stroke()
+        #     ctx.setLineDash []
+
+        c = canvas.canvas.getContext '2d'
+        c.save()
+        c.translate(0.5, 0.5)
+        c.beginPath()
+        c.translate ((Math.floor @p.x) - @radius), ((Math.floor @p.y) - @radius)
+        c.scale @radius, @radius
+        c.arc 1, 1, 1, 0, (2 * Math.PI), false
+        c.restore()
+        c.fillStyle = @arena.teams[@team].color
+        c.fill()
+
+
+    clear: (canvas) ->
+        console.log "clearing player"
+        console.log @lastP.x + " " + @lastP.y
+        # Cast
+        # if @startCastTime?
+        #     realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
+        #     radiusMs = @radius / realCastTime
+        #     radius = (radiusMs * (@time - @startCastTime)) + @radius
+
+        #     angle = @lastP.angle @castP
+        #     halfCone = Skills[@castedSkill].cone / 2
+
+        #     ctx.beginPath()
+        #     ctx.moveTo @lastP
+        #     ctx.arc @lastP, radius, angle - halfCone, angle + halfCone
+        #     ctx.moveTo @lastP
+        #     ctx.fillStyle "#f3f3f3"
+        #     ctx.fill()
+
+        # Location
+        # ctx.filledCircle @lastP, @radius, "#f3f3f3"
+        c = canvas.canvas.getContext '2d'
+        c.save()
+        c.translate(0.5, 0.5)
+        c.beginPath()
+        c.translate ((Math.floor @lastP.x) - @radius), ((Math.floor @lastP.y) - @radius)
+        c.scale @radius, @radius
+        c.arc 1, 1, 1, 0, (2 * Math.PI), false
+        c.restore()
+        c.fillStyle = "#f3f3f3"
+        c.fill()
+
+        # casting circle
+        # if Config.UI.castingCircles
+        #     ctx.beginPath()
+        #     ctx.circle @lastP, @maxCastRadius
+        #     ctx.lineWidth 1
+        #     ctx.setLineDash [3,12]
+        #     ctx.strokeStyle "#f3f3f3"
+        #     ctx.stroke()
+        #     ctx.setLineDash []
+
+        # ctx.filledCircle @lastP, @radius, "#f3f3f3"
 
 class AIPlayer extends ProtoPlayer
     constructor: (@arena, @handler, startP, team) ->

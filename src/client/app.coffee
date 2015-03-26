@@ -35,7 +35,7 @@ class GameState
                 score: 0
 
         @projectiles = []
-        @map = new Arena
+        @map = new Arena @canvas.context
 
         @handler = new Handlers.Network @
         readyPromise = @handler.ready()
@@ -65,18 +65,19 @@ class GameState
 
     render: ->
         # Clear the canvas.
-        @canvas.begin()
+        # @canvas.begin()
 
         # Render all the things.
         Renderers.arena @, @canvas
 
         # Nothing right now.
-        @canvas.end()
+        # @canvas.end()
 
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
         @projectiles.push p
 
+    # TODO: make it so players can't be over the border.
     allowedMovement: (newP, player) ->
 
         # TODO: n^2? seriously?
@@ -127,9 +128,6 @@ class GameState
         @map.update msDiff
 
         # Players.
-        for processor in @handler.locallyProcessed
-            processor.update updateTime
-
         for id, player of @handler.players
             player.update updateTime
 

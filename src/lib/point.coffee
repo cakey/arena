@@ -116,4 +116,8 @@ class Point
     add: (otherP) ->
         new Point (@x + otherP.x), (@y + otherP.y)
 
+    floor: () ->
+        @x = Math.floor @x
+        @y = Math.floor @y
+
 module.exports = Point

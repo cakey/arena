@@ -40,6 +40,7 @@
   "dependencies": {
     "classnames": "^1.2.0",
     "coffee-reactify": "^2.1.0",
+    "fabric": "^1.4.13",
     "lodash": "^2.4.1",
     "node-uuid": "^1.4.1",
     "react": "^0.12.2",

@@ -1,5 +1,6 @@
 _ = require 'lodash'
-React = require "react/addons"
+React = require 'react/addons'
+Fabric = require('fabric').fabric
 
 Utils = require "../lib/utils"
 Point = require "../lib/point"
@@ -23,7 +24,6 @@ Circle = React.createClass
 
 Arc = React.createClass
     render: ->
-
         radius = @props.radius
         startAngle = (@props.angle) + Math.PI - (@props.cone / 2)
 
@@ -192,30 +192,51 @@ SkillUI = React.createClass
 
 Arena = React.createClass
     render: ->
-        # Get contexts for rendering.
-        ctx = @props.arena.canvas.mapContext @props.arena.map
-        staticCtx = @props.arena.canvas.context()
-
-        # Render map.
-        @props.arena.map.render ctx
-
-        # Render Players.
-        for id, player of @props.arena.handler.players
-            player.render ctx
-
-        # Render projectiles.
-        for p in @props.arena.projectiles
-            p.render ctx
-
         # Render score and skills UI.
         <div>
-            <ScoreBoard teams={@props.arena.teams} />
-            <SkillUI UIplayer={@props.arena.focusedUIPlayer}/>
+            <ScoreBoard teams={@props.gameState.teams} />
+            <SkillUI UIplayer={@props.gameState.focusedUIPlayer}/>
         </div>
 
-arenaRenderer = (arena, canvas) ->
+arenaRenderer = (gameState, canvas) ->
+    # Get contexts for rendering.
+    map = gameState.map
+    # ctx = gameState.canvas.mapContext map.p, map.wallSize
+    # lastCtx = gameState.canvas.mapContext map.lastP, map.wallSize
+
+    map.render canvas.context
+
+    # Clear all.
+    # if not map.lastP.equal map.p
+    #     map.clear lastCtx
+
+    # for id, player of gameState.handler.players
+    #     # if not player.lastP.equal player.p
+    #     player.clear canvas
+
+    # for proj in gameState.projectiles
+    #     if not proj.lastP.equal proj.p
+    #         proj.clear lastCtx
+
+    # # Render all.
+
+
+    # # Render map.
+    # if not map.lastP.equal map.p
+    #     map.render ctx
+
+    # # Render Players.
+    # for id, player of gameState.handler.players
+    #     # if not player.lastP.equal player.p
+    #     player.render canvas
+
+    # # Render projectiles.
+    # for proj in gameState.projectiles
+    #     if not proj.lastP.equal proj.p
+    #         proj.render ctx
+
     React.render(
-        <Arena arena={arena} canvas={canvas} />
+        <Arena gameState={gameState} canvas={canvas} />
         document.getElementById('arena')
     )
 

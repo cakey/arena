@@ -13,3 +13,5 @@
  * http://coffeescript.org/
  * http://jade-lang.com/
  * http://gulpjs.com/
+
+Note: fabric requires cairo, install using brew (make sure you overwrite links otherwise the versions mess up)
