@@ -1,7 +1,6 @@
 Utils = require "../lib/utils"
-UIElement = require "../lib/ui-element"
 
-class Projectile extends UIElement
+class Projectile
     constructor: (@arena, @time, @p, dirP, @skill, @team) ->
         angle = @p.angle dirP
         @destP = @p.bearing angle, @skill.range

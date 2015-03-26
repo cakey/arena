@@ -3,11 +3,10 @@ uuid = require 'node-uuid'
 
 Utils = require "../lib/utils"
 Skills = require "../lib/skills"
-UIElement = require "../lib/ui-element"
 Point = require "../lib/point"
 Config = require "../lib/config"
 
-class ProtoPlayer extends UIElement
+class ProtoPlayer
     constructor: (@gameState, @p, @team, @id) ->
         @time = @gameState.time
         @radius = 20
@@ -21,8 +20,6 @@ class ProtoPlayer extends UIElement
 
         if not @id?
             @id = uuid.v4()
-
-        super(@id)
 
     moveTo: (@destP) ->
         if @startCastTime isnt null and Skills[@castedSkill].channeled
@@ -118,7 +115,7 @@ class AIPlayer extends ProtoPlayer
 
     update: (newTime) ->
         super newTime
-        otherPs = _.reject _.values(@handler.players), team: @team
+        otherPs = _.reject _.values(@gameState.players), team: @team
 
         if Math.random() < Utils.game.speed(0.005) and not @startCastTime?
             @handler.fire @, _.sample(otherPs).p, 'orb'
@@ -130,7 +127,6 @@ class AIPlayer extends ProtoPlayer
 class UIPlayer extends ProtoPlayer
     constructor: (@gameState, @handler, startP, team) ->
         super @gameState, startP, team
-
         @keyBindings =
             g: 'orb'
             h: 'flame'

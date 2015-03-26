@@ -200,7 +200,7 @@ Arena = React.createClass
         @props.gameState.map.render ctx
 
         # Render Players.
-        for id, player of @props.gameState.handler.players
+        for id, player of @props.gameState.players
             player.render ctx
 
         # Render projectiles.

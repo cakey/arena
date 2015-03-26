@@ -4,7 +4,6 @@ RSVP = require 'rsvp'
 uuid = require 'node-uuid'
 
 Point = require "../lib/point"
-Skills = require "../lib/skills"
 Player = require "../lib/player"
 
 class LocalHandler
@@ -62,7 +61,7 @@ class ClientNetworkHandler
             d = message.data
             if message.action is "control"
                 position = Point.fromObject d.actionPosition
-                player = @players[d.playerId]
+                player = @gameState.players[d.playerId]
 
                 playerPosition = Point.fromObject d.playerPosition
                 if not player
@@ -92,10 +91,7 @@ class ClientNetworkHandler
 
     ready: -> @_readyDeferred.promise
 
-    registerLocal: (processor) ->
-        player = processor
-        @players[player.id] = processor
-
+    registerLocal: (player) ->
         message =
             action: 'newPlayer'
             data:
@@ -106,10 +102,10 @@ class ClientNetworkHandler
         @ws.send JSON.stringify message
 
     register: (player) ->
-        @players[player.id] = player
+        @gameState.players[player.id] = player
 
     removePlayer: (playerId) ->
-        delete @players[playerId]
+        delete @gameState.players[playerId]
 
     moveTo: (player, destP) ->
         message =
@@ -118,7 +114,7 @@ class ClientNetworkHandler
                 playerId: player.id
                 action: 'moveTo'
                 actionPosition: destP.toObject()
-                playerPosition: player.p.toObject()
+                playerPosition: @gameState.players[player.id].p.toObject()
                 team: player.team
             id: @client_uuid
         @ws.send JSON.stringify message
@@ -130,11 +126,18 @@ class ClientNetworkHandler
                 playerId: player.id
                 action: 'fire'
                 actionPosition: castP.toObject()
-                playerPosition: player.p.toObject()
+                playerPosition: @gameState.players[player.id].p.toObject()
                 skill: skillName
                 team: player.team
             id: @client_uuid
         @ws.send JSON.stringify message
+
+    loop: =>
+        setTimeout @loop, 5
+        # TODO: A non sucky game loop...
+        # Fixed time updates.
+        @gameState.update new Date().getTime()
+        @gameState.render()
 
 module.exports =
     Local: LocalHandler

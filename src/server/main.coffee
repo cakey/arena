@@ -19,6 +19,7 @@ actions =
         clients[message.id] = ws
         players[message.id] = {}
 
+        # send existing players so the client can catch up
         for client_id, clientPs of players
             if client_id isnt message.id
                 for id, p of clientPs
@@ -53,8 +54,7 @@ actions =
         players[message.id][message.data.playerId] = message.data
 
         for client_id, client of clients
-            if message.id isnt client_id
-                client.send JSON.stringify message
+            client.send JSON.stringify message
         return
 
 wss.on 'connection', (ws) ->
