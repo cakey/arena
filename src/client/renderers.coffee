@@ -192,30 +192,30 @@ SkillUI = React.createClass
 
 Arena = React.createClass
     render: ->
-        # Get contexts for rendering.
-        ctx = @props.arena.canvas.mapContext @props.arena.map
-        staticCtx = @props.arena.canvas.context()
-
-        # Render map.
-        @props.arena.map.render ctx
-
-        # Render Players.
-        for id, player of @props.arena.handler.players
-            player.render ctx
-
-        # Render projectiles.
-        for p in @props.arena.projectiles
-            p.render ctx
-
         # Render score and skills UI.
         <div>
-            <ScoreBoard teams={@props.arena.teams} />
-            <SkillUI UIplayer={@props.arena.focusedUIPlayer}/>
+            <ScoreBoard teams={@props.gameState.teams} />
+            <SkillUI UIplayer={@props.gameState.focusedUIPlayer}/>
         </div>
 
-arenaRenderer = (arena, canvas) ->
+arenaRenderer = (gameState, canvas) ->
+    # Get contexts for rendering.
+
+
+    # Render map.
+    gameState.map.render canvas.state
+    canvas.stage.update()
+
+    # Render Players.
+    # for id, player of @props.arena.handler.players
+    #     player.render ctx
+
+    # Render projectiles.
+    # for p in @props.arena.projectiles
+    #     p.render ctx
+
     React.render(
-        <Arena arena={arena} canvas={canvas} />
+        <Arena gameState={gameState} canvas={canvas} />
         document.getElementById('arena')
     )
 

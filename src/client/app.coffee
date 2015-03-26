@@ -35,7 +35,7 @@ class GameState
                 score: 0
 
         @projectiles = []
-        @map = new Arena
+        @map = new Arena @canvas
 
         @handler = new Handlers.Network @
         readyPromise = @handler.ready()
@@ -65,13 +65,13 @@ class GameState
 
     render: ->
         # Clear the canvas.
-        @canvas.begin()
+        # @canvas.begin()
 
         # Render all the things.
         Renderers.arena @, @canvas
 
         # Nothing right now.
-        @canvas.end()
+        # @canvas.end()
 
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team

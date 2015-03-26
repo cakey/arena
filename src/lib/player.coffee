@@ -19,6 +19,11 @@ class ProtoPlayer extends UIElement
 
         @_lastCasted = {}
 
+        @circle = new createjs.Shape()
+        @circle.graphics.beginFill(@arena.teams[@team].color).
+            drawCircle(@p.x, @p.y, @radius)
+        @arena.canvas.stage.addChild @circle
+
         if not @id?
             @id = uuid.v4()
 
@@ -62,6 +67,9 @@ class ProtoPlayer extends UIElement
         if @arena.allowedMovement newP, @
             @p = newP
 
+        @circle.x = @p.x
+        @circle.y = @p.y
+
         # Cast
         if @startCastTime?
             realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
@@ -82,35 +90,14 @@ class ProtoPlayer extends UIElement
 
         @time = newTime
 
-    render: (ctx) ->
+    render: (canvas) ->
         # Cast
-        if @startCastTime?
-            realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
-            radiusMs = @radius / realCastTime
-            radius = (radiusMs * (@time - @startCastTime)) + @radius
-
-            angle = @p.angle @castP
-            halfCone = Skills[@castedSkill].cone / 2
-
-            ctx.beginPath()
-            ctx.moveTo @p
-            ctx.arc @p, radius, angle - halfCone, angle + halfCone
-            ctx.moveTo @p
-            ctx.fillStyle Skills[@castedSkill].color
-            ctx.fill()
 
         # Location
+
         ctx.filledCircle @p, @radius, @arena.teams[@team].color
 
         # casting circle
-        if Config.UI.castingCircles
-            ctx.beginPath()
-            ctx.circle @p, @maxCastRadius
-            ctx.lineWidth 1
-            ctx.setLineDash [3,12]
-            ctx.strokeStyle "#777777"
-            ctx.stroke()
-            ctx.setLineDash []
 
 class AIPlayer extends ProtoPlayer
     constructor: (@arena, @handler, startP, team) ->
