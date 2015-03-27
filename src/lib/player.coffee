@@ -60,6 +60,8 @@ class ProtoPlayer extends UIElement
 
         @angle = @p.angle @castP
         @halfCone = (Skills[@castedSkill].cone / 2)
+        if @arena.canvas.stage.contains @arc
+            @arena.canvas.stage.removeChild @arc
         @arc = new createjs.Shape()
         @arc.graphics.beginFill(Skills[@castedSkill].color).
             arc(@p.x, @p.y, radius, @angle - @halfCone, @angle + @halfCone).
@@ -152,12 +154,10 @@ class UIPlayer extends ProtoPlayer
             j: 'interrupt'
         addEventListener "mousedown", (event) =>
             if event.which is 3
-                newP = new Point event.x - @radius, event.y - @radius
-                topLeft = new Point 0, 0
-                bottomRight = @arena.map.size
-
-                p = newP.bound topLeft, bottomRight
-                @handler.moveTo @, p
+                eventPosition = Point.fromObject event
+                adjustedPosition = eventPosition.subtract(@arena.canvas.cameraOffset)
+                boundedPosition = @arena.map.boundPoint adjustedPosition
+                @handler.moveTo @, boundedPosition
 
         addEventListener "keypress", (event) =>
 

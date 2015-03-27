@@ -15,7 +15,7 @@ class Canvas
 
         window.onresize = _.throttle onResize, 50
 
-        @cameraOffset = new Point 0, 0
+        @cameraOffset = new Point 25, 25
 
         addEventListener "mousedown", (event) =>
             if event.which is 1
