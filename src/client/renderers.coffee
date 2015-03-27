@@ -215,12 +215,12 @@ Arena = React.createClass
         # Render score and skills UI.
         <div>
             <ScoreBoard teams={@props.gameState.teams} />
-            <SkillUI UIPlayer={@props.gameState.focusedUIPlayer} gameState={@props.gameState}/>
+            <SkillUI UIPlayer={@props.UIPlayer} gameState={@props.gameState}/>
         </div>
 
-arenaRenderer = (gameState, canvas, camera) ->
+arenaRenderer = (gameState, canvas, camera, focusedUIPlayer) ->
     React.render(
-        <Arena gameState={gameState} canvas={canvas} camera={camera} />
+        <Arena gameState={gameState} canvas={canvas} camera={camera} UIPlayer={focusedUIPlayer} />
         document.getElementById('arena')
     )
 

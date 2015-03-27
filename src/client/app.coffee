@@ -23,8 +23,8 @@ handler.ready().then ->
         gameState.addTeam "blue", "#3333aa"
 
         randomTeam = _.sample((name for name, r of gameState.teams))
-        gameState.focusedUIPlayer = new UIPlayer gameState, handler, randomPoint, randomTeam
-        handler.registerLocal gameState.focusedUIPlayer
+        handler.focusedUIPlayer = new UIPlayer gameState, handler, randomPoint, randomTeam
+        handler.registerLocal handler.focusedUIPlayer
 
         if Config.game.numAIs > 0
             gameState.addTeam "yellowAI", "#ddaa44"

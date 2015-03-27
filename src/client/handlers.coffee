@@ -132,7 +132,7 @@ class ClientNetworkHandler
         @canvas.begin()
 
         # Render all the things.
-        Renderers.arena @gameState, @canvas, @camera
+        Renderers.arena @gameState, @canvas, @camera, @focusedUIPlayer
 
         # Nothing right now.
         @canvas.end()
