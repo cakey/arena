@@ -32,6 +32,7 @@ class ProtoPlayer extends UIElement
 
     moveTo: (@destP) ->
         if @startCastTime isnt null and Skills[@castedSkill].channeled
+            @arena.canvas.stage.removeChild @arc
             @startCastTime = null
 
     pctCooldown: (castedSkill) ->
@@ -161,7 +162,7 @@ class UIPlayer extends ProtoPlayer
         addEventListener "keypress", (event) =>
 
             if skill = @keyBindings[String.fromCharCode event.which]
-                castP = @arena.map.mapMouseP.mapBound @p, @arena.map
+                castP = @arena.canvas.mousePosition.mapBound @p, @arena.map
                 @handler.fire @, castP, skill
             else
                 console.log event

@@ -10,13 +10,6 @@ class Arena
         @size = new Point Config.game.width, Config.game.height
         @wallSize = new Point 6, 6
 
-        @mapMouseP = new Point 0, 0
-        @mouseP = new Point 0, 0
-
-        addEventListener "mousemove", (event) =>
-            @mouseP = Point.fromObject event
-            @mapMouseP = @mouseP
-
         @map = new createjs.Shape()
         @map.graphics.beginFill("#f3f3f3").beginStroke("#558893").
             setStrokeStyle(6).
