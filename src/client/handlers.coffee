@@ -4,7 +4,6 @@ RSVP = require 'rsvp'
 uuid = require 'node-uuid'
 
 Point = require "../lib/point"
-Skills = require "../lib/skills"
 Player = require "../lib/player"
 
 class LocalHandler
@@ -33,10 +32,9 @@ class LocalHandler
 
     ready: -> @_readyDeferred.promise
 
-class NetworkHandler
-    constructor: (@arena) ->
+class ClientNetworkHandler
+    constructor: (@gameState) ->
         @players = {}
-        @locallyProcessed = []
 
         @host = "ws://#{location.hostname}:#{Config.ws.port}"
         @ws = new WebSocket @host
@@ -63,7 +61,7 @@ class NetworkHandler
             d = message.data
             if message.action is "control"
                 position = Point.fromObject d.actionPosition
-                player = @players[d.playerId]
+                player = @gameState.players[d.playerId]
 
                 playerPosition = Point.fromObject d.playerPosition
                 if not player
@@ -78,7 +76,7 @@ class NetworkHandler
                     player.fire position, d.skill
             else if message.action is "newPlayer"
                 playerPosition = Point.fromObject d.playerPosition
-                player = new Player.ProtoPlayer @arena, playerPosition, d.team, d.playerId
+                player = new Player.ProtoPlayer @gameState, playerPosition, d.team, d.playerId
                 @register player
             else if message.action is "deletePlayer"
                 @removePlayer d
@@ -93,11 +91,7 @@ class NetworkHandler
 
     ready: -> @_readyDeferred.promise
 
-    registerLocal: (processor) ->
-        player = processor
-        @players[player.id] = processor
-        @locallyProcessed.push processor
-
+    registerLocal: (player) ->
         message =
             action: 'newPlayer'
             data:
@@ -108,10 +102,10 @@ class NetworkHandler
         @ws.send JSON.stringify message
 
     register: (player) ->
-        @players[player.id] = player
+        @gameState.players[player.id] = player
 
     removePlayer: (playerId) ->
-        delete @players[playerId]
+        delete @gameState.players[playerId]
 
     moveTo: (player, destP) ->
         message =
@@ -120,7 +114,7 @@ class NetworkHandler
                 playerId: player.id
                 action: 'moveTo'
                 actionPosition: destP.toObject()
-                playerPosition: player.p.toObject()
+                playerPosition: @gameState.players[player.id].p.toObject()
                 team: player.team
             id: @client_uuid
         @ws.send JSON.stringify message
@@ -132,12 +126,19 @@ class NetworkHandler
                 playerId: player.id
                 action: 'fire'
                 actionPosition: castP.toObject()
-                playerPosition: player.p.toObject()
+                playerPosition: @gameState.players[player.id].p.toObject()
                 skill: skillName
                 team: player.team
             id: @client_uuid
         @ws.send JSON.stringify message
 
+    loop: =>
+        setTimeout @loop, 5
+        # TODO: A non sucky game loop...
+        # Fixed time updates.
+        @gameState.update new Date().getTime()
+        @gameState.render()
+
 module.exports =
     Local: LocalHandler
-    Network: NetworkHandler
+    Client: ClientNetworkHandler

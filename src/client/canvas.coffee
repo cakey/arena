@@ -20,22 +20,22 @@ class Canvas
         o = @ctx
         translatedContext =
             moveTo: (p) ->
-                mappedP = p.add(map.p).add(map.wallSize)
+                mappedP = p.add(map.p)
                 o.moveTo mappedP.x, mappedP.y
             arc: (p, args...) ->
-                mappedP = p.add(map.p).add(map.wallSize)
+                mappedP = p.add(map.p)
                 o.arc mappedP.x, mappedP.y, args...
             strokeRect: (p, size) ->
-                mappedP = p.add(map.p).add(map.wallSize)
+                mappedP = p.add(map.p)
                 o.strokeRect mappedP.x, mappedP.y, size.x, size.y
             fillRect: (p, size) ->
-                mappedP = p.add(map.p).add(map.wallSize)
+                mappedP = p.add(map.p)
                 o.fillRect mappedP.x, mappedP.y, size.x, size.y
             fillText: (arg, p) ->
-                mappedP = p.add(map.p).add(map.wallSize)
+                mappedP = p.add(map.p)
                 o.fillText arg, mappedP.x, mappedP.y
             strokeText: (arg, p) ->
-                mappedP = p.add(map.p).add(map.wallSize)
+                mappedP = p.add(map.p)
                 o.strokeText arg, mappedP.x, mappedP.y
 
             circle: (p, radius) -> translatedContext.arc p, radius, 0, 2 * Math.PI
@@ -63,6 +63,5 @@ class Canvas
     context: ->
         @mapContext
             p: new Point 0, 0
-            wallSize: new Point 0, 0
 
 module.exports = Canvas
