@@ -199,20 +199,17 @@ Arena = React.createClass
         </div>
 
 arenaRenderer = (gameState, canvas) ->
-    # Get contexts for rendering.
-
-
     # Render map.
     gameState.map.render canvas.state
     canvas.stage.update()
 
     # Render Players.
-    # for id, player of @props.arena.handler.players
-    #     player.render ctx
+    for id, player of gameState.handler.players
+        player.render canvas
 
     # Render projectiles.
-    # for p in @props.arena.projectiles
-    #     p.render ctx
+    for p in gameState.projectiles
+        p.render()
 
     React.render(
         <Arena gameState={gameState} canvas={canvas} />

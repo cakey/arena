@@ -6,7 +6,7 @@ Config = require "../lib/config"
 # TODO remove the "map" from the "@mapBlah" variables.
 class Arena
     constructor: (canvas) ->
-        @p = new Point 25, 25
+        @p = new Point 0, 0
         @size = new Point Config.game.width, Config.game.height
         @wallSize = new Point 6, 6
 
@@ -15,7 +15,7 @@ class Arena
 
         addEventListener "mousemove", (event) =>
             @mouseP = Point.fromObject event
-            @mapMouseP = @mouseP.subtract(@p).subtract(@wallSize)
+            @mapMouseP = @mouseP
 
         @map = new createjs.Shape()
         @map.graphics.beginFill("#f3f3f3").beginStroke("#558893").

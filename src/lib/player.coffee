@@ -11,6 +11,7 @@ class ProtoPlayer extends UIElement
     constructor: (@arena, @p, @team, @id) ->
         @time = @arena.time
         @radius = 20
+        @offset = new Point @radius, @radius
         @maxCastRadius = @radius * 2
         @destP = @p
         @speed = 0.2 # pixels/ms
@@ -21,7 +22,7 @@ class ProtoPlayer extends UIElement
 
         @circle = new createjs.Shape()
         @circle.graphics.beginFill(@arena.teams[@team].color).
-            drawCircle(@p.x, @p.y, @radius)
+            drawCircle(0, 0, @radius)
         @arena.canvas.stage.addChild @circle
 
         if not @id?
@@ -52,6 +53,16 @@ class ProtoPlayer extends UIElement
     fire: (@castP, @castedSkill) ->
         # first check cool down
         pctCooldown = @pctCooldown @castedSkill
+        realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
+        radiusMs = @radius / realCastTime
+        radius = (radiusMs * (@time - @startCastTime)) + @radius
+
+        @angle = @p.angle @castP
+        @halfCone = (Skills[@castedSkill].cone / 2)
+        @arc = new createjs.Shape()
+        @arc.graphics.beginFill(Skills[@castedSkill].color).
+            arc(@p.x, @p.y, radius, @angle - @halfCone, @angle + @halfCone).
+            lineTo(@p.x, @p.y).closePath()
 
         if pctCooldown >= 1
             # stop moving to fire
@@ -66,9 +77,6 @@ class ProtoPlayer extends UIElement
         newP = @p.towards @destP, (Utils.game.speed(@speed) * msDiff)
         if @arena.allowedMovement newP, @
             @p = newP
-
-        @circle.x = @p.x
-        @circle.y = @p.y
 
         # Cast
         if @startCastTime?
@@ -91,11 +99,28 @@ class ProtoPlayer extends UIElement
         @time = newTime
 
     render: (canvas) ->
+        # Move player circle.
+        @circle.x = @p.x
+        @circle.y = @p.y
+
         # Cast
+        if @startCastTime?
+            if not canvas.stage.contains @arc
+                canvas.stage.addChildAt @arc, 1
+            realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
+            radiusMs = @radius / realCastTime
+            radius = (radiusMs * (@time - @startCastTime)) + @radius
+
+            @arc.graphics.clear()
+            @arc.graphics.beginFill(Skills[@castedSkill].color).
+                arc(@p.x, @p.y, radius, @angle - @halfCone, @angle + @halfCone).
+                lineTo(@p.x, @p.y).closePath()
+        else
+            canvas.stage.removeChild @arc
 
         # Location
 
-        ctx.filledCircle @p, @radius, @arena.teams[@team].color
+        # ctx.filledCircle @p, @radius, @arena.teams[@team].color
 
         # casting circle
 
@@ -125,12 +150,12 @@ class UIPlayer extends ProtoPlayer
             n: 'bomb'
             j: 'interrupt'
         addEventListener "mousedown", (event) =>
-            topLeft = new Point @radius, @radius
-            bottomRight = @arena.map.size.subtract topLeft
-
-            p = @arena.map.mapMouseP.bound topLeft, bottomRight
-
             if event.which is 3
+                newP = new Point event.x - @radius, event.y - @radius
+                topLeft = new Point 0, 0
+                bottomRight = @arena.map.size
+
+                p = newP.bound topLeft, bottomRight
                 @handler.moveTo @, p
 
         addEventListener "keypress", (event) =>

@@ -135,6 +135,7 @@ class GameState
 
         # Projectiles.
         newProjectiles = []
+        deadProjectiles = []
         for projectile in @projectiles
             alive = projectile.update updateTime
             withinMap = (
@@ -144,6 +145,7 @@ class GameState
                 projectile.p.y < @map.size.y)
             if alive and withinMap
                 if hitPlayer = @projectileCollide projectile
+                    deadProjectiles.push projectile
                     skill = projectile.skill
                     @teams[projectile.team].score += skill.score
                     @teams[hitPlayer.team].score -= skill.score
@@ -151,9 +153,13 @@ class GameState
                         skill.hitPlayer hitPlayer, projectile
                     if skill.continue
                         newProjectiles.push projectile
-
                 else
                     newProjectiles.push projectile
+            else
+                deadProjectiles.push projectile
+
+        for projectile in deadProjectiles
+            @canvas.stage.removeChild projectile.ele
         @projectiles = newProjectiles
 
         @time = updateTime
