@@ -13,12 +13,9 @@ document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 
 camera = new Camera()
 canvas = new Canvas 'canvas'
-gameState = new GameState
-    shouldRender: true
-    canvas: canvas
-    camera: camera
+gameState = new GameState()
 
-handler = new Handlers.Client gameState
+handler = new Handlers.Client gameState, canvas, camera
 handler.ready().then ->
     try
         randomPoint = gameState.map.randomPoint()
@@ -39,7 +36,7 @@ handler.ready().then ->
             aip2 = new AIPlayer gameState, handler, gameState.map.randomPoint(), "greenAI"
             handler.registerLocal aip2, true
 
-        handler.loop()
+        handler.startLoop()
     catch e
         console.log e.message
         console.log e.stack

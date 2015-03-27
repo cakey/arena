@@ -198,8 +198,8 @@ SkillUI = React.createClass
 Arena = React.createClass
     render: ->
         # Get contexts for rendering.
-        ctx = @props.gameState.canvas.mapContext @props.gameState.camera
-        staticCtx = @props.gameState.canvas.context()
+        ctx = @props.canvas.mapContext @props.camera
+        staticCtx = @props.canvas.context()
 
         # Render map.
         @props.gameState.map.render ctx
@@ -218,9 +218,9 @@ Arena = React.createClass
             <SkillUI UIPlayer={@props.gameState.focusedUIPlayer} gameState={@props.gameState}/>
         </div>
 
-arenaRenderer = (gameState, canvas) ->
+arenaRenderer = (gameState, canvas, camera) ->
     React.render(
-        <Arena gameState={gameState} canvas={canvas} />
+        <Arena gameState={gameState} canvas={canvas} camera={camera} />
         document.getElementById('arena')
     )
 

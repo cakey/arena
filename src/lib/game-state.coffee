@@ -3,12 +3,10 @@ _ = require 'lodash'
 Point = require "./point"
 Projectile = require "./projectile"
 Map = require "./map"
-Renderers = require "../client/renderers"
 
 # TODO pull out update parts of arena and player to allow running on the server
 class GameState
-    constructor: (options) ->
-        {@shouldRender, @canvas, @camera} = options
+    constructor: ->
         @time = new Date().getTime()
         @players = {}
         @teams = {}
@@ -19,17 +17,6 @@ class GameState
         @teams[name] =
             color: color
             score: 0
-
-    render: ->
-        if @shouldRender
-            # Clear the canvas.
-            @canvas.begin()
-
-            # Render all the things.
-            Renderers.arena @, @canvas
-
-            # Nothing right now.
-            @canvas.end()
 
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
@@ -72,9 +59,6 @@ class GameState
 
     update: (updateTime) ->
         msDiff = updateTime - @time
-
-        # Map.
-        @camera.update msDiff
 
         for id, player of @players
             player.update updateTime

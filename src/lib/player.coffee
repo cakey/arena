@@ -145,7 +145,7 @@ class UIPlayer extends BasePlayer
             topLeft = new Point radius, radius
             bottomRight = @gameState.map.size.subtract topLeft
 
-            p = @gameState.camera.mapMouseP.bound topLeft, bottomRight
+            p = @handler.camera.mapMouseP.bound topLeft, bottomRight
 
             if event.which is 3
                 @handler.moveTo @, p
@@ -153,7 +153,7 @@ class UIPlayer extends BasePlayer
         addEventListener "keypress", (event) =>
 
             if skill = @keyBindings[String.fromCharCode event.which]
-                castP = @gameState.camera.mapMouseP.mapBound @p, @gameState.map
+                castP = @handler.camera.mapMouseP.mapBound @p, @gameState.map
                 @handler.fire @, castP, skill
             else
                 console.log event

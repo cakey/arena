@@ -5,9 +5,11 @@ uuid = require 'node-uuid'
 
 Point = require "../lib/point"
 Player = require "../lib/player"
+Renderers = require "./renderers"
+
 
 class ClientNetworkHandler
-    constructor: (@gameState) ->
+    constructor: (@gameState, @canvas, @camera) ->
         @host = "ws://#{location.hostname}:#{Config.ws.port}"
         @ws = new WebSocket @host
 
@@ -109,14 +111,32 @@ class ClientNetworkHandler
             id: @client_uuid
         @ws.send JSON.stringify message
 
-    loop: =>
-        setTimeout @loop, 5
+    startLoop: ->
+        @time = new Date().getTime()
+        @loopTick()
+
+    loopTick: =>
+        setTimeout @loopTick, 5
+        newTime = new Date().getTime()
         # TODO: A non sucky game loop...
         # Fixed time updates.
         for player in @locallyProcessed
             player.update()
-        @gameState.update new Date().getTime()
-        @gameState.render()
+
+        # Map.
+        @camera.update newTime - @time
+
+        @gameState.update newTime
+
+        # Clear the canvas.
+        @canvas.begin()
+
+        # Render all the things.
+        Renderers.arena @gameState, @canvas, @camera
+
+        # Nothing right now.
+        @canvas.end()
+        @time = newTime
 
 module.exports =
     Client: ClientNetworkHandler
