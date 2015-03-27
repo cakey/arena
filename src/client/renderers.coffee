@@ -175,7 +175,12 @@ SkillUI = React.createClass
                     { for boundKey, ki in row
                         skillName = @props.UIPlayer.keyBindings[boundKey]
                         if skill = Skills[skillName]
-                            pctCooldown = @props.UIPlayer.pctCooldown skillName
+                            pctCooldown =
+                                if @props.gameState.players[@props.UIPlayer.id]?
+                                    @props.gameState.players[@props.UIPlayer.id].pctCooldown skillName
+                                else
+                                    # haven't registered UI Player from the server yet
+                                    1
                             left = (rowOffsets[ri]+ki)*(60+5)
                             <SkillBoxUI
                                 skill={skill}
@@ -210,7 +215,7 @@ Arena = React.createClass
         # Render score and skills UI.
         <div>
             <ScoreBoard teams={@props.gameState.teams} />
-            <SkillUI UIPlayer={@props.gameState.focusedUIPlayer}/>
+            <SkillUI UIPlayer={@props.gameState.focusedUIPlayer} gameState={@props.gameState}/>
         </div>
 
 arenaRenderer = (gameState, canvas) ->

@@ -6,7 +6,11 @@ Skills = require "../lib/skills"
 Point = require "../lib/point"
 Config = require "../lib/config"
 
-class ProtoPlayer
+class BasePlayer
+    constructor: (@p, @team)->
+        @id = uuid.v4()
+
+class GamePlayer
     constructor: (@gameState, @p, @team, @id) ->
         @time = @gameState.time
         @radius = 20
@@ -109,24 +113,27 @@ class ProtoPlayer
             ctx.stroke()
             ctx.setLineDash []
 
-class AIPlayer extends ProtoPlayer
+class AIPlayer extends BasePlayer
     constructor: (@gameState, @handler, startP, team) ->
-        super @gameState, startP, team
+        super startP, team
 
     update: (newTime) ->
-        super newTime
+        self = @gameState.players[@id]
+        if not self?
+            # AIPlayer hasn't registered with gameState via server yet
+            return
         otherPs = _.reject _.values(@gameState.players), team: @team
 
-        if Math.random() < Utils.game.speed(0.005) and not @startCastTime?
+        if Math.random() < Utils.game.speed(0.005) and not self.startCastTime?
             @handler.fire @, _.sample(otherPs).p, 'orb'
 
         chanceToMove = Math.random() < Utils.game.speed(0.03)
-        if not @startCastTime? and (chanceToMove or @p.equal @destP)
+        if not self.startCastTime? and (chanceToMove or self.p.equal self.destP)
             @handler.moveTo @, @gameState.map.randomPoint()
 
-class UIPlayer extends ProtoPlayer
+class UIPlayer extends BasePlayer
     constructor: (@gameState, @handler, startP, team) ->
-        super @gameState, startP, team
+        super startP, team
         @keyBindings =
             g: 'orb'
             h: 'flame'
@@ -134,7 +141,8 @@ class UIPlayer extends ProtoPlayer
             n: 'bomb'
             j: 'interrupt'
         addEventListener "mousedown", (event) =>
-            topLeft = new Point @radius, @radius
+            radius = @gameState.players[@id].radius
+            topLeft = new Point radius, radius
             bottomRight = @gameState.map.size.subtract topLeft
 
             p = @gameState.camera.mapMouseP.bound topLeft, bottomRight
@@ -153,6 +161,6 @@ class UIPlayer extends ProtoPlayer
 
 module.exports = {
     AIPlayer,
-    ProtoPlayer,
+    GamePlayer,
     UIPlayer,
 }

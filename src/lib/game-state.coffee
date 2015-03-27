@@ -1,6 +1,5 @@
 _ = require 'lodash'
 
-Config = require "./config"
 Point = require "./point"
 Projectile = require "./projectile"
 Map = require "./map"
@@ -12,16 +11,14 @@ class GameState
         {@shouldRender, @canvas, @camera} = options
         @time = new Date().getTime()
         @players = {}
-        @teams =
-            red:
-                color: "#aa3333"
-                score: 0
-            blue:
-                color: "#3333aa"
-                score: 0
-
+        @teams = {}
         @projectiles = []
         @map = new Map
+
+    addTeam: (name, color) ->
+        @teams[name] =
+            color: color
+            score: 0
 
     render: ->
         if @shouldRender
