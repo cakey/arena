@@ -19,7 +19,6 @@ class Camera
             if event.which is 1
                 @mapToGo = @mapMiddle.towards Point.fromObject(event), 100
 
-
     update: (msDiff) ->
         @mapMiddle = new Point window.innerWidth / 2, window.innerHeight / 2
 

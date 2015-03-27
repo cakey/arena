@@ -21,18 +21,18 @@ class GameState
                 score: 0
 
         @projectiles = []
-        @map = new Map
+        @map = new Map @canvas
 
     render: ->
         if @shouldRender
             # Clear the canvas.
-            @canvas.begin()
+            # @canvas.begin()
 
             # Render all the things.
             Renderers.arena @, @canvas
 
             # Nothing right now.
-            @canvas.end()
+            # @canvas.end()
 
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
@@ -84,6 +84,7 @@ class GameState
 
         # Projectiles.
         newProjectiles = []
+        deadProjectiles = []
         for projectile in @projectiles
             alive = projectile.update updateTime
             withinMap = (
@@ -93,6 +94,7 @@ class GameState
                 projectile.p.y < @map.size.y)
             if alive and withinMap
                 if hitPlayer = @projectileCollide projectile
+                    deadProjectiles.push projectile
                     skill = projectile.skill
                     @teams[projectile.team].score += skill.score
                     @teams[hitPlayer.team].score -= skill.score
@@ -100,9 +102,13 @@ class GameState
                         skill.hitPlayer hitPlayer, projectile
                     if skill.continue
                         newProjectiles.push projectile
-
                 else
                     newProjectiles.push projectile
+            else
+                deadProjectiles.push projectile
+
+        for projectile in deadProjectiles
+            @canvas.stage.removeChild projectile.ele
         @projectiles = newProjectiles
 
         @time = updateTime

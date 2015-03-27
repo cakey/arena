@@ -18,6 +18,13 @@ class ProtoPlayer
 
         @_lastCasted = {}
 
+        @circle = new createjs.Shape()
+        @circle.graphics.beginFill(@gameState.teams[@team].color).
+            drawCircle(0, 0, @radius)
+        @gameState.canvas.stage.addChild @circle
+        @circle.x = @p.x
+        @circle.y = @p.y
+
         if not @id?
             @id = uuid.v4()
 
@@ -42,9 +49,18 @@ class ProtoPlayer
         return Math.min ((@time - lastCasted) / realCooldown), 1
 
     fire: (@castP, @castedSkill) ->
-        # first check cool down
-        pctCooldown = @pctCooldown @castedSkill
+        realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
+        radiusMs = @radius / realCastTime
+        radius = (radiusMs * (@time - @startCastTime)) + @radius
 
+        @angle = @p.angle @castP
+        @halfCone = (Skills[@castedSkill].cone / 2)
+        @arc = new createjs.Shape()
+        @arc.graphics.beginFill(Skills[@castedSkill].color).
+            arc(@p.x, @p.y, radius, @angle - @halfCone, @angle + @halfCone).
+            lineTo(@p.x, @p.y).closePath()
+
+        pctCooldown = @pctCooldown @castedSkill
         if pctCooldown >= 1
             # stop moving to fire
             if Skills[@castedSkill].channeled
@@ -79,35 +95,27 @@ class ProtoPlayer
 
         @time = newTime
 
-    render: (ctx) ->
+    render: (canvas) ->
+        # Move player circle.
+        @circle.x = @p.x
+        @circle.y = @p.y
+
         # Cast
         if @startCastTime?
+            if not canvas.stage.contains @arc
+                canvas.stage.addChildAt @arc, 1
             realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
             radiusMs = @radius / realCastTime
             radius = (radiusMs * (@time - @startCastTime)) + @radius
 
-            angle = @p.angle @castP
-            halfCone = Skills[@castedSkill].cone / 2
+            @arc.graphics.clear()
+            @arc.graphics.beginFill(Skills[@castedSkill].color).
+                arc(@p.x, @p.y, radius, @angle - @halfCone, @angle + @halfCone).
+                lineTo(@p.x, @p.y).closePath()
+        else
+            canvas.stage.removeChild @arc
 
-            ctx.beginPath()
-            ctx.moveTo @p
-            ctx.arc @p, radius, angle - halfCone, angle + halfCone
-            ctx.moveTo @p
-            ctx.fillStyle Skills[@castedSkill].color
-            ctx.fill()
-
-        # Location
-        ctx.filledCircle @p, @radius, @gameState.teams[@team].color
-
-        # casting circle
-        if Config.UI.castingCircles
-            ctx.beginPath()
-            ctx.circle @p, @maxCastRadius
-            ctx.lineWidth 1
-            ctx.setLineDash [3,12]
-            ctx.strokeStyle "#777777"
-            ctx.stroke()
-            ctx.setLineDash []
+        # TODO: still want these casting circles?
 
 class AIPlayer extends ProtoPlayer
     constructor: (@gameState, @handler, startP, team) ->
