@@ -36,6 +36,7 @@ class GameState
 
         @projectiles = []
         @map = new Arena @canvas
+        @newPlayers = []
 
         @handler = new Handlers.Network @
         readyPromise = @handler.ready()
@@ -46,6 +47,7 @@ class GameState
 
             @focusedUIPlayer = new UIPlayer this, @handler, randomPoint, randomTeam
             @handler.registerLocal @focusedUIPlayer
+            @newPlayers.push @focusedUIPlayer
 
             if Config.game.numAIs > 0
                 @teams.greenAI =
@@ -58,8 +60,10 @@ class GameState
             for a in [0...Config.game.numAIs]
                 aip1 = new AIPlayer @, @handler, @map.randomPoint(), "yellowAI"
                 @handler.registerLocal aip1
+                @newPlayers.push aip1
                 aip2 = new AIPlayer @, @handler, @map.randomPoint(), "greenAI"
                 @handler.registerLocal aip2
+                @newPlayers.push aip2
 
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team

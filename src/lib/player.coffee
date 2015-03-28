@@ -20,11 +20,6 @@ class ProtoPlayer extends UIElement
 
         @_lastCasted = {}
 
-        @circle = new createjs.Shape()
-        @circle.graphics.beginFill(@arena.teams[@team].color).
-            drawCircle(0, 0, @radius)
-        @arena.canvas.stage.addChild @circle
-
         if not @id?
             @id = uuid.v4()
 
@@ -32,7 +27,6 @@ class ProtoPlayer extends UIElement
 
     moveTo: (@destP) ->
         if @startCastTime isnt null and Skills[@castedSkill].channeled
-            @arena.canvas.stage.removeChild @arc
             @startCastTime = null
 
     pctCooldown: (castedSkill) ->
@@ -60,12 +54,6 @@ class ProtoPlayer extends UIElement
 
         @angle = @p.angle @castP
         @halfCone = (Skills[@castedSkill].cone / 2)
-        if @arena.canvas.stage.contains @arc
-            @arena.canvas.stage.removeChild @arc
-        @arc = new createjs.Shape()
-        @arc.graphics.beginFill(Skills[@castedSkill].color).
-            arc(@p.x, @p.y, radius, @angle - @halfCone, @angle + @halfCone).
-            lineTo(@p.x, @p.y).closePath()
 
         if pctCooldown >= 1
             # stop moving to fire
@@ -102,24 +90,24 @@ class ProtoPlayer extends UIElement
         @time = newTime
 
     render: (canvas) ->
-        # Move player circle.
-        @circle.x = @p.x
-        @circle.y = @p.y
+        # # Move player circle.
+        # @circle.x = @p.x
+        # @circle.y = @p.y
 
         # Cast
-        if @startCastTime?
-            if not canvas.stage.contains @arc
-                canvas.stage.addChildAt @arc, 1
-            realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
-            radiusMs = @radius / realCastTime
-            radius = (radiusMs * (@time - @startCastTime)) + @radius
+        # if @startCastTime?
+        #     if not canvas.stage.contains @arc
+        #         canvas.stage.addChildAt @arc, 1
+        #     realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
+        #     radiusMs = @radius / realCastTime
+        #     radius = (radiusMs * (@time - @startCastTime)) + @radius
 
-            @arc.graphics.clear()
-            @arc.graphics.beginFill(Skills[@castedSkill].color).
-                arc(@p.x, @p.y, radius, @angle - @halfCone, @angle + @halfCone).
-                lineTo(@p.x, @p.y).closePath()
-        else
-            canvas.stage.removeChild @arc
+        #     @arc.graphics.clear()
+        #     @arc.graphics.beginFill(Skills[@castedSkill].color).
+        #         arc(@p.x, @p.y, radius, @angle - @halfCone, @angle + @halfCone).
+        #         lineTo(@p.x, @p.y).closePath()
+        # else
+        #     canvas.stage.removeChild @arc
 
         # Location
 
