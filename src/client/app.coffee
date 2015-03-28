@@ -16,7 +16,7 @@ Projectile = require "../lib/projectile"
 Arena = require "../lib/arena"
 
 Canvas = require "./canvas"
-Renderers = require "./renderers"
+Gfx = require "./gfx"
 Handlers = require "./handlers"
 
 document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
@@ -61,18 +61,6 @@ class GameState
                 aip2 = new AIPlayer @, @handler, @map.randomPoint(), "greenAI"
                 @handler.registerLocal aip2
 
-            @loop()
-
-    render: ->
-        # Clear the canvas.
-        # @canvas.begin()
-
-        # Render all the things.
-        Renderers.arena @, @canvas
-
-        # Nothing right now.
-        # @canvas.end()
-
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
         @projectiles.push p
@@ -111,13 +99,6 @@ class GameState
             if p.team isnt player.team
                 return player if p.p.within player.p, p.skill.radius + player.radius
         return false
-
-    loop: =>
-        setTimeout @loop, 5
-        # TODO: A non sucky game loop...
-        # Fixed time updates.
-        @update()
-        @render()
 
     update: ->
         updateTime = new Date().getTime()
@@ -164,5 +145,12 @@ class GameState
 
         @time = updateTime
 
+gameLoop = =>
+    setTimeout gameLoop, 5
+    gameState.update()
+    gfx.render gameState
+
 canvas = new Canvas 'canvas'
+gfx = new Gfx canvas
 gameState = new GameState canvas
+gameLoop()
