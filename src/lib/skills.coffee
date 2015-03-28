@@ -68,7 +68,7 @@ skills =
 
             radiusP = new Point hitPlayer.radius, hitPlayer.radius
 
-            map = hitPlayer.arena.map
+            map = hitPlayer.gameState.map
 
             limitP = map.size.subtract radiusP
 

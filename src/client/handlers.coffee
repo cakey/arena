@@ -5,43 +5,19 @@ uuid = require 'node-uuid'
 
 Point = require "../lib/point"
 Player = require "../lib/player"
+Renderers = require "./renderers"
 
-class LocalHandler
-    constructor: ->
-        @players = {}
-        @locallyProcessed = []
-        @_readyDeferred = RSVP.defer()
-        @_readyDeferred.resolve()
-
-    registerLocal: (processor) ->
-        player = processor
-        @players[player.id] = player
-        @locallyProcessed.push processor
-
-    register: (player) ->
-        @players[player.id] = player
-
-    removePlayer: (playerId) ->
-        delete @players[playerId]
-
-    moveTo: (player, destP) ->
-        player.moveTo destP
-
-    fire: (player, castP, skillName) ->
-        player.fire castP, skillName
-
-    ready: -> @_readyDeferred.promise
 
 class ClientNetworkHandler
-    constructor: (@gameState) ->
-        @players = {}
-
+    constructor: (@gameState, @canvas, @camera) ->
         @host = "ws://#{location.hostname}:#{Config.ws.port}"
         @ws = new WebSocket @host
 
         @client_uuid = uuid.v4()
 
         @_readyDeferred = RSVP.defer()
+
+        @locallyProcessed = []
 
         @ws.onopen = =>
             message =
@@ -76,7 +52,7 @@ class ClientNetworkHandler
                     player.fire position, d.skill
             else if message.action is "newPlayer"
                 playerPosition = Point.fromObject d.playerPosition
-                player = new Player.ProtoPlayer @gameState, playerPosition, d.team, d.playerId
+                player = new Player.GamePlayer @gameState, playerPosition, d.team, d.playerId
                 @register player
             else if message.action is "deletePlayer"
                 @removePlayer d
@@ -91,7 +67,7 @@ class ClientNetworkHandler
 
     ready: -> @_readyDeferred.promise
 
-    registerLocal: (player) ->
+    registerLocal: (player, ai) ->
         message =
             action: 'newPlayer'
             data:
@@ -100,6 +76,9 @@ class ClientNetworkHandler
                 team: player.team
             id: @client_uuid
         @ws.send JSON.stringify message
+        if ai
+            @locallyProcessed.push player
+
 
     register: (player) ->
         @gameState.players[player.id] = player
@@ -132,13 +111,32 @@ class ClientNetworkHandler
             id: @client_uuid
         @ws.send JSON.stringify message
 
-    loop: =>
-        setTimeout @loop, 5
+    startLoop: ->
+        @time = new Date().getTime()
+        @loopTick()
+
+    loopTick: =>
+        setTimeout @loopTick, 5
+        newTime = new Date().getTime()
         # TODO: A non sucky game loop...
         # Fixed time updates.
-        @gameState.update new Date().getTime()
-        @gameState.render()
+        for player in @locallyProcessed
+            player.update()
+
+        # Map.
+        @camera.update newTime - @time
+
+        @gameState.update newTime
+
+        # Clear the canvas.
+        @canvas.begin()
+
+        # Render all the things.
+        Renderers.arena @gameState, @canvas, @camera, @focusedUIPlayer
+
+        # Nothing right now.
+        @canvas.end()
+        @time = newTime
 
 module.exports =
-    Local: LocalHandler
     Client: ClientNetworkHandler

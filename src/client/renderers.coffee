@@ -175,7 +175,12 @@ SkillUI = React.createClass
                     { for boundKey, ki in row
                         skillName = @props.UIPlayer.keyBindings[boundKey]
                         if skill = Skills[skillName]
-                            pctCooldown = @props.UIPlayer.pctCooldown skillName
+                            pctCooldown =
+                                if @props.gameState.players[@props.UIPlayer.id]?
+                                    @props.gameState.players[@props.UIPlayer.id].pctCooldown skillName
+                                else
+                                    # haven't registered UI Player from the server yet
+                                    1
                             left = (rowOffsets[ri]+ki)*(60+5)
                             <SkillBoxUI
                                 skill={skill}
@@ -193,8 +198,8 @@ SkillUI = React.createClass
 Arena = React.createClass
     render: ->
         # Get contexts for rendering.
-        ctx = @props.gameState.canvas.mapContext @props.gameState.camera
-        staticCtx = @props.gameState.canvas.context()
+        ctx = @props.canvas.mapContext @props.camera
+        staticCtx = @props.canvas.context()
 
         # Render map.
         @props.gameState.map.render ctx
@@ -210,12 +215,12 @@ Arena = React.createClass
         # Render score and skills UI.
         <div>
             <ScoreBoard teams={@props.gameState.teams} />
-            <SkillUI UIPlayer={@props.gameState.focusedUIPlayer}/>
+            <SkillUI UIPlayer={@props.UIPlayer} gameState={@props.gameState}/>
         </div>
 
-arenaRenderer = (gameState, canvas) ->
+arenaRenderer = (gameState, canvas, camera, focusedUIPlayer) ->
     React.render(
-        <Arena gameState={gameState} canvas={canvas} />
+        <Arena gameState={gameState} canvas={canvas} camera={camera} UIPlayer={focusedUIPlayer} />
         document.getElementById('arena')
     )
 
