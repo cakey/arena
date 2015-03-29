@@ -35,8 +35,10 @@ class GameState
                 score: 0
 
         @projectiles = []
-        @map = new Arena @canvas
+        @map = new Arena
         @newPlayers = []
+        @toAddProjectiles = []
+        @toRemoveProjectiles = []
 
         @handler = new Handlers.Network @
         readyPromise = @handler.ready()
@@ -67,6 +69,7 @@ class GameState
 
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
+        @toAddProjectiles.push p
         @projectiles.push p
 
     allowedMovement: (newP, player) ->
@@ -120,7 +123,6 @@ class GameState
 
         # Projectiles.
         newProjectiles = []
-        deadProjectiles = []
         for projectile in @projectiles
             alive = projectile.update updateTime
             withinMap = (
@@ -130,7 +132,7 @@ class GameState
                 projectile.p.y < @map.size.y)
             if alive and withinMap
                 if hitPlayer = @projectileCollide projectile
-                    deadProjectiles.push projectile
+                    @toRemoveProjectiles.push projectile
                     skill = projectile.skill
                     @teams[projectile.team].score += skill.score
                     @teams[hitPlayer.team].score -= skill.score
@@ -141,10 +143,8 @@ class GameState
                 else
                     newProjectiles.push projectile
             else
-                deadProjectiles.push projectile
+                @toRemoveProjectiles.push projectile
 
-        for projectile in deadProjectiles
-            @canvas.stage.removeChild projectile.ele
         @projectiles = newProjectiles
 
         @time = updateTime

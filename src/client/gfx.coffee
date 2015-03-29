@@ -8,6 +8,7 @@ class Gfx
         @playerCounter = 0
         @projectileCounter = 0
         @players = []
+        @projectiles = []
         @addMap()
 
     # Main render function. Called from outside each game loop.
@@ -18,13 +19,19 @@ class Gfx
         # Render Players.
         for player in gameState.newPlayers
             @addPlayer player
-            gameState.newPlayers = []
+        gameState.newPlayers = []
         for id, player of gameState.handler.players
             @updatePlayer player
 
         # Render projectiles.
+        for p in gameState.toAddProjectiles
+            @addProjectile p
+        gameState.toAddProjectiles = []
         for p in gameState.projectiles
-            p.render()
+            @updateProjectile p
+        for p in gameState.toRemoveProjectiles
+            @removeProjectile p
+        gameState.toRemoveProjectiles = []
 
         # Render react UI.
         ReactRenderer.arena gameState, @canvas
@@ -78,8 +85,25 @@ class Gfx
     #
     # Projectile.
     #
-    addProjectile: ->
+    addProjectile: (projectile) ->
+        projectile.gfxId = @projectileCounter++
+        proj = new createjs.Shape()
+        proj.graphics.beginFill(projectile.skill.color).
+            beginStroke(projectile.arena.teams[projectile.team].color).
+            setStrokeStyle(1).
+            drawCircle(0, 0, projectile.skill.radius)
+        proj.x = projectile.p.x
+        proj.y = projectile.p.y
+        @canvas.stage.addChild proj
+        @projectiles[projectile.gfxId] = proj
 
+    updateProjectile: (projectile) ->
+        p = @projectiles[projectile.gfxId]
+        p.x = projectile.p.x
+        p.y = projectile.p.y
 
+    removeProjectile: (projectile) ->
+        @canvas.stage.removeChild @projectiles[projectile.gfxId]
+        delete @projectiles[projectile.gfxId]
 
 module.exports = Gfx

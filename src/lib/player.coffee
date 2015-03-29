@@ -3,11 +3,10 @@ uuid = require 'node-uuid'
 
 Utils = require "../lib/utils"
 Skills = require "../lib/skills"
-UIElement = require "../lib/ui-element"
 Point = require "../lib/point"
 Config = require "../lib/config"
 
-class ProtoPlayer extends UIElement
+class ProtoPlayer
     constructor: (@arena, @p, @team, @id) ->
         @time = @arena.time
         @radius = 20
@@ -22,8 +21,6 @@ class ProtoPlayer extends UIElement
 
         if not @id?
             @id = uuid.v4()
-
-        super(@id)
 
     moveTo: (@destP) ->
         if @startCastTime isnt null and Skills[@castedSkill].channeled
@@ -89,32 +86,6 @@ class ProtoPlayer extends UIElement
 
         @time = newTime
 
-    render: (canvas) ->
-        # # Move player circle.
-        # @circle.x = @p.x
-        # @circle.y = @p.y
-
-        # Cast
-        # if @startCastTime?
-        #     if not canvas.stage.contains @arc
-        #         canvas.stage.addChildAt @arc, 1
-        #     realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
-        #     radiusMs = @radius / realCastTime
-        #     radius = (radiusMs * (@time - @startCastTime)) + @radius
-
-        #     @arc.graphics.clear()
-        #     @arc.graphics.beginFill(Skills[@castedSkill].color).
-        #         arc(@p.x, @p.y, radius, @angle - @halfCone, @angle + @halfCone).
-        #         lineTo(@p.x, @p.y).closePath()
-        # else
-        #     canvas.stage.removeChild @arc
-
-        # Location
-
-        # ctx.filledCircle @p, @radius, @arena.teams[@team].color
-
-        # casting circle
-
 class AIPlayer extends ProtoPlayer
     constructor: (@arena, @handler, startP, team) ->
         super @arena, startP, team
@@ -134,6 +105,7 @@ class UIPlayer extends ProtoPlayer
     constructor: (@arena, @handler, startP, team) ->
         super @arena, startP, team
 
+        console.log "here?"
         @keyBindings =
             g: 'orb'
             h: 'flame'

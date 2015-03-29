@@ -5,7 +5,7 @@ Config = require "../lib/config"
 
 # TODO remove the "map" from the "@mapBlah" variables.
 class Arena
-    constructor: (canvas) ->
+    constructor: () ->
         @origin = new Point 0, 0
         @p = new Point 0, 0
         @size = new Point Config.game.width, Config.game.height
@@ -18,7 +18,5 @@ class Arena
         point.bound @origin, @size
 
     update: (msDiff) ->
-
-    render: (state) ->
 
 module.exports = Arena
