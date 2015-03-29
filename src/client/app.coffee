@@ -23,6 +23,10 @@ document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 # TODO pull out update parts of arena and player to allow running on the server
 class GameState
     constructor: (@canvas) ->
+        @cameraOffset = new Point 25, 25
+        @canvas.moveCameraTo @cameraOffset.x, @cameraOffset.y
+        @mousePosition = new Point 0, 0
+
         @time = new Date().getTime()
 
         @teams =
@@ -154,5 +158,15 @@ gameLoop = =>
     gfx.render gameState
 
 gfx = new Gfx 'canvas'
-gameState = new GameState canvas
+gameState = new GameState gfx
+
+addEventListener "mousedown", (event) =>
+    if event.which is 1
+        gameState.cameraOffset = new Point event.x, event.y
+        gfx.moveCameraTo event.x, event.y
+
+addEventListener "mousemove", (event) =>
+    eventPosition = Point.fromObject event
+    gameState.mousePosition = eventPosition.subtract gameState.cameraOffset
+
 gameLoop()

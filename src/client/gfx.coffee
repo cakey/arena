@@ -20,19 +20,6 @@ class Gfx
 
         window.onresize = _.throttle onResize, 50
 
-        @cameraOffset = new Point 25, 25
-
-        addEventListener "mousedown", (event) =>
-            if event.which is 1
-                @cameraOffset = new Point event.x, event.y
-                @stage.setTransform event.x, event.y
-
-        @mousePosition = new Point 0, 0
-
-        addEventListener "mousemove", (event) =>
-            eventPosition = Point.fromObject event
-            @mousePosition = eventPosition.subtract @cameraOffset
-
         # Render variables.
         @playerCounter = 0
         @projectileCounter = 0
@@ -64,6 +51,9 @@ class Gfx
 
         # Render react UI.
         ReactRenderer.arena gameState, @canvas
+
+    moveCameraTo: (x, y) ->
+        @stage.setTransform x, y
 
     #
     # Map.

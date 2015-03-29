@@ -114,14 +114,14 @@ class UIPlayer extends ProtoPlayer
         addEventListener "mousedown", (event) =>
             if event.which is 3
                 eventPosition = Point.fromObject event
-                adjustedPosition = eventPosition.subtract(@arena.canvas.cameraOffset)
+                adjustedPosition = eventPosition.subtract(@arena.cameraOffset)
                 boundedPosition = @arena.map.boundPoint adjustedPosition
                 @handler.moveTo @, boundedPosition
 
         addEventListener "keypress", (event) =>
 
             if skill = @keyBindings[String.fromCharCode event.which]
-                castP = @arena.canvas.mousePosition.mapBound @p, @arena.map
+                castP = @arena.mousePosition.mapBound @p, @arena.map
                 @handler.fire @, castP, skill
             else
                 console.log event
