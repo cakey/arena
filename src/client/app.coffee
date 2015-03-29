@@ -24,17 +24,17 @@ document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 class GameState
     constructor: (@canvas) ->
         @cameraOffset = new Point 25, 25
-        @canvas.moveCameraTo @cameraOffset.x, @cameraOffset.y
+        # @canvas.moveCameraTo @cameraOffset.x, @cameraOffset.y
         @mousePosition = new Point 0, 0
 
         @time = new Date().getTime()
 
         @teams =
             red:
-                color: "#aa3333"
+                color: 0xaa3333
                 score: 0
             blue:
-                color: "#3333aa"
+                color: 0x3333aa
                 score: 0
 
         @projectiles = []
@@ -56,10 +56,10 @@ class GameState
 
             if Config.game.numAIs > 0
                 @teams.greenAI =
-                    color: "#33aa33"
+                    color: 0x33aa33
                     score: 0
                 @teams.yellowAI =
-                    color: "#ddaa44"
+                    color: 0xddaa44
                     score: 0
 
             for a in [0...Config.game.numAIs]
@@ -157,7 +157,7 @@ gameLoop = =>
     gameState.update()
     gfx.render gameState
 
-gfx = new Gfx 'canvas'
+gfx = new Gfx 'render-area'
 gameState = new GameState gfx
 
 addEventListener "mousedown", (event) =>
