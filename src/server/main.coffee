@@ -1,4 +1,5 @@
 Config = require "../lib/config"
+GameState = require "../lib/game-state"
 
 WebSocketServer = require('ws').Server
 
@@ -9,12 +10,24 @@ clients = {}
 
 messageCount = 0
 
+class ServerHandler
+    constructor: ->
+
+    start: ->
+        console.log "Game Loop (start)"
+
+    stop: ->
+        console.log "Game Loop (end)"
+
+
+serverHandler = new ServerHandler()
+
 actions =
     register: (ws, message) ->
         console.log "register --- #{message.id[..7]}"
 
         if Object.keys(clients).length is 0
-            console.log "Game Loop (start)"
+            serverHandler.start()
 
         clients[message.id] = ws
         players[message.id] = {}
@@ -41,7 +54,7 @@ actions =
         delete players[message.id]
 
         if Object.keys(clients).length is 0
-            console.log "Game Loop (end)"
+            serverHandler.stop()
             messageCount = 0
 
     control: (ws, message) ->
