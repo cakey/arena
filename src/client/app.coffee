@@ -15,7 +15,6 @@ AIPlayer = Player.AIPlayer
 Projectile = require "../lib/projectile"
 Arena = require "../lib/arena"
 
-Canvas = require "./canvas"
 Gfx = require "./gfx"
 Handlers = require "./handlers"
 
@@ -154,7 +153,6 @@ gameLoop = =>
     gameState.update()
     gfx.render gameState
 
-canvas = new Canvas 'canvas'
-gfx = new Gfx canvas
+gfx = new Gfx 'canvas'
 gameState = new GameState canvas
 gameLoop()

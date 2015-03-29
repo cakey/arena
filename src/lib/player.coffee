@@ -105,7 +105,6 @@ class UIPlayer extends ProtoPlayer
     constructor: (@arena, @handler, startP, team) ->
         super @arena, startP, team
 
-        console.log "here?"
         @keyBindings =
             g: 'orb'
             h: 'flame'

@@ -1,10 +1,39 @@
+_ = require 'lodash'
+
+Point = require "../lib/point"
 ReactRenderer = require "./react-renderer"
 Utils = require "../lib/utils"
 Skills = require "../lib/skills"
 Config = require "../lib/config"
 
 class Gfx
-    constructor: (@canvas) ->
+    constructor: (@id) ->
+        # Set up the canvas.
+        @stage = new createjs.Stage @id
+        @stage.canvas.width = window.innerWidth
+        @stage.canvas.height = window.innerHeight
+        @stage.setTransform 25, 25
+
+        onResize = =>
+            @stage.canvas.width = window.innerWidth
+            @stage.canvas.height = window.innerHeight
+
+        window.onresize = _.throttle onResize, 50
+
+        @cameraOffset = new Point 25, 25
+
+        addEventListener "mousedown", (event) =>
+            if event.which is 1
+                @cameraOffset = new Point event.x, event.y
+                @stage.setTransform event.x, event.y
+
+        @mousePosition = new Point 0, 0
+
+        addEventListener "mousemove", (event) =>
+            eventPosition = Point.fromObject event
+            @mousePosition = eventPosition.subtract @cameraOffset
+
+        # Render variables.
         @playerCounter = 0
         @projectileCounter = 0
         @players = []
@@ -14,7 +43,7 @@ class Gfx
     # Main render function. Called from outside each game loop.
     render: (gameState) ->
         # Render map.
-        @canvas.stage.update()
+        @stage.update()
 
         # Render Players.
         for player in gameState.newPlayers
@@ -44,7 +73,7 @@ class Gfx
         @map.graphics.beginFill("#f3f3f3").beginStroke("#558893").
             setStrokeStyle(6).
             drawRect(0, 0, Config.game.width, Config.game.height)
-        @canvas.stage.addChild @map
+        @stage.addChild @map
 
     #
     # Player.
@@ -54,9 +83,9 @@ class Gfx
         playerShape = new createjs.Shape()
         playerShape.graphics.beginFill(player.arena.teams[player.team].color).
             drawCircle(0, 0, player.radius)
-        @canvas.stage.addChild playerShape
+        @stage.addChild playerShape
         castArc = new createjs.Shape()
-        @canvas.stage.addChildAt castArc, 1
+        @stage.addChildAt castArc, 1
         @players[player.gfxId] =
             playerBody: playerShape
             castArc: castArc
@@ -94,7 +123,7 @@ class Gfx
             drawCircle(0, 0, projectile.skill.radius)
         proj.x = projectile.p.x
         proj.y = projectile.p.y
-        @canvas.stage.addChild proj
+        @stage.addChild proj
         @projectiles[projectile.gfxId] = proj
 
     updateProjectile: (projectile) ->
@@ -103,7 +132,7 @@ class Gfx
         p.y = projectile.p.y
 
     removeProjectile: (projectile) ->
-        @canvas.stage.removeChild @projectiles[projectile.gfxId]
+        @stage.removeChild @projectiles[projectile.gfxId]
         delete @projectiles[projectile.gfxId]
 
 module.exports = Gfx
