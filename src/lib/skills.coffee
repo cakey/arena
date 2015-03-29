@@ -12,6 +12,7 @@ skills =
         speed: 0.6
         range: 400
         color: "#aa0000"
+        hexcolor: 0xaa0000
         channeled: true
         score: 50
         description: "Standard range projectile, all rounder."
@@ -24,6 +25,7 @@ skills =
         speed: 1
         range: 800
         color: "#000000"
+        hexcolor: 0x000000
         channeled: false
         score: 1
         description: "High rate, low damage, long range machine gun."
@@ -36,6 +38,7 @@ skills =
         speed: 0.05
         range: 200
         color: "#00bbbb"
+        hexcolor: 0x00bbbb
         channeled: false
         score: 500
         description: "Extremely high damage, close range, slow casting bomb."
@@ -50,6 +53,7 @@ skills =
         speed: 0.3
         range: 75
         color: "#990099"
+        hexcolor: 0x990099
         channeled: true
         score: 3
         continue: true
@@ -89,6 +93,7 @@ skills =
         speed: 3
         range: 1000
         color: "#aa0077"
+        hexcolor: 0xaa0077
         channeled: false
         score: 0
         description: "Instant projectile that interrupts targets. No damage."

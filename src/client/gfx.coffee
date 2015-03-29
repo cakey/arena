@@ -6,6 +6,21 @@ Utils = require "../lib/utils"
 Skills = require "../lib/skills"
 Config = require "../lib/config"
 
+toRad = (p_angle) ->
+    return (p_angle - 90) * Math.PI / 180
+
+PIXI.Graphics.prototype.drawArc = (p_x, p_y, p_radius, p_startAngle, p_endAngle) ->
+    totalAngle = p_endAngle - p_startAngle
+    segments = Math.ceil Math.abs(Math.sqrt(1 - Math.pow (1 - Math.min(p_radius / 60, 1)), 2) * totalAngle * p_radius * 0.01)
+    anglePerSegment = totalAngle / segments
+
+    for index in [1..segments]
+        x = p_x + Math.cos(toRad(p_startAngle + (anglePerSegment * index))) * p_radius
+        y = p_y + Math.sin(toRad(p_startAngle + (anglePerSegment * index))) * p_radius
+        @.lineTo x, y
+
+    return @
+
 class Gfx
     constructor: (@id) ->
         # Set up the canvas.
@@ -46,19 +61,15 @@ class Gfx
         for id, player of gameState.handler.players
             @updatePlayer player
 
-        # # Render projectiles.
-        # for p in gameState.toAddProjectiles
-        #     @addProjectile p
-        # gameState.toAddProjectiles = []
-        # for p in gameState.projectiles
-        #     @updateProjectile p
-        # for p in gameState.toRemoveProjectiles
-        #     @removeProjectile p
-        # gameState.toRemoveProjectiles = []
-
-
-        # Update render info.
-
+        # Render projectiles.
+        for p in gameState.toAddProjectiles
+            @addProjectile p
+        gameState.toAddProjectiles = []
+        for p in gameState.projectiles
+            @updateProjectile p
+        for p in gameState.toRemoveProjectiles
+            @removeProjectile p
+        gameState.toRemoveProjectiles = []
 
         # Render stage.
         @renderer.render @stage
@@ -84,20 +95,16 @@ class Gfx
     #
     addPlayer: (player) ->
         player.gfxId = @playerCounter++
-        # playerShape = new createjs.Shape()
-        # playerShape.graphics.beginFill(player.arena.teams[player.team].color).
-        #     drawCircle(0, 0, player.radius)
-        # @stage.addChild playerShape
-        # castArc = new createjs.Shape()
-        # @stage.addChildAt castArc, 1
-        @playerShape = new PIXI.Graphics()
-        @playerShape.beginFill(player.arena.teams[player.team].color).
+        playerShape = new PIXI.Graphics()
+        playerShape.beginFill(player.arena.teams[player.team].color).
             drawCircle(0, 0, player.radius)
-        @container.addChild @playerShape
+        castArc = new PIXI.Graphics()
+        @container.addChild playerShape
+        @container.addChildAt castArc, 1
 
         @players[player.gfxId] =
-            playerBody: @playerShape
-            # castArc: castArc
+            playerBody: playerShape
+            castArc: castArc
 
     updatePlayer: (player) ->
         playerBody = @players[player.gfxId].playerBody
@@ -106,17 +113,17 @@ class Gfx
         playerBody.y = player.p.y
 
         # Cast
-        # castArc = @players[player.gfxId].castArc
-        # castArc.graphics.clear()
-        # if player.startCastTime?
-        #     realCastTime = Utils.game.speedInverse(Skills[player.castedSkill].castTime)
-        #     radiusMs = player.radius / realCastTime
-        #     radius = (radiusMs * (player.time - player.startCastTime)) + player.radius
+        castArc = @players[player.gfxId].castArc
+        castArc.clear()
+        if player.startCastTime?
+            realCastTime = Utils.game.speedInverse(Skills[player.castedSkill].castTime)
+            radiusMs = player.radius / realCastTime
+            radius = (radiusMs * (player.time - player.startCastTime)) + player.radius
 
-        #     castArc.graphics.clear()
-        #     castArc.graphics.beginFill(Skills[player.castedSkill].color).
-        #         arc(player.p.x, player.p.y, radius, player.angle - player.halfCone, player.angle + player.halfCone).
-        #         lineTo(player.p.x, player.p.y).closePath()
+            castArc.beginFill(Skills[player.castedSkill].hexcolor).
+                moveTo(player.p.x, player.p.y).
+                arc(player.p.x, player.p.y, radius, player.angle - player.halfCone, player.angle + player.halfCone).
+                lineTo(player.p.x, player.p.y)
 
     removePlayer: ->
 
@@ -125,14 +132,13 @@ class Gfx
     #
     addProjectile: (projectile) ->
         projectile.gfxId = @projectileCounter++
-        proj = new createjs.Shape()
-        proj.graphics.beginFill(projectile.skill.color).
-            beginStroke(projectile.arena.teams[projectile.team].color).
-            setStrokeStyle(1).
+        proj = new PIXI.Graphics()
+        proj.beginFill(projectile.skill.hexcolor).
+            lineStyle(1, projectile.arena.teams[projectile.team].color, 1).
             drawCircle(0, 0, projectile.skill.radius)
         proj.x = projectile.p.x
         proj.y = projectile.p.y
-        @stage.addChild proj
+        @container.addChild proj
         @projectiles[projectile.gfxId] = proj
 
     updateProjectile: (projectile) ->
@@ -141,7 +147,7 @@ class Gfx
         p.y = projectile.p.y
 
     removeProjectile: (projectile) ->
-        @stage.removeChild @projectiles[projectile.gfxId]
+        @container.removeChild @projectiles[projectile.gfxId]
         delete @projectiles[projectile.gfxId]
 
 module.exports = Gfx
