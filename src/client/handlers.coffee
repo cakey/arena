@@ -35,30 +35,33 @@ class ClientNetworkHandler
         @ws.onmessage = (unparsed) =>
             message = JSON.parse unparsed.data
             d = message.data
-            if message.action is "control"
-                position = Point.fromObject d.actionPosition
-                player = @gameState.players[d.playerId]
+            switch message.action
+                when "control"
+                    position = Point.fromObject d.actionPosition
+                    player = @gameState.players[d.playerId]
 
-                playerPosition = Point.fromObject d.playerPosition
-                if not player
-                    console.log "unregistered player"
-                    return
+                    playerPosition = Point.fromObject d.playerPosition
+                    if not player
+                        console.log "unregistered player"
+                        return
 
-                if d.action is "moveTo"
-                    # server corrects us
-                    player.p = playerPosition
-                    player.moveTo position
-                else if d.action is "fire"
-                    player.fire position, d.skill
-            else if message.action is "newPlayer"
-                playerPosition = Point.fromObject d.playerPosition
-                player = new Player.GamePlayer @gameState, playerPosition, d.team, d.playerId
-                @register player
-            else if message.action is "deletePlayer"
-                @removePlayer d
-            else
-                console.log "unrecognised message"
-                console.log message
+                    if d.action is "moveTo"
+                        # server corrects us
+                        player.p = playerPosition
+                        player.moveTo position
+                    else if d.action is "fire"
+                        player.fire position, d.skill
+                when "newPlayer"
+                    playerPosition = Point.fromObject d.playerPosition
+                    player = new Player.GamePlayer @gameState, playerPosition, d.team, d.playerId
+                    @register player
+                when "deletePlayer"
+                    @removePlayer d
+                when "ping"
+                    @ws.send JSON.stringify message
+                else
+                    console.log "unrecognised message"
+                    console.log message
 
         @ws.onclose = ->
             # Server crashed or connection dropped
