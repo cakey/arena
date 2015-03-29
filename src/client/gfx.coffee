@@ -6,21 +6,6 @@ Utils = require "../lib/utils"
 Skills = require "../lib/skills"
 Config = require "../lib/config"
 
-toRad = (p_angle) ->
-    return (p_angle - 90) * Math.PI / 180
-
-PIXI.Graphics.prototype.drawArc = (p_x, p_y, p_radius, p_startAngle, p_endAngle) ->
-    totalAngle = p_endAngle - p_startAngle
-    segments = Math.ceil Math.abs(Math.sqrt(1 - Math.pow (1 - Math.min(p_radius / 60, 1)), 2) * totalAngle * p_radius * 0.01)
-    anglePerSegment = totalAngle / segments
-
-    for index in [1..segments]
-        x = p_x + Math.cos(toRad(p_startAngle + (anglePerSegment * index))) * p_radius
-        y = p_y + Math.sin(toRad(p_startAngle + (anglePerSegment * index))) * p_radius
-        @.lineTo x, y
-
-    return @
-
 class Gfx
     constructor: (@id) ->
         # Set up the canvas.

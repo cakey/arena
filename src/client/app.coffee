@@ -154,8 +154,13 @@ class GameState
 
 gameLoop = =>
     setTimeout gameLoop, 5
+    time = new Date().getTime()
     gameState.update()
+    stateTime = new Date().getTime()
+    console.log "game state update took: " + (stateTime - time)
     gfx.render gameState
+    renderTime = new Date().getTime()
+    console.log "rendering took: " + (renderTime - stateTime)
 
 gfx = new Gfx 'render-area'
 gameState = new GameState gfx
