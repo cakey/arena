@@ -154,13 +154,11 @@ class GameState
 
 gameLoop = =>
     setTimeout gameLoop, 5
-    time = new Date().getTime()
     gameState.update()
-    stateTime = new Date().getTime()
-    console.log "game state update took: " + (stateTime - time)
+
+render = =>
+    requestAnimFrame render
     gfx.render gameState
-    renderTime = new Date().getTime()
-    console.log "rendering took: " + (renderTime - stateTime)
 
 gfx = new Gfx 'render-area'
 gameState = new GameState gfx
@@ -175,3 +173,6 @@ addEventListener "mousemove", (event) =>
     gameState.mousePosition = eventPosition.subtract gameState.cameraOffset
 
 gameLoop()
+# Rendering using requestAnimFrame. Read about it here:
+# http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
+requestAnimFrame render
