@@ -1,5 +1,12 @@
 # class for each client
 
+uuid = require 'node-uuid'
+
+WebSocketServer = require('ws').Server
+
+Config = require "../lib/config"
+GameState = require "../lib/game-state"
+
 class FixedBuffer
     constructor: (@n) ->
         @i = 0
@@ -25,12 +32,6 @@ class FixedBuffer
 
 
 
-uuid = require 'node-uuid'
-
-WebSocketServer = require('ws').Server
-
-Config = require "../lib/config"
-GameState = require "../lib/game-state"
 
 wss = new WebSocketServer port: Config.ws.port
 
@@ -46,29 +47,35 @@ class ServerHandler
     start: ->
         console.log "Game Loop (start)"
         @tick = 0
-        @loop()
+        @gameState = new GameState (new Date().getTime())
+        console.log @gameState
+        process.nextTick @loop
 
     loop: =>
-        @loopTimeout = setTimeout @loop, 100
+        @loopTimeout = setTimeout @loop, 10
 
-        if @tick % 10 is 0
+        if @tick % 200 is 0
             for clientID, conn of clients
                 console.log clientID, clientPings[clientID].average()
 
+        if @tick % 10 is 0
+            for clientID, conn of clients
+                pingID = uuid.v4()
+                pings[pingID] =
+                    clientID: clientID
+                    time: new Date().getTime()
+                conn.send JSON.stringify
+                    data: pingID
+                    action: "ping"
 
-        for clientID, conn of clients
-            pingID = uuid.v4()
-            pings[pingID] =
-                clientID: clientID
-                time: new Date().getTime()
-            conn.send JSON.stringify
-                data: pingID
-                action: "ping"
+        @gameState.update new Date().getTime()
+
         @tick += 1
 
     stop: ->
         console.log "Game Loop (end)"
         clearTimeout @loopTimeout
+        @gameState = null
 
 
 serverHandler = new ServerHandler()

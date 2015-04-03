@@ -114,22 +114,22 @@ class GamePlayer
             ctx.setLineDash []
 
 class AIPlayer extends BasePlayer
-    constructor: (@gameState, @handler, startP, team) ->
+    constructor: (@handler, startP, team) ->
         super startP, team
 
-    update: (newTime) ->
-        self = @gameState.players[@id]
+    update: (newTime, gameState) ->
+        self = gameState.players[@id]
         if not self?
             # AIPlayer hasn't registered with gameState via server yet
             return
-        otherPs = _.reject _.values(@gameState.players), team: @team
+        otherPs = _.reject _.values(gameState.players), team: @team
 
         if Math.random() < Utils.game.speed(0.005) and not self.startCastTime?
             @handler.fire @, _.sample(otherPs).p, 'orb'
 
         chanceToMove = Math.random() < Utils.game.speed(0.03)
         if not self.startCastTime? and (chanceToMove or self.p.equal self.destP)
-            @handler.moveTo @, @gameState.map.randomPoint()
+            @handler.moveTo @, gameState.map.randomPoint()
 
 class UIPlayer extends BasePlayer
     constructor: (@gameState, @handler, startP, team) ->

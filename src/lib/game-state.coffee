@@ -6,8 +6,7 @@ Map = require "./map"
 
 # TODO pull out update parts of arena and player to allow running on the server
 class GameState
-    constructor: ->
-        @time = new Date().getTime()
+    constructor: (@time) ->
         @players = {}
         @teams = {}
         @projectiles = []
@@ -17,6 +16,12 @@ class GameState
         @teams[name] =
             color: color
             score: 0
+
+    addPlayer: (player) ->
+        @players[player.id] = player
+
+    removePlayer: (playerId) ->
+        delete @players[playerId]
 
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team

@@ -54,9 +54,9 @@ class ClientNetworkHandler
                 when "newPlayer"
                     playerPosition = Point.fromObject d.playerPosition
                     player = new Player.GamePlayer @gameState, playerPosition, d.team, d.playerId
-                    @register player
+                    @gameState.addPlayer player
                 when "deletePlayer"
-                    @removePlayer d
+                    @gameState.removePlayer d
                 when "ping"
                     @ws.send JSON.stringify message
                 else
@@ -81,13 +81,6 @@ class ClientNetworkHandler
         @ws.send JSON.stringify message
         if ai
             @locallyProcessed.push player
-
-
-    register: (player) ->
-        @gameState.players[player.id] = player
-
-    removePlayer: (playerId) ->
-        delete @gameState.players[playerId]
 
     moveTo: (player, destP) ->
         message =
@@ -124,7 +117,7 @@ class ClientNetworkHandler
         # TODO: A non sucky game loop...
         # Fixed time updates.
         for player in @locallyProcessed
-            player.update()
+            player.update newTime, @gameState
 
         # Map.
         @camera.update newTime - @time
