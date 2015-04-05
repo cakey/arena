@@ -6,6 +6,8 @@ WebSocketServer = require('ws').Server
 
 Config = require "../lib/config"
 GameState = require "../lib/game-state"
+Point = require "../lib/point"
+Player = require "../lib/player"
 
 class FixedBuffer
     constructor: (@n) ->
@@ -48,11 +50,13 @@ class ServerHandler
         console.log "Game Loop (start)"
         @tick = 0
         @gameState = new GameState (new Date().getTime())
-        console.log @gameState
         process.nextTick @loop
 
     loop: =>
         @loopTimeout = setTimeout @loop, 10
+
+        if @tick % 500 is 0
+            console.log @gameState
 
         if @tick % 200 is 0
             for clientID, conn of clients
@@ -71,6 +75,11 @@ class ServerHandler
         @gameState.update new Date().getTime()
 
         @tick += 1
+
+    newPlayer: (d) ->
+        playerPosition = Point.fromObject d.playerPosition
+        player = new Player.GamePlayer @gameState, playerPosition, d.team, d.playerId
+        @gameState.addPlayer player
 
     stop: ->
         console.log "Game Loop (end)"
@@ -124,7 +133,7 @@ actions =
 
     newPlayer: (ws, message) ->
         players[message.id][message.data.playerId] = message.data
-
+        serverHandler.newPlayer message.data
         for client_id, client of clients
             client.send JSON.stringify message
         return
