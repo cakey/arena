@@ -66,7 +66,7 @@ class GameState
         msDiff = updateTime - @time
 
         for id, player of @players
-            player.update updateTime
+            player.update updateTime, @
 
         # Projectiles.
         newProjectiles = []

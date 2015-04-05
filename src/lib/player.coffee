@@ -11,8 +11,8 @@ class BasePlayer
         @id = uuid.v4()
 
 class GamePlayer
-    constructor: (@gameState, @p, @team, @id) ->
-        @time = @gameState.time
+    constructor: (initTime, @p, @team, @id) ->
+        @time = initTime
         @radius = 20
         @maxCastRadius = @radius * 2
         @destP = @p
@@ -55,12 +55,12 @@ class GamePlayer
                 @destP = @p
             @startCastTime = @time # needs to be passed through
 
-    update: (newTime) ->
+    update: (newTime, gameState) ->
         msDiff = newTime - @time
 
         # Location
         newP = @p.towards @destP, (Utils.game.speed(@speed) * msDiff)
-        if @gameState.allowedMovement newP, @
+        if gameState.allowedMovement newP, @
             @p = newP
 
         # Cast
@@ -77,13 +77,13 @@ class GamePlayer
                 if @castP.within @p, @maxCastRadius
                     @castP = edgeP.bearing castAngle, 0.1
 
-                @gameState.addProjectile edgeP, @castP, Skills[@castedSkill], @team
+                gameState.addProjectile edgeP, @castP, Skills[@castedSkill], @team
 
                 @_lastCasted[@castedSkill] = newTime
 
         @time = newTime
 
-    render: (ctx) ->
+    render: (ctx, gameState) ->
         # Cast
         if @startCastTime?
             realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
@@ -101,7 +101,7 @@ class GamePlayer
             ctx.fill()
 
         # Location
-        ctx.filledCircle @p, @radius, @gameState.teams[@team].color
+        ctx.filledCircle @p, @radius, gameState.teams[@team].color
 
         # casting circle
         if Config.UI.castingCircles
