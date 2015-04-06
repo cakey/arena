@@ -59,6 +59,8 @@ class ClientNetworkHandler
                     @gameState.removePlayer d
                 when "ping"
                     @ws.send JSON.stringify message
+                when "sync"
+                    @gameState.sync d
                 else
                     console.log "unrecognised message"
                     console.log message

@@ -45,6 +45,7 @@ messageCount = 0
 
 class ServerHandler
     constructor: ->
+        @tickTime = 10 # ms
 
     start: ->
         console.log "Game Loop (start)"
@@ -62,7 +63,9 @@ class ServerHandler
         process.nextTick @loop
 
     loop: =>
-        @loopTimeout = setTimeout @loop, 10
+        @loopTimeout = setTimeout @loop, @tickTime
+
+        @gameState.update new Date().getTime()
 
         if @tick % 500 is 0
             console.log JSON.stringify @gameState, null, 4
@@ -70,6 +73,7 @@ class ServerHandler
         if @tick % 200 is 0
             for clientID, conn of clients
                 console.log clientID, clientPings[clientID].average()
+
 
         if @tick % 10 is 0
             for clientID, conn of clients
@@ -81,7 +85,12 @@ class ServerHandler
                     data: pingID
                     action: "ping"
 
-        @gameState.update new Date().getTime()
+        if @tick % 5 is 0
+            for clientID, conn of clients
+                conn.send JSON.stringify
+                    data: @gameState
+                    action: "sync"
+
 
         @tick += 1
 
@@ -156,9 +165,6 @@ actions =
                 serverHandler.movePlayer id, point
             when 'fire'
                 serverHandler.playerFire id, point, message.data.skill
-
-        player = players[message.id][message.data.playerId]
-        player.playerPosition = message.data.playerPosition
 
     newPlayer: (ws, message) ->
         serverHandler.newPlayer message.data

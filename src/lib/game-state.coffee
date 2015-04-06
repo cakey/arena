@@ -117,4 +117,14 @@ class GameState
 
         state
 
+    sync: (newState) ->
+        # tied closely with toJSON
+        # TODO: use tick data to smooth
+
+        for teamId, newScore of newState.teams
+            @teams[teamId].score = newScore
+
+        for playerId, playerState of newState.players
+            player.p = Point.fromObject playerState
+
 module.exports = GameState
