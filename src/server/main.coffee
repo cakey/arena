@@ -78,7 +78,7 @@ class ServerHandler
 
     newPlayer: (d) ->
         playerPosition = Point.fromObject d.playerPosition
-        player = new Player.GamePlayer @gameState, playerPosition, d.team, d.playerId
+        player = new Player.GamePlayer @gameState.time, playerPosition, d.team, d.playerId
         @gameState.addPlayer player
 
     stop: ->
