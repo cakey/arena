@@ -23,6 +23,11 @@ class GameState
     removePlayer: (playerId) ->
         delete @players[playerId]
 
+    movePlayer: (playerId, point) ->
+        player = @players[playerId]
+        player.moveTo point
+
+
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
         @projectiles.push p
@@ -92,5 +97,16 @@ class GameState
         @projectiles = newProjectiles
 
         @time = updateTime
+
+    toJSON: ->
+        state = {}
+        state.players = {}
+        for id, player of @players
+            playerState = player.p.toObject()
+            playerState.team = player.team
+            state.players[id[..7]] = playerState
+        state.time = @time
+
+        state
 
 module.exports = GameState

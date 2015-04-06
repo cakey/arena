@@ -56,7 +56,7 @@ class ServerHandler
         @loopTimeout = setTimeout @loop, 10
 
         if @tick % 500 is 0
-            console.log @gameState
+            console.log JSON.stringify @gameState, null, 4
 
         if @tick % 200 is 0
             for clientID, conn of clients
@@ -84,6 +84,8 @@ class ServerHandler
     removePlayer: (id) ->
         @gameState.removePlayer id
 
+    movePlayer: (id, dest) ->
+        @gameState.movePlayer id, dest
 
     stop: ->
         console.log "Game Loop (end)"
@@ -135,6 +137,13 @@ actions =
     control: (ws, message) ->
         for client_id, client of clients
             client.send JSON.stringify message
+        id = message.data.playerId
+        point = Point.fromObject message.data.actionPosition
+        switch message.data.action
+            when 'moveTo'
+                serverHandler.movePlayer id, point
+
+        #switch message.action
         player = players[message.id][message.data.playerId]
         player.playerPosition = message.data.playerPosition
 
