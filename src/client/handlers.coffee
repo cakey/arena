@@ -50,7 +50,7 @@ class ClientNetworkHandler
                         player.p = playerPosition
                         @gameState.movePlayer d.playerId, position
                     else if d.action is "fire"
-                        player.fire position, d.skill
+                        @gameState.playerFire d.playerId, position, d.skill
                 when "newPlayer"
                     playerPosition = Point.fromObject d.playerPosition
                     player = new Player.GamePlayer @gameState.time, playerPosition, d.team, d.playerId

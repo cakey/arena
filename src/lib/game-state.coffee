@@ -27,6 +27,10 @@ class GameState
         player = @players[playerId]
         player.moveTo point
 
+    playerFire: (playerId, destP, skill) ->
+        player = @players[playerId]
+        player.fire destP, skill
+
 
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
@@ -106,6 +110,10 @@ class GameState
             playerState.team = player.team
             state.players[id[..7]] = playerState
         state.time = @time
+        state.teams = {}
+        for name, obj of @teams
+            state.teams[name] = obj.score
+        state.projectiles = @projectiles.length
 
         state
 

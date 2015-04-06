@@ -50,6 +50,15 @@ class ServerHandler
         console.log "Game Loop (start)"
         @tick = 0
         @gameState = new GameState (new Date().getTime())
+
+        # I will fix this when I move AI processing to serverSide
+        @gameState.addTeam "red", "#aa3333"
+        @gameState.addTeam "blue", "#3333aa"
+
+        if Config.game.numAIs > 0
+            @gameState.addTeam "yellowAI", "#ddaa44"
+            @gameState.addTeam "greenAI", "#33aa33"
+
         process.nextTick @loop
 
     loop: =>
@@ -86,6 +95,9 @@ class ServerHandler
 
     movePlayer: (id, dest) ->
         @gameState.movePlayer id, dest
+
+    playerFire: (id, castP, skillName) ->
+        @gameState.playerFire id, castP, skillName
 
     stop: ->
         console.log "Game Loop (end)"
@@ -142,8 +154,9 @@ actions =
         switch message.data.action
             when 'moveTo'
                 serverHandler.movePlayer id, point
+            when 'fire'
+                serverHandler.playerFire id, point, message.data.skill
 
-        #switch message.action
         player = players[message.id][message.data.playerId]
         player.playerPosition = message.data.playerPosition
 
