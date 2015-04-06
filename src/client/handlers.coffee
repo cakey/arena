@@ -48,7 +48,7 @@ class ClientNetworkHandler
                     if d.action is "moveTo"
                         # server corrects us
                         player.p = playerPosition
-                        player.moveTo position
+                        @gameState.movePlayer d.playerId, position
                     else if d.action is "fire"
                         player.fire position, d.skill
                 when "newPlayer"
