@@ -81,6 +81,10 @@ class ServerHandler
         player = new Player.GamePlayer @gameState.time, playerPosition, d.team, d.playerId
         @gameState.addPlayer player
 
+    removePlayer: (id) ->
+        @gameState.removePlayer id
+
+
     stop: ->
         console.log "Game Loop (end)"
         clearTimeout @loopTimeout
@@ -119,6 +123,9 @@ actions =
                     data: id
                     action: "deletePlayer"
 
+        for id, p of players[message.id]
+            serverHandler.removePlayer id
+
         delete players[message.id]
 
         if Object.keys(clients).length is 0
@@ -132,8 +139,8 @@ actions =
         player.playerPosition = message.data.playerPosition
 
     newPlayer: (ws, message) ->
-        players[message.id][message.data.playerId] = message.data
         serverHandler.newPlayer message.data
+        players[message.id][message.data.playerId] = message.data
         for client_id, client of clients
             client.send JSON.stringify message
         return
