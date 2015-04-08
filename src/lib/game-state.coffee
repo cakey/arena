@@ -106,7 +106,9 @@ class GameState
         state = {}
         state.players = {}
         for id, player of @players
-            playerState = player.p.toObject()
+            playerState = {}
+            playerState.p = player.p.toObject()
+            playerState.destP = player.destP.toObject()
             playerState.team = player.team
             state.players[id] = playerState
         state.time = @time
@@ -125,6 +127,7 @@ class GameState
             @teams[teamId].score = newScore
 
         for playerId, playerState of newState.players
-            @players[playerId].p = Point.fromObject playerState
+            @players[playerId].p = Point.fromObject playerState.p
+            @players[playerId].destP = Point.fromObject playerState.destP
 
 module.exports = GameState

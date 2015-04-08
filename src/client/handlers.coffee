@@ -49,8 +49,7 @@ class ClientNetworkHandler
                     else if d.action is "fire"
                         @gameState.playerFire d.playerId, position, d.skill
                 when "newPlayer"
-                    playerPosition = Point.fromObject d.playerPosition
-                    player = new Player.GamePlayer @gameState.time, playerPosition, d.team, d.playerId
+                    player = new Player.GamePlayer @gameState.time, @gameState.map.randomPoint(), d.team, d.playerId
                     @gameState.addPlayer player
                 when "deletePlayer"
                     @gameState.removePlayer d
