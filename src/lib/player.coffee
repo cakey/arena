@@ -125,11 +125,11 @@ class AIPlayer extends BasePlayer
         otherPs = _.reject _.values(gameState.players), team: @team
 
         if Math.random() < Utils.game.speed(0.005) and not self.startCastTime?
-            @handler.fire @, _.sample(otherPs).p, 'orb'
+            @handler.triggerFire @, _.sample(otherPs).p, 'orb'
 
         chanceToMove = Math.random() < Utils.game.speed(0.03)
         if not self.startCastTime? and (chanceToMove or self.p.equal self.destP)
-            @handler.moveTo @, gameState.map.randomPoint()
+            @handler.triggerMoveTo @, gameState.map.randomPoint()
 
 class UIPlayer extends BasePlayer
     constructor: (@gameState, @handler, startP, team) ->
@@ -148,13 +148,13 @@ class UIPlayer extends BasePlayer
             p = @handler.camera.mapMouseP.bound topLeft, bottomRight
 
             if event.which is 3
-                @handler.moveTo @, p
+                @handler.triggerMoveTo @, p
 
         addEventListener "keypress", (event) =>
 
             if skill = @keyBindings[String.fromCharCode event.which]
                 castP = @handler.camera.mapMouseP.mapBound @p, @gameState.map
-                @handler.fire @, castP, skill
+                @handler.triggerFire @, castP, skill
             else
                 console.log event
                 console.log event.which

@@ -44,8 +44,9 @@ clientPings = {}
 messageCount = 0
 
 class ServerHandler
+
     constructor: ->
-        @tickTime = 10 # ms
+        @SERVERID = "SERVER"
 
     start: ->
         console.log "Game Loop (start)"
@@ -60,12 +61,25 @@ class ServerHandler
             @gameState.addTeam "yellowAI", "#ddaa44"
             @gameState.addTeam "greenAI", "#33aa33"
 
+        @locallyProccessed = []
+
+        for a in [0...Config.game.numAIs]
+            aip1 = new Player.AIPlayer @, @gameState.map.randomPoint(), "yellowAI"
+            @registerAI aip1
+            aip2 = new Player.AIPlayer @, @gameState.map.randomPoint(), "greenAI"
+            @registerAI aip2
+
         process.nextTick @loop
 
     loop: =>
-        @loopTimeout = setTimeout @loop, @tickTime
+        @loopTimeout = setTimeout @loop, Config.game.tickTime
 
-        @gameState.update new Date().getTime()
+        newTime = new Date().getTime()
+
+        for ai in @locallyProccessed
+            ai.update newTime, @gameState
+
+        @gameState.update newTime
 
         if @tick % 500 is 0
             console.log JSON.stringify @gameState, null, 4
@@ -108,10 +122,44 @@ class ServerHandler
     playerFire: (id, castP, skillName) ->
         @gameState.playerFire id, castP, skillName
 
+    # These need to be refactored with ClientHandler
+
+    registerAI: (ai) ->
+        @locallyProccessed.push ai
+        actions.newPlayer null,
+            action: 'newPlayer'
+            data:
+                playerId: ai.id
+                playerPosition: ai.p.toObject()
+                team: ai.team
+            id: @SERVERID
+
+    triggerMoveTo: (player, destP) ->
+        actions.control null,
+            action: 'control'
+            data:
+                playerId: player.id
+                action: 'moveTo'
+                actionPosition: destP.toObject()
+                team: player.team
+            id: @SERVERID
+
+    triggerFire: (player, castP, skillName) ->
+        actions.control null,
+            action: 'control'
+            data:
+                playerId: player.id
+                action: 'fire'
+                actionPosition: castP.toObject()
+                skill: skillName
+                team: player.team
+            id: @SERVERID
+
     stop: ->
         console.log "Game Loop (end)"
         clearTimeout @loopTimeout
         @gameState = null
+        @locallyProccessed = []
 
 
 serverHandler = new ServerHandler()
@@ -125,6 +173,7 @@ actions =
         players[message.id] = {}
 
         if Object.keys(clients).length is 1
+            players[serverHandler.SERVERID] = {}
             serverHandler.start()
 
         # send existing players so the client can catch up
@@ -152,6 +201,7 @@ actions =
         delete players[message.id]
 
         if Object.keys(clients).length is 0
+            players = {} # To remove server AIs too
             serverHandler.stop()
             messageCount = 0
 

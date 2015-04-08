@@ -7,6 +7,7 @@ config =
         height: 300
         speedup: 1
         numAIs: 1
+        tickTime: 10
     UI:
         castingCircles: false
 

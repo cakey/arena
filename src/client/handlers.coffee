@@ -40,14 +40,11 @@ class ClientNetworkHandler
                     position = Point.fromObject d.actionPosition
                     player = @gameState.players[d.playerId]
 
-                    playerPosition = Point.fromObject d.playerPosition
                     if not player
                         console.log "unregistered player"
                         return
 
                     if d.action is "moveTo"
-                        # server corrects us
-                        player.p = playerPosition
                         @gameState.movePlayer d.playerId, position
                     else if d.action is "fire"
                         @gameState.playerFire d.playerId, position, d.skill
@@ -84,26 +81,24 @@ class ClientNetworkHandler
         if ai
             @locallyProcessed.push player
 
-    moveTo: (player, destP) ->
+    triggerMoveTo: (player, destP) ->
         message =
             action: 'control'
             data:
                 playerId: player.id
                 action: 'moveTo'
                 actionPosition: destP.toObject()
-                playerPosition: @gameState.players[player.id].p.toObject()
                 team: player.team
             id: @client_uuid
         @ws.send JSON.stringify message
 
-    fire: (player, castP, skillName) ->
+    triggerFire: (player, castP, skillName) ->
         message =
             action: 'control'
             data:
                 playerId: player.id
                 action: 'fire'
                 actionPosition: castP.toObject()
-                playerPosition: @gameState.players[player.id].p.toObject()
                 skill: skillName
                 team: player.team
             id: @client_uuid
@@ -114,7 +109,7 @@ class ClientNetworkHandler
         @loopTick()
 
     loopTick: =>
-        setTimeout @loopTick, 5
+        setTimeout @loopTick, Config.game.tickTime
         newTime = new Date().getTime()
         # TODO: A non sucky game loop...
         # Fixed time updates.
