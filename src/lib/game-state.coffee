@@ -108,7 +108,7 @@ class GameState
         for id, player of @players
             playerState = player.p.toObject()
             playerState.team = player.team
-            state.players[id[..7]] = playerState
+            state.players[id] = playerState
         state.time = @time
         state.teams = {}
         for name, obj of @teams
@@ -125,6 +125,6 @@ class GameState
             @teams[teamId].score = newScore
 
         for playerId, playerState of newState.players
-            player.p = Point.fromObject playerState
+            @players[playerId].p = Point.fromObject playerState
 
 module.exports = GameState
