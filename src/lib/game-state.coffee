@@ -92,7 +92,7 @@ class GameState
                     @teams[projectile.team].score += skill.score
                     @teams[hitPlayer.team].score -= skill.score
                     if skill.hitPlayer?
-                        skill.hitPlayer hitPlayer, projectile
+                        skill.hitPlayer hitPlayer, projectile, @map
                     if skill.continue
                         newProjectiles.push projectile
 
