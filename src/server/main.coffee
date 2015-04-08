@@ -32,18 +32,7 @@ class FixedBuffer
 
         sum / length
 
-
-
-
-wss = new WebSocketServer port: Config.ws.port
-
-players = {}
-clients = {}
-pings = {}
-clientPings = {}
-messageCount = 0
-
-class ServerHandler
+class GameHandler
 
     constructor: ->
         @SERVERID = "SERVER"
@@ -85,14 +74,14 @@ class ServerHandler
             console.log JSON.stringify @gameState, null, 4
 
         if @tick % 200 is 0
-            for clientID, conn of clients
-                console.log clientID, clientPings[clientID].average()
+            for clientID, conn of clientHandler.clients
+                console.log clientID, clientHandler.clientPings[clientID].average()
 
 
         if @tick % 10 is 0
-            for clientID, conn of clients
+            for clientID, conn of clientHandler.clients
                 pingID = uuid.v4()
-                pings[pingID] =
+                clientHandler.pings[pingID] =
                     clientID: clientID
                     time: new Date().getTime()
                 conn.send JSON.stringify
@@ -100,7 +89,7 @@ class ServerHandler
                     action: "ping"
 
         if @tick % 5 is 0
-            for clientID, conn of clients
+            for clientID, conn of clientHandler.clients
                 conn.send JSON.stringify
                     data: @gameState
                     action: "sync"
@@ -126,7 +115,7 @@ class ServerHandler
 
     registerAI: (ai) ->
         @locallyProccessed.push ai
-        actions.newPlayer null,
+        clientHandler.newPlayer null,
             action: 'newPlayer'
             data:
                 playerId: ai.id
@@ -135,7 +124,7 @@ class ServerHandler
             id: @SERVERID
 
     triggerMoveTo: (player, destP) ->
-        actions.control null,
+        clientHandler.control null,
             action: 'control'
             data:
                 playerId: player.id
@@ -145,7 +134,7 @@ class ServerHandler
             id: @SERVERID
 
     triggerFire: (player, castP, skillName) ->
-        actions.control null,
+        clientHandler.control null,
             action: 'control'
             data:
                 playerId: player.id
@@ -162,22 +151,55 @@ class ServerHandler
         @locallyProccessed = []
 
 
-serverHandler = new ServerHandler()
+class ClientHandler
+    constructor: (@wss) ->
 
-actions =
+        @messageCount = 0
+        @players = {}
+        @clients = {}
+        @pings = {} # Unbounded resources
+        @clientPings = {}
+
+        @wss.on 'connection', (ws) =>
+            ws.on 'message', (unparsed) => @sprayMessage ws, unparsed
+
+    sprayMessage: (ws, unparsed) ->
+        @messageCount += 1
+        if @messageCount % 100 is 0
+            console.log @messageCount
+        try
+            message = JSON.parse unparsed
+            switch message.action
+                when "register"
+                    @register ws, message
+                when "deregister"
+                    @deregister ws, message
+                when "control"
+                    @control ws, message
+                when "newPlayer"
+                    @newPlayer ws, message
+                when "ping"
+                    @ping ws, message
+                else
+                    console.log "Unsupported message action #{message.action}"
+        catch e
+            console.log "EXCEPTION!"
+            console.log e.message
+            console.log e.stack
+
     register: (ws, message) ->
         console.log "register --- #{message.id[..7]}"
 
-        clients[message.id] = ws
-        clientPings[message.id] = new FixedBuffer 50
-        players[message.id] = {}
+        @clients[message.id] = ws
+        @clientPings[message.id] = new FixedBuffer 50
+        @players[message.id] = {}
 
-        if Object.keys(clients).length is 1
-            players[serverHandler.SERVERID] = {}
-            serverHandler.start()
+        if Object.keys(@clients).length is 1
+            @players[gameHandler.SERVERID] = {}
+            gameHandler.start()
 
-        # send existing players so the client can catch up
-        for client_id, clientPs of players
+        # send existing @players so the client can catch up
+        for client_id, clientPs of @players
             if client_id isnt message.id
                 for id, p of clientPs
                     ws.send JSON.stringify
@@ -187,57 +209,53 @@ actions =
 
     deregister: (ws, message) ->
         console.log "deregister - #{message.id[..7]}"
-        delete clients[message.id]
+        delete @clients[message.id]
 
-        for client_id, client of clients
-            for id, p of players[message.id]
+        for client_id, client of @clients
+            for id, p of @players[message.id]
                 client.send JSON.stringify
                     data: id
                     action: "deletePlayer"
 
-        for id, p of players[message.id]
-            serverHandler.removePlayer id
+        for id, p of @players[message.id]
+            gameHandler.removePlayer id
 
-        delete players[message.id]
+        delete @players[message.id]
 
-        if Object.keys(clients).length is 0
-            players = {} # To remove server AIs too
-            serverHandler.stop()
+        if Object.keys(@clients).length is 0
+            @players = {} # To remove server AIs too
+            gameHandler.stop()
             messageCount = 0
 
     control: (ws, message) ->
-        for client_id, client of clients
+        for client_id, client of @clients
             client.send JSON.stringify message
         id = message.data.playerId
         point = Point.fromObject message.data.actionPosition
         switch message.data.action
             when 'moveTo'
-                serverHandler.movePlayer id, point
+                gameHandler.movePlayer id, point
             when 'fire'
-                serverHandler.playerFire id, point, message.data.skill
+                gameHandler.playerFire id, point, message.data.skill
 
     newPlayer: (ws, message) ->
-        serverHandler.newPlayer message.data
-        players[message.id][message.data.playerId] = message.data
-        for client_id, client of clients
+        gameHandler.newPlayer message.data
+        @players[message.id][message.data.playerId] = message.data
+        for client_id, client of @clients
             client.send JSON.stringify message
         return
 
     ping: (ws, message) ->
         returnTime = new Date().getTime()
-        ping = pings[message.data]
+        ping = @pings[message.data]
         rtt = returnTime - ping.time
-        clientPings[ping.clientID].add rtt
+        @clientPings[ping.clientID].add rtt
 
-wss.on 'connection', (ws) ->
-    ws.on 'message', (unparsed) ->
-        messageCount += 1
-        if messageCount % 100 is 0
-            console.log messageCount
-        try
-            message = JSON.parse unparsed
-            actions[message.action](ws, message)
-        catch e
-            console.log "EXCEPTION!"
-            console.log e.message
-            console.log e.stack
+
+# These need to be uncoupled.
+
+wss = new WebSocketServer port: Config.ws.port
+gameHandler = new GameHandler()
+clientHandler = new ClientHandler wss
+
+
