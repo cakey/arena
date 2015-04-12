@@ -79,21 +79,12 @@ class GameHandler
 
 
         if @tick % 10 is 0
-            for clientID, conn of clientHandler.clients
-                pingID = uuid.v4()
-                clientHandler.pings[pingID] =
-                    clientID: clientID
-                    time: new Date().getTime()
-                conn.send JSON.stringify
-                    data: pingID
-                    action: "ping"
+            clientHandler.sendPings()
 
         if @tick % 5 is 0
-            for clientID, conn of clientHandler.clients
-                conn.send JSON.stringify
-                    data: @gameState
-                    action: "sync"
-
+            clientHandler.broadcast
+                data: @gameState
+                action: "sync"
 
         @tick += 1
 
@@ -187,6 +178,20 @@ class ClientHandler
             console.log e.message
             console.log e.stack
 
+    broadcast: (message) ->
+        for clientID, conn of @clients
+            conn.send JSON.stringify message
+
+    sendPings: ->
+        for clientID, conn of @clients
+            pingID = uuid.v4()
+            @pings[pingID] =
+                clientID: clientID
+                time: new Date().getTime()
+            conn.send JSON.stringify
+                data: pingID
+                action: "ping"
+
     register: (ws, message) ->
         console.log "register --- #{message.id[..7]}"
 
@@ -211,11 +216,10 @@ class ClientHandler
         console.log "deregister - #{message.id[..7]}"
         delete @clients[message.id]
 
-        for client_id, client of @clients
-            for id, p of @players[message.id]
-                client.send JSON.stringify
-                    data: id
-                    action: "deletePlayer"
+        for id, p of @players[message.id]
+            @broadcast
+                data: id
+                action: "deletePlayer"
 
         for id, p of @players[message.id]
             gameHandler.removePlayer id
@@ -228,8 +232,8 @@ class ClientHandler
             messageCount = 0
 
     control: (ws, message) ->
-        for client_id, client of @clients
-            client.send JSON.stringify message
+        @broadcast message
+
         id = message.data.playerId
         point = Point.fromObject message.data.actionPosition
         switch message.data.action
@@ -241,8 +245,9 @@ class ClientHandler
     newPlayer: (ws, message) ->
         gameHandler.newPlayer message.data
         @players[message.id][message.data.playerId] = message.data
-        for client_id, client of @clients
-            client.send JSON.stringify message
+
+        @broadcast message
+
         return
 
     ping: (ws, message) ->
@@ -252,7 +257,8 @@ class ClientHandler
         @clientPings[ping.clientID].add rtt
 
 
-# These need to be uncoupled.
+# These need to be uncoupled. Let's implement a per tick queue.
+# Actions should be data, not function calls.
 
 wss = new WebSocketServer port: Config.ws.port
 gameHandler = new GameHandler()
