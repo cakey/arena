@@ -13,7 +13,7 @@ document.addEventListener "contextmenu", ((e) -> e.preventDefault()), false
 
 camera = new Camera()
 canvas = new Canvas 'canvas'
-gameState = new GameState()
+gameState = new GameState new Date().getTime()
 
 handler = new Handlers.Client gameState, canvas, camera
 handler.ready().then ->
@@ -29,12 +29,6 @@ handler.ready().then ->
         if Config.game.numAIs > 0
             gameState.addTeam "yellowAI", "#ddaa44"
             gameState.addTeam "greenAI", "#33aa33"
-
-        for a in [0...Config.game.numAIs]
-            aip1 = new AIPlayer gameState, handler, gameState.map.randomPoint(), "yellowAI"
-            handler.registerLocal aip1, true
-            aip2 = new AIPlayer gameState, handler, gameState.map.randomPoint(), "greenAI"
-            handler.registerLocal aip2, true
 
         handler.startLoop()
     catch e

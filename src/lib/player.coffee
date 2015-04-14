@@ -11,8 +11,8 @@ class BasePlayer
         @id = uuid.v4()
 
 class GamePlayer
-    constructor: (@gameState, @p, @team, @id) ->
-        @time = @gameState.time
+    constructor: (initTime, @p, @team, @id) ->
+        @time = initTime
         @radius = 20
         @maxCastRadius = @radius * 2
         @destP = @p
@@ -55,12 +55,12 @@ class GamePlayer
                 @destP = @p
             @startCastTime = @time # needs to be passed through
 
-    update: (newTime) ->
+    update: (newTime, gameState) ->
         msDiff = newTime - @time
 
         # Location
         newP = @p.towards @destP, (Utils.game.speed(@speed) * msDiff)
-        if @gameState.allowedMovement newP, @
+        if gameState.allowedMovement newP, @
             @p = newP
 
         # Cast
@@ -77,13 +77,13 @@ class GamePlayer
                 if @castP.within @p, @maxCastRadius
                     @castP = edgeP.bearing castAngle, 0.1
 
-                @gameState.addProjectile edgeP, @castP, Skills[@castedSkill], @team
+                gameState.addProjectile edgeP, @castP, Skills[@castedSkill], @team
 
                 @_lastCasted[@castedSkill] = newTime
 
         @time = newTime
 
-    render: (ctx) ->
+    render: (ctx, gameState) ->
         # Cast
         if @startCastTime?
             realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
@@ -101,7 +101,7 @@ class GamePlayer
             ctx.fill()
 
         # Location
-        ctx.filledCircle @p, @radius, @gameState.teams[@team].color
+        ctx.filledCircle @p, @radius, gameState.teams[@team].color
 
         # casting circle
         if Config.UI.castingCircles
@@ -114,22 +114,22 @@ class GamePlayer
             ctx.setLineDash []
 
 class AIPlayer extends BasePlayer
-    constructor: (@gameState, @handler, startP, team) ->
+    constructor: (@handler, startP, team) ->
         super startP, team
 
-    update: (newTime) ->
-        self = @gameState.players[@id]
+    update: (newTime, gameState) ->
+        self = gameState.players[@id]
         if not self?
             # AIPlayer hasn't registered with gameState via server yet
             return
-        otherPs = _.reject _.values(@gameState.players), team: @team
+        otherPs = _.reject _.values(gameState.players), team: @team
 
         if Math.random() < Utils.game.speed(0.005) and not self.startCastTime?
-            @handler.fire @, _.sample(otherPs).p, 'orb'
+            @handler.triggerFire @, _.sample(otherPs).p, 'orb'
 
         chanceToMove = Math.random() < Utils.game.speed(0.03)
         if not self.startCastTime? and (chanceToMove or self.p.equal self.destP)
-            @handler.moveTo @, @gameState.map.randomPoint()
+            @handler.triggerMoveTo @, gameState.map.randomPoint()
 
 class UIPlayer extends BasePlayer
     constructor: (@gameState, @handler, startP, team) ->
@@ -148,13 +148,13 @@ class UIPlayer extends BasePlayer
             p = @handler.camera.mapMouseP.bound topLeft, bottomRight
 
             if event.which is 3
-                @handler.moveTo @, p
+                @handler.triggerMoveTo @, p
 
         addEventListener "keypress", (event) =>
 
             if skill = @keyBindings[String.fromCharCode event.which]
                 castP = @handler.camera.mapMouseP.mapBound @p, @gameState.map
-                @handler.fire @, castP, skill
+                @handler.triggerFire @, castP, skill
             else
                 console.log event
                 console.log event.which

@@ -55,7 +55,7 @@ skills =
         continue: true
         description: "Close range, low damage. Knocks back targets."
         cooldown: 0
-        hitPlayer: (hitPlayer, projectile) ->
+        hitPlayer: (hitPlayer, projectile, map) ->
             # TODO
             # There are likely issues with network syncronisation
             #   (this needs to be calculated server side too...)
@@ -67,8 +67,6 @@ skills =
             knockbackP = hitPlayer.p.bearing angle, 45
 
             radiusP = new Point hitPlayer.radius, hitPlayer.radius
-
-            map = hitPlayer.gameState.map
 
             limitP = map.size.subtract radiusP
 

@@ -6,8 +6,7 @@ Map = require "./map"
 
 # TODO pull out update parts of arena and player to allow running on the server
 class GameState
-    constructor: ->
-        @time = new Date().getTime()
+    constructor: (@time) ->
         @players = {}
         @teams = {}
         @projectiles = []
@@ -17,6 +16,21 @@ class GameState
         @teams[name] =
             color: color
             score: 0
+
+    addPlayer: (player) ->
+        @players[player.id] = player
+
+    removePlayer: (playerId) ->
+        delete @players[playerId]
+
+    movePlayer: (playerId, point) ->
+        player = @players[playerId]
+        player.moveTo point
+
+    playerFire: (playerId, destP, skill) ->
+        player = @players[playerId]
+        player.fire destP, skill
+
 
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
@@ -61,7 +75,7 @@ class GameState
         msDiff = updateTime - @time
 
         for id, player of @players
-            player.update updateTime
+            player.update updateTime, @
 
         # Projectiles.
         newProjectiles = []
@@ -78,7 +92,7 @@ class GameState
                     @teams[projectile.team].score += skill.score
                     @teams[hitPlayer.team].score -= skill.score
                     if skill.hitPlayer?
-                        skill.hitPlayer hitPlayer, projectile
+                        skill.hitPlayer hitPlayer, projectile, @map
                     if skill.continue
                         newProjectiles.push projectile
 
@@ -87,5 +101,33 @@ class GameState
         @projectiles = newProjectiles
 
         @time = updateTime
+
+    toJSON: ->
+        state = {}
+        state.players = {}
+        for id, player of @players
+            playerState = {}
+            playerState.p = player.p.toObject()
+            playerState.destP = player.destP.toObject()
+            playerState.team = player.team
+            state.players[id] = playerState
+        state.time = @time
+        state.teams = {}
+        for name, obj of @teams
+            state.teams[name] = obj.score
+        state.projectiles = @projectiles.length
+
+        state
+
+    sync: (newState) ->
+        # tied closely with toJSON
+        # TODO: use tick data to smooth
+
+        for teamId, newScore of newState.teams
+            @teams[teamId].score = newScore
+
+        for playerId, playerState of newState.players
+            @players[playerId].p = Point.fromObject playerState.p
+            @players[playerId].destP = Point.fromObject playerState.destP
 
 module.exports = GameState

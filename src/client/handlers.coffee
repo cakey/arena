@@ -35,30 +35,31 @@ class ClientNetworkHandler
         @ws.onmessage = (unparsed) =>
             message = JSON.parse unparsed.data
             d = message.data
-            if message.action is "control"
-                position = Point.fromObject d.actionPosition
-                player = @gameState.players[d.playerId]
+            switch message.action
+                when "control"
+                    position = Point.fromObject d.actionPosition
+                    player = @gameState.players[d.playerId]
 
-                playerPosition = Point.fromObject d.playerPosition
-                if not player
-                    console.log "unregistered player"
-                    return
+                    if not player
+                        console.log "unregistered player"
+                        return
 
-                if d.action is "moveTo"
-                    # server corrects us
-                    player.p = playerPosition
-                    player.moveTo position
-                else if d.action is "fire"
-                    player.fire position, d.skill
-            else if message.action is "newPlayer"
-                playerPosition = Point.fromObject d.playerPosition
-                player = new Player.GamePlayer @gameState, playerPosition, d.team, d.playerId
-                @register player
-            else if message.action is "deletePlayer"
-                @removePlayer d
-            else
-                console.log "unrecognised message"
-                console.log message
+                    if d.action is "moveTo"
+                        @gameState.movePlayer d.playerId, position
+                    else if d.action is "fire"
+                        @gameState.playerFire d.playerId, position, d.skill
+                when "newPlayer"
+                    player = new Player.GamePlayer @gameState.time, @gameState.map.randomPoint(), d.team, d.playerId
+                    @gameState.addPlayer player
+                when "deletePlayer"
+                    @gameState.removePlayer d
+                when "ping"
+                    @ws.send JSON.stringify message
+                when "sync"
+                    @gameState.sync d
+                else
+                    console.log "unrecognised message"
+                    console.log message
 
         @ws.onclose = ->
             # Server crashed or connection dropped
@@ -79,33 +80,24 @@ class ClientNetworkHandler
         if ai
             @locallyProcessed.push player
 
-
-    register: (player) ->
-        @gameState.players[player.id] = player
-
-    removePlayer: (playerId) ->
-        delete @gameState.players[playerId]
-
-    moveTo: (player, destP) ->
+    triggerMoveTo: (player, destP) ->
         message =
             action: 'control'
             data:
                 playerId: player.id
                 action: 'moveTo'
                 actionPosition: destP.toObject()
-                playerPosition: @gameState.players[player.id].p.toObject()
                 team: player.team
             id: @client_uuid
         @ws.send JSON.stringify message
 
-    fire: (player, castP, skillName) ->
+    triggerFire: (player, castP, skillName) ->
         message =
             action: 'control'
             data:
                 playerId: player.id
                 action: 'fire'
                 actionPosition: castP.toObject()
-                playerPosition: @gameState.players[player.id].p.toObject()
                 skill: skillName
                 team: player.team
             id: @client_uuid
@@ -116,12 +108,12 @@ class ClientNetworkHandler
         @loopTick()
 
     loopTick: =>
-        setTimeout @loopTick, 5
+        setTimeout @loopTick, Config.game.tickTime
         newTime = new Date().getTime()
         # TODO: A non sucky game loop...
         # Fixed time updates.
         for player in @locallyProcessed
-            player.update()
+            player.update newTime, @gameState
 
         # Map.
         @camera.update newTime - @time
