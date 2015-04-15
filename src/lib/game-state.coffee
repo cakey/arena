@@ -2,6 +2,7 @@ _ = require 'lodash'
 
 Point = require "./point"
 Projectile = require "./projectile"
+CapturePoint = require "./mechanics/capture-point"
 Map = require "./map"
 
 # TODO pull out update parts of arena and player to allow running on the server
@@ -11,6 +12,8 @@ class GameState
         @teams = {}
         @projectiles = []
         @map = new Map
+        @capturePoints = []
+        @capturePoints.push new CapturePoint(new Point(100, 100), 50)
 
     addTeam: (name, color) ->
         @teams[name] =
@@ -99,6 +102,9 @@ class GameState
                 else
                     newProjectiles.push projectile
         @projectiles = newProjectiles
+
+        for cp in @capturePoints
+            cp.update @
 
         @time = updateTime
 
