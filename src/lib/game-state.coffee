@@ -3,6 +3,7 @@ _ = require 'lodash'
 Point = require "./point"
 Projectile = require "./projectile"
 CapturePoint = require "./mechanics/capture-point"
+Barriers = require "./mechanics/barriers"
 Map = require "./map"
 
 # TODO pull out update parts of arena and player to allow running on the server
@@ -13,8 +14,15 @@ class GameState
         @projectiles = []
         @map = new Map
         @capturePoints = []
+        @barriers = []
+
+        # Need to pull this stuff out into a map initialiser
+        # and make it generic across different types of entities
         @capturePoints.push new CapturePoint(new Point(200, 250), 75)
         @capturePoints.push new CapturePoint(new Point(700, 250), 75)
+
+        @barriers.push new Barriers.Rect(new Point(444, 100), new Point(456, 200))
+        @barriers.push new Barriers.Rect(new Point(444, 300), new Point(456, 400))
 
     addTeam: (name, color) ->
         @teams[name] =
@@ -47,6 +55,9 @@ class GameState
         currentUnallowed = 0
         newUnallowed = 0
 
+        # we calculate if the new position is at least as valid as our current position
+
+        # player collisions
         for otherId, otherPlayer of @players
             if otherId isnt player.id
                 currentD = player.p.distance otherPlayer.p
@@ -56,6 +67,13 @@ class GameState
                     currentUnallowed += (minimum - currentD)
                 if newD < minimum
                     newUnallowed += (minimum - newD)
+
+        # barrier collisions
+        for barrier in @barriers
+            if barrier.circleIntersect player.p, player.radius
+                currentUnallowed += player.radius
+            if barrier.circleIntersect newP, player.radius
+                newUnallowed += player.radius
 
         allowed = newUnallowed <= currentUnallowed
 
@@ -72,7 +90,16 @@ class GameState
         # otherwise add to newProjectiles
         for id, player of @players
             if p.team isnt player.team
-                return player if p.p.within player.p, p.skill.radius + player.radius
+                if p.p.within player.p, p.skill.radius + player.radius
+                    return {
+                        player: player
+                        type: "player"
+                    }
+        for barrier in @barriers
+            if barrier.circleIntersect(p.p, p.skill.radius)
+                return {
+                    type: "barrier"
+                }
         return false
 
     update: (updateTime) ->
@@ -91,15 +118,18 @@ class GameState
                 projectile.p.x < @map.size.x and
                 projectile.p.y < @map.size.y)
             if alive and withinMap
-                if hitPlayer = @projectileCollide projectile
-                    skill = projectile.skill
-                    @teams[projectile.team].score += skill.score
-                    @teams[hitPlayer.team].score -= skill.score
-                    if skill.hitPlayer?
-                        skill.hitPlayer hitPlayer, projectile, @map
-                    if skill.continue
-                        newProjectiles.push projectile
-
+                if hit = @projectileCollide projectile
+                    if hit.type is "player"
+                        hitPlayer = hit.player
+                        skill = projectile.skill
+                        @teams[projectile.team].score += skill.score
+                        @teams[hitPlayer.team].score -= skill.score
+                        if skill.hitPlayer?
+                            skill.hitPlayer hitPlayer, projectile, @map
+                        if skill.continue
+                            newProjectiles.push projectile
+                     # else
+                        # drop projectile
                 else
                     newProjectiles.push projectile
         @projectiles = newProjectiles

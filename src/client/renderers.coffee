@@ -207,6 +207,9 @@ Arena = React.createClass
         for cp in @props.gameState.capturePoints
             cp.render ctx, @props.gameState.teams
 
+        for b in @props.gameState.barriers
+            b.render ctx
+
         # Render Players.
         for id, player of @props.gameState.players
             player.render ctx, @props.gameState
