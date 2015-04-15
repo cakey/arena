@@ -2,6 +2,7 @@ _ = require 'lodash'
 
 Point = require "./point"
 Projectile = require "./projectile"
+CapturePoint = require "./mechanics/capture-point"
 Map = require "./map"
 
 # TODO pull out update parts of arena and player to allow running on the server
@@ -11,6 +12,9 @@ class GameState
         @teams = {}
         @projectiles = []
         @map = new Map
+        @capturePoints = []
+        @capturePoints.push new CapturePoint(new Point(150, 150), 50)
+        @capturePoints.push new CapturePoint(new Point(450, 150), 50)
 
     addTeam: (name, color) ->
         @teams[name] =
@@ -100,6 +104,9 @@ class GameState
                     newProjectiles.push projectile
         @projectiles = newProjectiles
 
+        for cp in @capturePoints
+            cp.update @
+
         @time = updateTime
 
     toJSON: ->
@@ -117,6 +124,8 @@ class GameState
             state.teams[name] = obj.score
         state.projectiles = @projectiles.length
 
+        state.capturePoints = (cp.current for cp in @capturePoints)
+
         state
 
     sync: (newState) ->
@@ -129,5 +138,8 @@ class GameState
         for playerId, playerState of newState.players
             @players[playerId].p = Point.fromObject playerState.p
             @players[playerId].destP = Point.fromObject playerState.destP
+
+        for cp, i in newState.capturePoints
+            @capturePoints[i].current = cp
 
 module.exports = GameState
