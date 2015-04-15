@@ -5,7 +5,7 @@ class Rect
 
     render: (ctx) ->
         ctx.beginPath()
-        ctx.fillStyle "#444444"
+        ctx.fillStyle "#554444"
         ctx.fillRect @topleft, (@bottomright.subtract(@topleft))
 
     circleIntersect: (center, radius) ->
