@@ -13,8 +13,8 @@ class GameState
         @projectiles = []
         @map = new Map
         @capturePoints = []
-        @capturePoints.push new CapturePoint(new Point(150, 150), 50)
-        @capturePoints.push new CapturePoint(new Point(450, 150), 50)
+        @capturePoints.push new CapturePoint(new Point(200, 250), 75)
+        @capturePoints.push new CapturePoint(new Point(700, 250), 75)
 
     addTeam: (name, color) ->
         @teams[name] =

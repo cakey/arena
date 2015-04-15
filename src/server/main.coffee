@@ -43,12 +43,12 @@ class GameHandler
         @gameState = new GameState (new Date().getTime())
 
         # I will fix this when I move AI processing to serverSide
-        @gameState.addTeam "red", "#aa3333"
-        @gameState.addTeam "blue", "#3333aa"
+        @gameState.addTeam "red", Config.colors.red
+        @gameState.addTeam "blue", Config.colors.blue
 
         if Config.game.numAIs > 0
-            @gameState.addTeam "yellowAI", "#ddaa44"
-            @gameState.addTeam "greenAI", "#33aa33"
+            @gameState.addTeam "yellowAI", Config.colors.yellow
+            @gameState.addTeam "greenAI", Config.colors.green
 
         @locallyProccessed = []
 
