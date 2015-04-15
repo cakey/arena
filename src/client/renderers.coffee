@@ -72,11 +72,11 @@ ScoreBoard = React.createClass
         <div className="scoreBox box" >
             {teamKeys.map (teamKey, i) =>
                 <div className="scoreRow" key={i} >
-                    <span className="teamName" >
+                    <span style={color:@props.teams[teamKey].color} className="teamName" >
                         {teamKey}
                     </span>
                     <span className="scoreValue" >
-                        {@props.teams[teamKey].score}
+                        {Math.floor(@props.teams[teamKey].score / 100)}
                     </span>
                 </div>
             }
@@ -206,6 +206,9 @@ Arena = React.createClass
 
         for cp in @props.gameState.capturePoints
             cp.render ctx, @props.gameState.teams
+
+        for b in @props.gameState.barriers
+            b.render ctx
 
         # Render Players.
         for id, player of @props.gameState.players

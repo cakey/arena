@@ -22,9 +22,9 @@ class Canvas
             moveTo: (p) ->
                 mappedP = p.add(map.p)
                 o.moveTo mappedP.x, mappedP.y
-            arc: (p, args...) ->
+            arc: (p, radius, startAngle, endAngle) ->
                 mappedP = p.add(map.p)
-                o.arc mappedP.x, mappedP.y, args...
+                o.arc mappedP.x, mappedP.y, radius, startAngle, endAngle
             strokeRect: (p, size) ->
                 mappedP = p.add(map.p)
                 o.strokeRect mappedP.x, mappedP.y, size.x, size.y

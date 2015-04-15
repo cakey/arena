@@ -19,13 +19,12 @@ class CapturePoint
             ctx.fillStyle color
             ctx.fill()
 
-        if @current.captured
-            ctx.beginPath()
-            ctx.moveTo @p
-            ctx.arc @p, (@radius+3), 0, (2 * Math.PI)
-            color = "#000000"
-            ctx.fillStyle color
-            ctx.fill()
+        color = if @current.captured then teams[@current.team].color else "#ffffff"
+        ctx.beginPath()
+        ctx.moveTo @p
+        ctx.arc @p, (@radius+3), 0, (2 * Math.PI)
+        ctx.fillStyle color
+        ctx.fill()
 
         ctx.filledCircle @p, @radius, "#bbbbbb"
 
