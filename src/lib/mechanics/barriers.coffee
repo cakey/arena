@@ -9,6 +9,9 @@ class Rect
         ctx.fillRect @topleft, (@bottomright.subtract(@topleft))
 
     circleIntersect: (center, radius) ->
+        if radius >= 20
+            # stickiness
+            radius -= 3
         rad = new Point radius, radius
         center.inside(@topleft.subtract(rad), @bottomright.add(rad))
 
