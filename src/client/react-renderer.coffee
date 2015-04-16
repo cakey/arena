@@ -173,14 +173,9 @@ SkillUI = React.createClass
             { for row, ri in rows
                 <div key={ri} style={{bottom: (rows.length - ri) *60, position: "fixed"}}>
                     { for boundKey, ki in row
-                        skillName = @props.UIPlayer.keyBindings[boundKey]
+                        skillName = @props.keyBindings[boundKey]
                         if skill = Skills[skillName]
-                            pctCooldown =
-                                if @props.gameState.players[@props.UIPlayer.id]?
-                                    @props.gameState.players[@props.UIPlayer.id].pctCooldown skillName
-                                else
-                                    # haven't registered UI Player from the server yet
-                                    1
+                            pctCooldown = @props.UIplayer.pctCooldown skillName
                             left = (rowOffsets[ri]+ki)*(60+5)
                             <SkillBoxUI
                                 skill={skill}
@@ -197,30 +192,15 @@ SkillUI = React.createClass
 
 Arena = React.createClass
     render: ->
-        # Get contexts for rendering.
-        ctx = @props.canvas.mapContext @props.camera
-        staticCtx = @props.canvas.context()
-
-        # Render map.
-        @props.gameState.map.render ctx
-
-        # Render Players.
-        for id, player of @props.gameState.players
-            player.render ctx, @props.gameState
-
-        # Render projectiles.
-        for p in @props.gameState.projectiles
-            p.render ctx
-
         # Render score and skills UI.
         <div>
             <ScoreBoard teams={@props.gameState.teams} />
-            <SkillUI UIPlayer={@props.UIPlayer} gameState={@props.gameState}/>
+            <SkillUI UIplayer={@props.gameState.players[@props.handler.focusedUIPlayer.id]} keyBindings={@props.handler.focusedUIPlayer.keyBindings}/>
         </div>
 
-arenaRenderer = (gameState, canvas, camera, focusedUIPlayer) ->
+arenaRenderer = (gameState, handler) ->
     React.render(
-        <Arena gameState={gameState} canvas={canvas} camera={camera} UIPlayer={focusedUIPlayer} />
+        <Arena gameState={gameState} handler={handler} />
         document.getElementById('arena')
     )
 

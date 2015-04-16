@@ -5,11 +5,9 @@ uuid = require 'node-uuid'
 
 Point = require "../lib/point"
 Player = require "../lib/player"
-Renderers = require "./renderers"
-
 
 class ClientNetworkHandler
-    constructor: (@gameState, @canvas, @camera) ->
+    constructor: (@gameState, @camera) ->
         @host = "ws://#{location.hostname}:#{Config.ws.port}"
         @ws = new WebSocket @host
 
@@ -119,15 +117,6 @@ class ClientNetworkHandler
         @camera.update newTime - @time
 
         @gameState.update newTime
-
-        # Clear the canvas.
-        @canvas.begin()
-
-        # Render all the things.
-        Renderers.arena @gameState, @canvas, @camera, @focusedUIPlayer
-
-        # Nothing right now.
-        @canvas.end()
         @time = newTime
 
 module.exports =

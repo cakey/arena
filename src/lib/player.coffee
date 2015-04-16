@@ -48,6 +48,12 @@ class GamePlayer
     fire: (@castP, @castedSkill) ->
         # first check cool down
         pctCooldown = @pctCooldown @castedSkill
+        realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
+        radiusMs = @radius / realCastTime
+        radius = (radiusMs * (@time - @startCastTime)) + @radius
+
+        @angle = @p.angle @castP
+        @halfCone = (Skills[@castedSkill].cone / 2)
 
         if pctCooldown >= 1
             # stop moving to fire

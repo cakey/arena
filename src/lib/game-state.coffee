@@ -11,6 +11,9 @@ class GameState
         @teams = {}
         @projectiles = []
         @map = new Map
+        @newPlayers = []
+        @toAddProjectiles = []
+        @toRemoveProjectiles = []
 
     addTeam: (name, color) ->
         @teams[name] =
@@ -18,6 +21,7 @@ class GameState
             score: 0
 
     addPlayer: (player) ->
+        @newPlayers.push player
         @players[player.id] = player
 
     removePlayer: (playerId) ->
@@ -31,9 +35,9 @@ class GameState
         player = @players[playerId]
         player.fire destP, skill
 
-
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
+        @toAddProjectiles.push p
         @projectiles.push p
 
     allowedMovement: (newP, player) ->
@@ -88,6 +92,7 @@ class GameState
                 projectile.p.y < @map.size.y)
             if alive and withinMap
                 if hitPlayer = @projectileCollide projectile
+                    @toRemoveProjectiles.push projectile
                     skill = projectile.skill
                     @teams[projectile.team].score += skill.score
                     @teams[hitPlayer.team].score -= skill.score
@@ -95,9 +100,10 @@ class GameState
                         skill.hitPlayer hitPlayer, projectile, @map
                     if skill.continue
                         newProjectiles.push projectile
-
                 else
                     newProjectiles.push projectile
+            else
+                @toRemoveProjectiles.push projectile
         @projectiles = newProjectiles
 
         @time = updateTime

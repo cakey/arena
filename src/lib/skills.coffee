@@ -12,6 +12,7 @@ skills =
         speed: 0.6
         range: 400
         color: "#aa0000"
+        hexcolor: 0xaa0000
         channeled: true
         score: 50
         description: "Standard range projectile, all rounder."
@@ -24,6 +25,7 @@ skills =
         speed: 1
         range: 800
         color: "#000000"
+        hexcolor: 0x000000
         channeled: false
         score: 1
         description: "High rate, low damage, long range machine gun."
@@ -36,6 +38,7 @@ skills =
         speed: 0.05
         range: 200
         color: "#00bbbb"
+        hexcolor: 0x00bbbb
         channeled: false
         score: 500
         description: "Extremely high damage, close range, slow casting bomb."
@@ -50,12 +53,13 @@ skills =
         speed: 0.3
         range: 75
         color: "#990099"
+        hexcolor: 0x990099
         channeled: true
         score: 3
         continue: true
         description: "Close range, low damage. Knocks back targets."
         cooldown: 0
-        hitPlayer: (hitPlayer, projectile, map) ->
+        hitPlayer: (hitPlayer, projectile) ->
             # TODO
             # There are likely issues with network syncronisation
             #   (this needs to be calculated server side too...)
@@ -67,6 +71,8 @@ skills =
             knockbackP = hitPlayer.p.bearing angle, 45
 
             radiusP = new Point hitPlayer.radius, hitPlayer.radius
+
+            map = hitPlayer.arena.map
 
             limitP = map.size.subtract radiusP
 
@@ -87,6 +93,7 @@ skills =
         speed: 3
         range: 1000
         color: "#aa0077"
+        hexcolor: 0xaa0077
         channeled: false
         score: 0
         description: "Instant projectile that interrupts targets. No damage."
