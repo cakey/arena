@@ -49,7 +49,9 @@ class GameState
     killPlayer: (playerId) ->
         @deadPlayerIds[playerId] = @time
         player = @players[playerId]
-        player.kill _.sample [new Point(450, -50), new Point(450, 550)]
+        respawnX = 250 + (_.sample (x for x in [0..400] by 20))
+        respawnY = _.sample [-50, 550]
+        player.kill new Point respawnX, respawnY
 
     respawnPlayer: (playerId) ->
         delete @deadPlayerIds[playerId]

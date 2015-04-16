@@ -28,6 +28,8 @@ skills =
         score: 0 #1
         description: "High rate, low damage, long range machine gun."
         cooldown: 0
+        hitPlayer: (hitPlayer, projectile, gameState) ->
+            gameState.killPlayer hitPlayer.id
 
     bomb:
         cone: Math.PI / 1.5

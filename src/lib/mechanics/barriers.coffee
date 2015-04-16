@@ -1,11 +1,12 @@
 Point = require "../point"
+Config = require "../config"
 
 class Rect
     constructor: (@topleft, @bottomright) ->
 
     render: (ctx) ->
         ctx.beginPath()
-        ctx.fillStyle "#554444"
+        ctx.fillStyle Config.colors.barrierBrown
         ctx.fillRect @topleft, (@bottomright.subtract(@topleft))
 
     circleIntersect: (center, radius) ->
