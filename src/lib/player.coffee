@@ -101,7 +101,7 @@ class GamePlayer
 
     render: (ctx, gameState) ->
         # Cast
-        if @startCastTime?1
+        if @startCastTime? and @alive
             realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
             radiusMs = @radius / realCastTime
             radius = (radiusMs * (@time - @startCastTime)) + @radius
