@@ -30,16 +30,17 @@ class CapturePoint
 
     update: (gameState) ->
         for id, player of gameState.players
-            if @p.distance(player.p) < (@radius + player.radius)
-                if player.team is @current.team
-                    @current.strength = Math.min(@maxStrength, @current.strength + 1)
-                    if @current.strength is @maxStrength
-                        @current.captured = true
-                else
-                    @current.strength = Math.max(0, @current.strength - 1)
-                    if @current.strength is 0
-                        @current.captured = false
-                        @current.team = player.team
+            if player.alive
+                if @p.distance(player.p) < (@radius + player.radius)
+                    if player.team is @current.team
+                        @current.strength = Math.min(@maxStrength, @current.strength + 1)
+                        if @current.strength is @maxStrength
+                            @current.captured = true
+                    else
+                        @current.strength = Math.max(0, @current.strength - 1)
+                        if @current.strength is 0
+                            @current.captured = false
+                            @current.team = player.team
 
         if @current.captured
             gameState.teams[@current.team].score += 1

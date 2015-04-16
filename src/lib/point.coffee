@@ -5,6 +5,8 @@ class Point
     constructor: (@x,@y) ->
 
     @fromObject: (object) ->
+        if not object?
+            return null
         if not object.x? and not object.y?
             throw new Error "Point.fromObject constructor requires x/y keys"
 

@@ -2,7 +2,7 @@ Point = require "../lib/point"
 
 class Camera
     constructor: ->
-        @p = new Point 25, 25
+        @p = new Point 25, 100
         @mapMouseP = new Point 0, 0
         @mouseP = new Point 0, 0
 
