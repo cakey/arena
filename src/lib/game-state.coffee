@@ -23,8 +23,8 @@ class GameState
         @capturePoints.push new CapturePoint(new Point(200, 250), 75)
         @capturePoints.push new CapturePoint(new Point(700, 250), 75)
 
-        @barriers.push new Barriers.Rect(new Point(438, 100), new Point(462, 200))
-        @barriers.push new Barriers.Rect(new Point(438, 300), new Point(462, 400))
+        @barriers.push new Barriers.Rect(new Point(444, 100), new Point(456, 200))
+        @barriers.push new Barriers.Rect(new Point(444, 300), new Point(456, 400))
 
     addTeam: (name, color) ->
         @teams[name] =
