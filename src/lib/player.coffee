@@ -21,6 +21,8 @@ class GamePlayer
         @castP = null
         @alive = true
 
+        @states = {}
+
         @_lastCasted = {}
 
         if not @id?
@@ -31,9 +33,14 @@ class GamePlayer
         @p = @destP = spawnLocation
         @castP = null
         @startCastTime = null
+        @states = {}
+
+    applyState: (stateName, duration) ->
+        @states[stateName] = (@time + duration)
 
     respawn: ->
         @alive = true
+        @applyState "invulnerable", 1500
 
     moveTo: (destP) ->
         if @alive
@@ -81,21 +88,31 @@ class GamePlayer
 
             # Cast
             if @startCastTime?
-                realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
+                skill = Skills[@castedSkill]
+                realCastTime = Utils.game.speedInverse(skill.castTime)
                 if newTime - @startCastTime > realCastTime
                     @startCastTime = null
 
-                    castAngle = @p.angle @castP
 
-                    edgeP = @p.bearing castAngle, @maxCastRadius
+                    if skill.type is "projectile"
+                        castAngle = @p.angle @castP
 
-                    # handle edgecase where castPoint was within casting circle
-                    if @castP.within @p, @maxCastRadius
-                        @castP = edgeP.bearing castAngle, 0.1
+                        edgeP = @p.bearing castAngle, @maxCastRadius
 
-                    gameState.addProjectile edgeP, @castP, Skills[@castedSkill], @team
+                        # handle edgecase where castPoint was within casting circle
+                        if @castP.within @p, @maxCastRadius
+                            @castP = edgeP.bearing castAngle, 0.1
+
+                        gameState.addProjectile edgeP, @castP, skill, @team
+                    else if skill.type is "targeted"
+                        gameState.castTargeted @castP, skill, @team
 
                 @_lastCasted[@castedSkill] = newTime
+
+            # States
+            for state, endTime of @states
+                if endTime < newTime
+                    delete @states[state]
 
         @time = newTime
 
@@ -115,6 +132,16 @@ class GamePlayer
             ctx.moveTo @p
             ctx.fillStyle Skills[@castedSkill].color
             ctx.fill()
+
+        # States
+        if @states["invulnerable"]
+            ctx.beginPath()
+            ctx.circle @p, (@radius+8)
+            ctx.lineWidth 6
+            ctx.setLineDash [2, 5]
+            ctx.strokeStyle Config.colors.invulnerable
+            ctx.stroke()
+            ctx.setLineDash []
 
         # Location
         if @alive
@@ -153,8 +180,14 @@ class AIPlayer extends BasePlayer
             otherPs = _.reject otherPs, alive: false
 
             if otherPs.length > 0
-                if Math.random() < Utils.game.speed(0.005) and not self.startCastTime?
-                    @handler.triggerFire @, _.sample(otherPs).p, 'bomb'
+                if Math.random() < Utils.game.speed(0.01) and not self.startCastTime?
+                    skill = _.sample ['bomb', 'flame', 'invulnerable']
+                    castP =
+                        if Skills[skill].enemies
+                            _.sample(otherPs).p
+                        else
+                            self.p
+                    @handler.triggerFire @, castP, skill
 
             chanceToMove = Math.random() < Utils.game.speed(0.03)
             if not self.startCastTime? and (chanceToMove or self.p.equal self.destP)
@@ -164,11 +197,12 @@ class UIPlayer extends BasePlayer
     constructor: (@gameState, @handler, startP, team) ->
         super startP, team
         @keyBindings =
-            g: 'orb'
+            # g: 'orb'
             h: 'flame'
-            b: 'gun'
+            #hb: 'gun'
             n: 'bomb'
-            j: 'interrupt'
+            # j: 'interrupt'
+            m: 'invulnerable'
         addEventListener "mousedown", (event) =>
             radius = @gameState.players[@id].radius
             topLeft = new Point radius, radius
