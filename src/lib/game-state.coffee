@@ -185,6 +185,7 @@ class GameState
             playerState.destP = player.destP?.toObject()
             playerState.team = player.team
             playerState.alive = player.alive
+            playerState.states = player.states
             state.players[id] = playerState
         state.time = @time
         state.teams = {}
@@ -206,9 +207,12 @@ class GameState
             @teams[teamId].score = newScore
 
         for playerId, playerState of newState.players
-            @players[playerId].p = Point.fromObject playerState.p
-            @players[playerId].destP = Point.fromObject playerState.destP
-            @players[playerId].alive = playerState.alive
+            player = @players[playerId]
+            player.p = Point.fromObject playerState.p
+            player.destP = Point.fromObject playerState.destP
+            player.alive = playerState.alive
+            player.states = playerState.states
+
 
         for cp, i in newState.capturePoints
             @capturePoints[i].current = cp
