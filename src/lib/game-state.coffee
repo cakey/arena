@@ -36,6 +36,7 @@ class GameState
 
     removePlayer: (playerId) ->
         delete @players[playerId]
+        delete @deadPlayerIds[playerId]
 
     movePlayer: (playerId, point) ->
         player = @players[playerId]
