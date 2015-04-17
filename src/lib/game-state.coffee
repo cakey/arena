@@ -48,11 +48,12 @@ class GameState
 
 
     killPlayer: (playerId) ->
-        @deadPlayerIds[playerId] = @time
         player = @players[playerId]
-        respawnX = 250 + (_.sample (x for x in [0..400] by 20))
-        respawnY = _.sample [-50, 550]
-        player.kill new Point respawnX, respawnY
+        if not player.states["invulnerable"]?
+            @deadPlayerIds[playerId] = @time
+            respawnX = 250 + (_.sample (x for x in [0..400] by 20))
+            respawnY = _.sample [-50, 550]
+            player.kill new Point respawnX, respawnY
 
     respawnPlayer: (playerId) ->
         delete @deadPlayerIds[playerId]
@@ -62,6 +63,21 @@ class GameState
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
         @projectiles.push p
+
+    castTargeted: (castP, skill, team) ->
+        closestPlayer = null
+        closestDistance = Infinity
+        for playerId, player of @players
+            sameTeam = player.team is team
+            if (skill.allies and sameTeam) or (skill.enemies and (not sameTeam))
+                distance = player.p.distance castP
+                if distance < closestDistance
+                    closestDistance = distance
+                    closestPlayer = player
+
+        # is the closest player close enough?
+        if closestDistance < (closestPlayer.radius + skill.accuracyRadius)
+            skill.hitPlayer closestPlayer
 
     allowedMovement: (newP, player) ->
 

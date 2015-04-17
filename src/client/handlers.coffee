@@ -127,7 +127,7 @@ class ClientNetworkHandler
 
         # Render all the things.
         Renderers.arena @gameState, @canvas, @camera, @focusedUIPlayer
-        if @tickNo % 10 is 0
+        if @tickNo % 5 is 0
             Renderers.ui @gameState, @canvas, @camera, @focusedUIPlayer
 
         # Nothing right now.
