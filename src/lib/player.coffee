@@ -19,15 +19,27 @@ class GamePlayer
         @speed = 0.2 # pixels/ms
         @startCastTime = null
         @castP = null
+        @alive = true
 
         @_lastCasted = {}
 
         if not @id?
             @id = uuid.v4()
 
-    moveTo: (@destP) ->
-        if @startCastTime isnt null and Skills[@castedSkill].channeled
-            @startCastTime = null
+    kill: (spawnLocation) ->
+        @alive = false
+        @p = @destP = spawnLocation
+        @castP = null
+        @startCastTime = null
+
+    respawn: ->
+        @alive = true
+
+    moveTo: (destP) ->
+        if @alive
+            @destP = destP
+            if @startCastTime isnt null and Skills[@castedSkill].channeled
+                @startCastTime = null
 
     pctCooldown: (castedSkill) ->
         realCooldown = Utils.game.speedInverse Skills[castedSkill].cooldown
@@ -45,39 +57,43 @@ class GamePlayer
 
         return Math.min ((@time - lastCasted) / realCooldown), 1
 
-    fire: (@castP, @castedSkill) ->
-        # first check cool down
-        pctCooldown = @pctCooldown @castedSkill
+    fire: (castP, castedSkill) ->
+        if @alive
+            @castP = castP
+            @castedSkill = castedSkill
 
-        if pctCooldown >= 1
-            # stop moving to fire
-            if Skills[@castedSkill].channeled
-                @destP = @p
-            @startCastTime = @time # needs to be passed through
+            # first check cool down
+            pctCooldown = @pctCooldown @castedSkill
+
+            if pctCooldown >= 1
+                # stop moving to fire
+                if Skills[@castedSkill].channeled
+                    @destP = @p
+                @startCastTime = @time # needs to be passed through
 
     update: (newTime, gameState) ->
         msDiff = newTime - @time
+        if @alive
+            # Location
+            newP = @p.towards @destP, (Utils.game.speed(@speed) * msDiff)
+            if gameState.allowedMovement newP, @
+                @p = newP
 
-        # Location
-        newP = @p.towards @destP, (Utils.game.speed(@speed) * msDiff)
-        if gameState.allowedMovement newP, @
-            @p = newP
+            # Cast
+            if @startCastTime?
+                realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
+                if newTime - @startCastTime > realCastTime
+                    @startCastTime = null
 
-        # Cast
-        if @startCastTime?
-            realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
-            if newTime - @startCastTime > realCastTime
-                @startCastTime = null
+                    castAngle = @p.angle @castP
 
-                castAngle = @p.angle @castP
+                    edgeP = @p.bearing castAngle, @maxCastRadius
 
-                edgeP = @p.bearing castAngle, @maxCastRadius
+                    # handle edgecase where castPoint was within casting circle
+                    if @castP.within @p, @maxCastRadius
+                        @castP = edgeP.bearing castAngle, 0.1
 
-                # handle edgecase where castPoint was within casting circle
-                if @castP.within @p, @maxCastRadius
-                    @castP = edgeP.bearing castAngle, 0.1
-
-                gameState.addProjectile edgeP, @castP, Skills[@castedSkill], @team
+                    gameState.addProjectile edgeP, @castP, Skills[@castedSkill], @team
 
                 @_lastCasted[@castedSkill] = newTime
 
@@ -85,7 +101,7 @@ class GamePlayer
 
     render: (ctx, gameState) ->
         # Cast
-        if @startCastTime?
+        if @startCastTime? and @alive
             realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
             radiusMs = @radius / realCastTime
             radius = (radiusMs * (@time - @startCastTime)) + @radius
@@ -101,7 +117,14 @@ class GamePlayer
             ctx.fill()
 
         # Location
-        ctx.filledCircle @p, @radius, gameState.teams[@team].color
+        if @alive
+            ctx.filledCircle @p, @radius, gameState.teams[@team].color
+        else
+            deathTime = gameState.deadPlayerIds[@id]
+            pctRespawn = (@time - deathTime) / Config.game.respawnTime
+            ctx.filledCircle @p, (@radius-1), Config.colors.barrierBrown
+            ctx.filledCircle @p, (@radius * pctRespawn), gameState.teams[@team].color
+
 
         # casting circle
         if Config.UI.castingCircles
@@ -122,14 +145,17 @@ class AIPlayer extends BasePlayer
         if not self?
             # AIPlayer hasn't registered with gameState via server yet
             return
-        otherPs = _.reject _.values(gameState.players), team: @team
+        if self.alive
+            otherPs = _.reject _.values(gameState.players), team: @team
+            otherPs = _.reject otherPs, alive: false
 
-        if Math.random() < Utils.game.speed(0.005) and not self.startCastTime?
-            @handler.triggerFire @, _.sample(otherPs).p, 'orb'
+            if otherPs.length > 0
+                if Math.random() < Utils.game.speed(0.005) and not self.startCastTime?
+                    @handler.triggerFire @, _.sample(otherPs).p, 'bomb'
 
-        chanceToMove = Math.random() < Utils.game.speed(0.03)
-        if not self.startCastTime? and (chanceToMove or self.p.equal self.destP)
-            @handler.triggerMoveTo @, gameState.map.randomPoint()
+            chanceToMove = Math.random() < Utils.game.speed(0.03)
+            if not self.startCastTime? and (chanceToMove or self.p.equal self.destP)
+                @handler.triggerMoveTo @, gameState.map.randomPoint()
 
 class UIPlayer extends BasePlayer
     constructor: (@gameState, @handler, startP, team) ->

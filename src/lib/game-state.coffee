@@ -5,6 +5,7 @@ Projectile = require "./projectile"
 CapturePoint = require "./mechanics/capture-point"
 Barriers = require "./mechanics/barriers"
 Map = require "./map"
+Config = require "./config"
 
 # TODO pull out update parts of arena and player to allow running on the server
 class GameState
@@ -13,6 +14,7 @@ class GameState
         @teams = {}
         @projectiles = []
         @map = new Map
+        @deadPlayerIds = {}
         @capturePoints = []
         @barriers = []
 
@@ -44,6 +46,18 @@ class GameState
         player.fire destP, skill
 
 
+    killPlayer: (playerId) ->
+        @deadPlayerIds[playerId] = @time
+        player = @players[playerId]
+        respawnX = 250 + (_.sample (x for x in [0..400] by 20))
+        respawnY = _.sample [-50, 550]
+        player.kill new Point respawnX, respawnY
+
+    respawnPlayer: (playerId) ->
+        delete @deadPlayerIds[playerId]
+        player = @players[playerId]
+        player.respawn()
+
     addProjectile: (startP, destP, skill, team) ->
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
         @projectiles.push p
@@ -60,13 +74,14 @@ class GameState
         # player collisions
         for otherId, otherPlayer of @players
             if otherId isnt player.id
-                currentD = player.p.distance otherPlayer.p
-                newD = newP.distance otherPlayer.p
-                minimum = player.radius + otherPlayer.radius
-                if currentD < minimum
-                    currentUnallowed += (minimum - currentD)
-                if newD < minimum
-                    newUnallowed += (minimum - newD)
+                if otherPlayer.alive
+                    currentD = player.p.distance otherPlayer.p
+                    newD = newP.distance otherPlayer.p
+                    minimum = player.radius + otherPlayer.radius
+                    if currentD < minimum
+                        currentUnallowed += (minimum - currentD)
+                    if newD < minimum
+                        newUnallowed += (minimum - newD)
 
         # barrier collisions
         for barrier in @barriers
@@ -89,12 +104,13 @@ class GameState
         # if so increment owner of projectile score
         # otherwise add to newProjectiles
         for id, player of @players
-            if p.team isnt player.team
-                if p.p.within player.p, p.skill.radius + player.radius
-                    return {
-                        player: player
-                        type: "player"
-                    }
+            if player.alive
+                if p.team isnt player.team
+                    if p.p.within player.p, p.skill.radius + player.radius
+                        return {
+                            player: player
+                            type: "player"
+                        }
         for barrier in @barriers
             if barrier.circleIntersect(p.p, p.skill.radius)
                 return {
@@ -125,7 +141,7 @@ class GameState
                         @teams[projectile.team].score += skill.score
                         @teams[hitPlayer.team].score -= skill.score
                         if skill.hitPlayer?
-                            skill.hitPlayer hitPlayer, projectile, @map
+                            skill.hitPlayer hitPlayer, projectile, @
                         if skill.continue
                             newProjectiles.push projectile
                      # else
@@ -137,6 +153,10 @@ class GameState
         for cp in @capturePoints
             cp.update @
 
+        for playerId, deathTime of @deadPlayerIds
+            if updateTime - deathTime > Config.game.respawnTime
+                @respawnPlayer playerId
+
         @time = updateTime
 
     toJSON: ->
@@ -144,9 +164,10 @@ class GameState
         state.players = {}
         for id, player of @players
             playerState = {}
-            playerState.p = player.p.toObject()
-            playerState.destP = player.destP.toObject()
+            playerState.p = player.p?.toObject()
+            playerState.destP = player.destP?.toObject()
             playerState.team = player.team
+            playerState.alive = player.alive
             state.players[id] = playerState
         state.time = @time
         state.teams = {}
@@ -155,6 +176,8 @@ class GameState
         state.projectiles = @projectiles.length
 
         state.capturePoints = (cp.current for cp in @capturePoints)
+
+        state.deadPlayerIds = @deadPlayerIds
 
         state
 
@@ -168,8 +191,11 @@ class GameState
         for playerId, playerState of newState.players
             @players[playerId].p = Point.fromObject playerState.p
             @players[playerId].destP = Point.fromObject playerState.destP
+            @players[playerId].alive = playerState.alive
 
         for cp, i in newState.capturePoints
             @capturePoints[i].current = cp
+
+        @deadPlayerIds = newState.deadPlayerIds
 
 module.exports = GameState

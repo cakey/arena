@@ -8,6 +8,7 @@ config =
         speedup: 1
         numAIs: 1
         tickTime: 10
+        respawnTime: 2000
     UI:
         castingCircles: false
 
@@ -16,5 +17,6 @@ config =
         red: "#bb4455"
         green: "#55bb55"
         yellow: "#ddaa44"
+        barrierBrown: "#554444"
 
 module.exports = config

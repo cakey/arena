@@ -28,6 +28,8 @@ skills =
         score: 0 #1
         description: "High rate, low damage, long range machine gun."
         cooldown: 0
+        hitPlayer: (hitPlayer, projectile, gameState) ->
+            gameState.killPlayer hitPlayer.id
 
     bomb:
         cone: Math.PI / 1.5
@@ -40,6 +42,8 @@ skills =
         score: 0 #500
         description: "Extremely high damage, close range, slow casting bomb."
         cooldown: 4000
+        hitPlayer: (hitPlayer, projectile, gameState) ->
+            gameState.killPlayer hitPlayer.id
 
         # TODO: smaller over time?
 
@@ -55,7 +59,7 @@ skills =
         continue: true
         description: "Close range, low damage. Knocks back targets."
         cooldown: 0
-        hitPlayer: (hitPlayer, projectile, map) ->
+        hitPlayer: (hitPlayer, projectile, gameState) ->
             # TODO
             # There are likely issues with network syncronisation
             #   (this needs to be calculated server side too...)
@@ -68,7 +72,7 @@ skills =
 
             radiusP = new Point hitPlayer.radius, hitPlayer.radius
 
-            limitP = map.size.subtract radiusP
+            limitP = gameState.map.size.subtract radiusP
 
             boundedKnockbackP = knockbackP.bound radiusP, limitP
 
@@ -77,8 +81,6 @@ skills =
             hitPlayer.startCastTime = null
 
             hitPlayer.destP = hitPlayer.p
-
-
 
     interrupt:
         cone: Math.PI / 8
