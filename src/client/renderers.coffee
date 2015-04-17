@@ -219,7 +219,8 @@ arenaRenderer = (gameState, canvas, camera, focusedUIPlayer) ->
 
     # Render Players.
     for id, player of gameState.players
-        player.render ctx, gameState
+        focused = id is focusedUIPlayer.id
+        player.render ctx, gameState, focused
 
     # Render projectiles.
     for p in gameState.projectiles
