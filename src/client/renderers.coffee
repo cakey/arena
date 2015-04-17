@@ -120,7 +120,7 @@ SkillBoxUI = React.createClass
 
                         num = Math.round(@props.skill.cooldown * (1 - @props.pctCooldown) / 100)
                         point = num % 10
-                        secs = Math.round(num / 10)
+                        secs = Math.floor(num / 10)
                         <div>
                             <div className="cooldown" style={cooldownStyle}></div>
                             <div style={cooldownTextStyle}>{"#{secs}.#{point}"}</div>
