@@ -154,6 +154,16 @@ class ClientHandler
         @wss.on 'connection', (ws) =>
             ws.on 'message', (unparsed) => @sprayMessage ws, unparsed
 
+    send: (clientID, json) ->
+        # Handles closing clients.
+        errHandler = (e) =>
+            if e?
+                console.log e.message
+                console.log e.stack
+                @deregister null, {id: clientID}
+
+        @clients[clientID].send json, errHandler
+
     sprayMessage: (ws, unparsed) ->
         @messageCount += 1
         if @messageCount % 100 is 0
@@ -179,16 +189,16 @@ class ClientHandler
             console.log e.stack
 
     broadcast: (message) ->
-        for clientID, conn of @clients
-            conn.send JSON.stringify message
+        for clientID, _ of @clients
+            @send clientID, JSON.stringify message
 
     sendPings: ->
-        for clientID, conn of @clients
+        for clientID, _ of @clients
             pingID = uuid.v4()
             @pings[pingID] =
                 clientID: clientID
                 time: new Date().getTime()
-            conn.send JSON.stringify
+            @send clientID, JSON.stringify
                 data: pingID
                 action: "ping"
 
@@ -207,7 +217,7 @@ class ClientHandler
         for client_id, clientPs of @players
             if client_id isnt message.id
                 for id, p of clientPs
-                    ws.send JSON.stringify
+                    @send message.id, JSON.stringify
                         data: p
                         action: "newPlayer"
         return
