@@ -39,15 +39,15 @@ skills =
 
     bomb:
         cone: Math.PI / 1.5
-        radius: 15
-        castTime: 800
+        radius: 12
+        castTime: 600
         speed: 0.15
         range: 300
         color: "#00bbbb"
         channeled: false
         score: 0 #500
         description: "One hit kill."
-        cooldown: 4000
+        cooldown: 3000
         enemies: true
         type: "projectile"
         hitPlayer: (hitPlayer, projectile, gameState) ->
@@ -56,12 +56,12 @@ skills =
 
     flame:
         cone: Math.PI / 2
-        radius: 10
-        castTime: 5 #10
-        speed: 0.5
+        radius: 6
+        castTime: 150 #10
+        speed: 0.4
         range: 250
         color: "#990099"
-        channeled: true
+        channeled: false
         score: 0 #3
         description: "Close range, low damage. Knocks back targets."
         cooldown: 2000
@@ -78,7 +78,7 @@ skills =
                 # knockback
                 angle = projectile.p.angle hitPlayer.p
 
-                knockbackP = hitPlayer.p.bearing angle, 150
+                knockbackP = hitPlayer.p.bearing angle, 100
 
                 radiusP = new Point hitPlayer.radius, hitPlayer.radius
 
