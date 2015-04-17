@@ -99,7 +99,7 @@ class GamePlayer
 
         @time = newTime
 
-    render: (ctx, gameState) ->
+    render: (ctx, gameState, focused) ->
         # Cast
         if @startCastTime? and @alive
             realCastTime = Utils.game.speedInverse(Skills[@castedSkill].castTime)
@@ -124,6 +124,9 @@ class GamePlayer
             pctRespawn = (@time - deathTime) / Config.game.respawnTime
             ctx.filledCircle @p, (@radius-1), Config.colors.barrierBrown
             ctx.filledCircle @p, (@radius * pctRespawn), gameState.teams[@team].color
+
+        if focused
+            ctx.filledCircle @p, 3, "#000000"
 
 
         # casting circle
