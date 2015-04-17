@@ -197,27 +197,6 @@ SkillUI = React.createClass
 
 Arena = React.createClass
     render: ->
-        # Get contexts for rendering.
-        ctx = @props.canvas.mapContext @props.camera
-        staticCtx = @props.canvas.context()
-
-        # Render map.
-        @props.gameState.map.render ctx
-
-        for cp in @props.gameState.capturePoints
-            cp.render ctx, @props.gameState.teams
-
-        for b in @props.gameState.barriers
-            b.render ctx
-
-        # Render Players.
-        for id, player of @props.gameState.players
-            player.render ctx, @props.gameState
-
-        # Render projectiles.
-        for p in @props.gameState.projectiles
-            p.render ctx
-
         # Render score and skills UI.
         <div>
             <ScoreBoard teams={@props.gameState.teams} />
@@ -225,6 +204,28 @@ Arena = React.createClass
         </div>
 
 arenaRenderer = (gameState, canvas, camera, focusedUIPlayer) ->
+    # Get contexts for rendering.
+    ctx = canvas.mapContext camera
+    staticCtx = canvas.context()
+
+    # Render map.
+    gameState.map.render ctx
+
+    for cp in gameState.capturePoints
+        cp.render ctx, gameState.teams
+
+    for b in gameState.barriers
+        b.render ctx
+
+    # Render Players.
+    for id, player of gameState.players
+        player.render ctx, gameState
+
+    # Render projectiles.
+    for p in gameState.projectiles
+        p.render ctx
+
+uiRenderer = (gameState, canvas, camera, focusedUIPlayer) ->
     React.render(
         <Arena gameState={gameState} canvas={canvas} camera={camera} UIPlayer={focusedUIPlayer} />
         document.getElementById('arena')
@@ -232,5 +233,6 @@ arenaRenderer = (gameState, canvas, camera, focusedUIPlayer) ->
 
 Renderers =
     arena: arenaRenderer
+    ui: uiRenderer
 
 module.exports = Renderers

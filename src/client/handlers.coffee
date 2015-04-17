@@ -105,9 +105,11 @@ class ClientNetworkHandler
 
     startLoop: ->
         @time = new Date().getTime()
+        @tickNo = 0
         @loopTick()
 
     loopTick: =>
+        @tickNo += 1
         setTimeout @loopTick, Config.game.tickTime
         newTime = new Date().getTime()
         # TODO: A non sucky game loop...
@@ -125,6 +127,8 @@ class ClientNetworkHandler
 
         # Render all the things.
         Renderers.arena @gameState, @canvas, @camera, @focusedUIPlayer
+        if @tickNo % 10 is 0
+            Renderers.ui @gameState, @canvas, @camera, @focusedUIPlayer
 
         # Nothing right now.
         @canvas.end()
