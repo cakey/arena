@@ -183,12 +183,16 @@ class AIPlayer extends BasePlayer
 
             if otherPs.length > 0
                 if Math.random() < Utils.game.speed(0.01) and not self.startCastTime?
-                    skill = _.sample ['bomb', 'flame', 'invulnerable']
+                    skill = _.sample ['bomb', 'flame', 'invulnerable', 'barrier']
                     castP =
                         if Skills[skill].enemies
                             _.sample(otherPs).p
-                        else
+                        else if Skills[skill].allies
                             self.p
+                        else
+                            # ground
+                            _.sample(otherPs).p
+
                     @handler.triggerFire @, castP, skill
 
             chanceToMove = Math.random() < Utils.game.speed(0.03)

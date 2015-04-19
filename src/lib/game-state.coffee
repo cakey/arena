@@ -176,6 +176,9 @@ class GameState
         for cp in @capturePoints
             cp.update @
 
+        # remove expired barriers
+        @barriers = _.filter @barriers, ([b, expiry]) => (not expiry?) or (expiry > @time)
+
         for playerId, deathTime of @deadPlayerIds
             if updateTime - deathTime > Config.game.respawnTime
                 @respawnPlayer playerId

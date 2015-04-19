@@ -136,18 +136,19 @@ skills =
         channeled: false
         score: 0
         description: "Create a ground barrier"
-        cooldown: 10
+        cooldown: 1000
         cone: Math.PI
 
         onLand: (gameState, castP, originP) ->
 
-            for i in [-4..4]
-                loc = castP.subtract new Point i*15, 0
+            for i in [-6..6]
+                loc = castP.subtract new Point i*12, 0
 
-                tl = loc.subtract new Point 5, 5
-                br = loc.add new Point 5, 5
+                tl = loc.subtract new Point 4, 4
+                br = loc.add new Point 4, 4
                 barrier = new Barriers.Rect tl, br
-                gameState.createBarrier barrier, 2000
+
+                gameState.createBarrier barrier, 3000 - (Math.abs(i) * 100)
 
 
 module.exports = skills
