@@ -67,7 +67,7 @@ class GameState
     createBarrier: (barrier, duration) ->
         @barriers.push [barrier, @time + duration]
 
-    castTargeted: (edgeP, castP, skill, team) ->
+    castTargeted: (originP, castP, skill, team) ->
         closestPlayer = null
         closestDistance = Infinity
         for playerId, player of @players

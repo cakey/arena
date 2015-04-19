@@ -105,9 +105,9 @@ class GamePlayer
 
                         gameState.addProjectile edgeP, @castP, skill, @team
                     else if skill.type is "targeted"
-                        gameState.castTargeted edgeP, @castP, skill, @team
+                        gameState.castTargeted @p, @castP, skill, @team
                     else if skill.type is "ground_targeted"
-                        gameState.castGroundTargeted edgeP, @castP, skill, @team
+                        gameState.castGroundTargeted @p, @castP, skill, @team
 
                 @_lastCasted[@castedSkill] = newTime
 
@@ -191,7 +191,8 @@ class AIPlayer extends BasePlayer
                             self.p
                         else
                             # ground
-                            _.sample(otherPs).p
+                            p = _.sample(otherPs).p
+                            p.towards self.p, 50
 
                     @handler.triggerFire @, castP, skill
 
