@@ -105,7 +105,9 @@ class GamePlayer
 
                         gameState.addProjectile edgeP, @castP, skill, @team
                     else if skill.type is "targeted"
-                        gameState.castTargeted @castP, skill, @team
+                        gameState.castTargeted edgeP, @castP, skill, @team
+                    else if skill.type is "ground_targeted"
+                        gameState.castGroundTargeted edgeP, @castP, skill, @team
 
                 @_lastCasted[@castedSkill] = newTime
 
@@ -197,9 +199,9 @@ class UIPlayer extends BasePlayer
     constructor: (@gameState, @handler, startP, team) ->
         super startP, team
         @keyBindings =
-            # g: 'orb'
+            g: 'barrier'
             h: 'flame'
-            #hb: 'gun'
+            # b: 'gun'
             n: 'bomb'
             # j: 'interrupt'
             m: 'invulnerable'

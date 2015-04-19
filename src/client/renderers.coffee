@@ -214,7 +214,7 @@ arenaRenderer = (gameState, canvas, camera, focusedUIPlayer) ->
     for cp in gameState.capturePoints
         cp.render ctx, gameState.teams
 
-    for b in gameState.barriers
+    for [b, expiry] in gameState.barriers
         b.render ctx
 
     # Render Players.

@@ -3,7 +3,7 @@
 
 Point = require "./point"
 Config = require "./config"
-
+Barriers = require "./mechanics/barriers"
 
 skills =
     orb:
@@ -126,6 +126,28 @@ skills =
 
         hitPlayer: (hitPlayer) ->
             hitPlayer.applyState "invulnerable", 2000
+
+    barrier:
+        castTime: 150
+        type: "ground_targeted"
+        radius: 4
+        color: Config.colors.barrierBrown
+        range: 1000
+        channeled: false
+        score: 0
+        description: "Create a ground barrier"
+        cooldown: 10
+        cone: Math.PI
+
+        onLand: (gameState, castP, originP) ->
+
+            for i in [-4..4]
+                loc = castP.subtract new Point i*15, 0
+
+                tl = loc.subtract new Point 5, 5
+                br = loc.add new Point 5, 5
+                barrier = new Barriers.Rect tl, br
+                gameState.createBarrier barrier, 2000
 
 
 module.exports = skills

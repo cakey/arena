@@ -23,8 +23,8 @@ class GameState
         @capturePoints.push new CapturePoint(new Point(200, 250), 75)
         @capturePoints.push new CapturePoint(new Point(700, 250), 75)
 
-        @barriers.push new Barriers.Rect(new Point(444, 100), new Point(456, 200))
-        @barriers.push new Barriers.Rect(new Point(444, 300), new Point(456, 400))
+        @barriers.push [new Barriers.Rect(new Point(444, 100), new Point(456, 200)), null]
+        @barriers.push [new Barriers.Rect(new Point(444, 300), new Point(456, 400)), null]
 
     addTeam: (name, color) ->
         @teams[name] =
@@ -64,7 +64,10 @@ class GameState
         p = new Projectile @, new Date().getTime(), startP, destP, skill, team
         @projectiles.push p
 
-    castTargeted: (castP, skill, team) ->
+    createBarrier: (barrier, duration) ->
+        @barriers.push [barrier, @time + duration]
+
+    castTargeted: (edgeP, castP, skill, team) ->
         closestPlayer = null
         closestDistance = Infinity
         for playerId, player of @players
@@ -78,6 +81,9 @@ class GameState
         # is the closest player close enough?
         if closestDistance < (closestPlayer.radius + skill.accuracyRadius)
             skill.hitPlayer closestPlayer
+
+    castGroundTargeted: (originP, castP, skill, team) ->
+        skill.onLand @, castP, originP
 
     allowedMovement: (newP, player) ->
 
@@ -101,7 +107,7 @@ class GameState
                         newUnallowed += (minimum - newD)
 
         # barrier collisions
-        for barrier in @barriers
+        for [barrier, expiry] in @barriers
             if barrier.circleIntersect player.p, player.radius
                 currentUnallowed += player.radius
             if barrier.circleIntersect newP, player.radius
@@ -128,7 +134,7 @@ class GameState
                             player: player
                             type: "player"
                         }
-        for barrier in @barriers
+        for [barrier, expiry] in @barriers
             if barrier.circleIntersect(p.p, p.skill.radius)
                 return {
                     type: "barrier"
