@@ -206,6 +206,8 @@ class GameState
 
         state.deadPlayerIds = @deadPlayerIds
 
+        state.barriers = ([b.toObject(), d] for [b,d] in @barriers)
+
         state
 
     sync: (newState) ->
@@ -225,6 +227,9 @@ class GameState
 
         for cp, i in newState.capturePoints
             @capturePoints[i].current = cp
+
+        # Todo: This always resyncs the permanent barriers too :(
+        @barriers = ([Barriers.fromObject(obj), d] for [obj,d] in newState.barriers)
 
         @deadPlayerIds = newState.deadPlayerIds
 
