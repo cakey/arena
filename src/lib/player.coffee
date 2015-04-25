@@ -105,7 +105,9 @@ class GamePlayer
 
                         gameState.addProjectile edgeP, @castP, skill, @team
                     else if skill.type is "targeted"
-                        gameState.castTargeted @castP, skill, @team
+                        gameState.castTargeted @p, @castP, skill, @team
+                    else if skill.type is "ground_targeted"
+                        gameState.castGroundTargeted @p, @castP, skill, @team
 
                 @_lastCasted[@castedSkill] = newTime
 
@@ -181,12 +183,17 @@ class AIPlayer extends BasePlayer
 
             if otherPs.length > 0
                 if Math.random() < Utils.game.speed(0.01) and not self.startCastTime?
-                    skill = _.sample ['bomb', 'flame', 'invulnerable']
+                    skill = _.sample ['bomb', 'flame', 'invulnerable', 'barrier']
                     castP =
                         if Skills[skill].enemies
                             _.sample(otherPs).p
-                        else
+                        else if Skills[skill].allies
                             self.p
+                        else
+                            # ground
+                            p = _.sample(otherPs).p
+                            p.towards self.p, 50
+
                     @handler.triggerFire @, castP, skill
 
             chanceToMove = Math.random() < Utils.game.speed(0.03)
@@ -197,9 +204,9 @@ class UIPlayer extends BasePlayer
     constructor: (@gameState, @handler, startP, team) ->
         super startP, team
         @keyBindings =
-            # g: 'orb'
+            g: 'barrier'
             h: 'flame'
-            #hb: 'gun'
+            # b: 'gun'
             n: 'bomb'
             # j: 'interrupt'
             m: 'invulnerable'

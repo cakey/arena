@@ -16,4 +16,16 @@ class Rect
         rad = new Point radius, radius
         center.inside(@topleft.subtract(rad), @bottomright.add(rad))
 
-module.exports = {Rect}
+    toObject: ->
+        return {
+            type: "Rect"
+            tl: @topleft.toObject()
+            br: @bottomright.toObject()
+        }
+
+fromObject = (obj) ->
+    if obj.type is "Rect"
+        new Rect Point.fromObject(obj.tl), Point.fromObject(obj.br)
+
+
+module.exports = {Rect, fromObject}

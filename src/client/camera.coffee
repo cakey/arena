@@ -12,12 +12,13 @@ class Camera
         @cameraSpeed = 0.3
 
         addEventListener "mousemove", (event) =>
-            @mouseP = Point.fromObject event
+            @mouseP = new Point event.clientX, event.clientY
             @mapMouseP = @mouseP.subtract(@p)
 
         addEventListener "mousedown", (event) =>
             if event.which is 1
-                @mapToGo = @mapMiddle.towards Point.fromObject(event), 100
+                p = new Point event.clientX, event.clientY
+                @mapToGo = @mapMiddle.towards p, 100
 
 
     update: (msDiff) ->

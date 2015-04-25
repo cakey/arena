@@ -189,11 +189,11 @@ class ClientHandler
             console.log e.stack
 
     broadcast: (message) ->
-        for clientID, _ of @clients
+        for clientID, client of @clients
             @send clientID, JSON.stringify message
 
     sendPings: ->
-        for clientID, _ of @clients
+        for clientID, client of @clients
             pingID = uuid.v4()
             @pings[pingID] =
                 clientID: clientID
