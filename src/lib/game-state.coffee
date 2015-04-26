@@ -4,6 +4,7 @@ Point = require "./point"
 Projectile = require "./projectile"
 CapturePoint = require "./mechanics/capture-point"
 Barriers = require "./mechanics/barriers"
+Mine = require "./mechanics/mine"
 Map = require "./map"
 Config = require "./config"
 
@@ -17,6 +18,7 @@ class GameState
         @deadPlayerIds = {}
         @capturePoints = []
         @barriers = []
+        @mines = []
 
         # Need to pull this stuff out into a map initialiser
         # and make it generic across different types of entities
@@ -54,6 +56,8 @@ class GameState
             respawnX = 250 + (_.sample (x for x in [0..400] by 20))
             respawnY = _.sample [-50, 550]
             player.kill new Point respawnX, respawnY
+            return true
+        return false
 
     respawnPlayer: (playerId) ->
         delete @deadPlayerIds[playerId]
@@ -66,6 +70,9 @@ class GameState
 
     createBarrier: (barrier, duration) ->
         @barriers.push [barrier, @time + duration]
+
+    createMine: (mine, duration) ->
+        @mines.push [mine, @time + duration]
 
     castTargeted: (originP, castP, skill, team) ->
         if originP.distance(castP) > skill.range
@@ -88,7 +95,7 @@ class GameState
                 skill.hitPlayer closestPlayer
 
     castGroundTargeted: (originP, castP, skill, team) ->
-        skill.onLand @, castP, originP
+        skill.onLand @, castP, originP, team
 
     allowedMovement: (newP, player) ->
 
@@ -149,8 +156,21 @@ class GameState
     update: (updateTime) ->
         msDiff = updateTime - @time
 
+        # remove expired entities
+        @barriers = _.filter @barriers, ([b, expiry]) => (not expiry?) or (expiry > @time)
+        @mines = _.filter @mines, ([b, expiry]) => (not expiry?) or (expiry > @time)
+
         for id, player of @players
             player.update updateTime, @
+
+        for id, player of @players
+            for [mine, d], i in @mines
+                if d > 0
+                    if player.team isnt mine.team
+                        if mine.center.distance(player.p) < (mine.radius + player.radius)
+                            if @killPlayer id
+                                @mines[i][1] = 0
+                                @teams[mine.team].score += 1500
 
         # Projectiles.
         newProjectiles = []
@@ -181,9 +201,6 @@ class GameState
         for cp in @capturePoints
             cp.update @
 
-        # remove expired barriers
-        @barriers = _.filter @barriers, ([b, expiry]) => (not expiry?) or (expiry > @time)
-
         for playerId, deathTime of @deadPlayerIds
             if updateTime - deathTime > Config.game.respawnTime
                 @respawnPlayer playerId
@@ -212,6 +229,7 @@ class GameState
         state.deadPlayerIds = @deadPlayerIds
 
         state.barriers = ([b.toObject(), d] for [b,d] in @barriers)
+        state.mines = ([b.toObject(), d] for [b,d] in @mines)
 
         state
 
@@ -235,6 +253,7 @@ class GameState
 
         # Todo: This always resyncs the permanent barriers too :(
         @barriers = ([Barriers.fromObject(obj), d] for [obj,d] in newState.barriers)
+        @mines = ([Mine.fromObject(obj), d] for [obj,d] in newState.mines)
 
         @deadPlayerIds = newState.deadPlayerIds
 

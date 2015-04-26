@@ -217,6 +217,9 @@ arenaRenderer = (gameState, canvas, camera, focusedUIPlayer) ->
     for [b, expiry] in gameState.barriers
         b.render ctx
 
+    for [m, expiry] in gameState.mines
+        m.render ctx
+
     # Render Players.
     for id, player of gameState.players
         focused = id is focusedUIPlayer.id
