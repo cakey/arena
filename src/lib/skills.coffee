@@ -152,5 +152,22 @@ skills =
 
                 gameState.createBarrier barrier, 3250 - (Math.abs(i) * 80)
 
+    hamstring:
+        castTime: 250
+        type: "targeted"
+        radius: 12
+        color: Config.colors.barrierBrown
+        range: 100
+        channeled: false
+        score: 0
+        description: "Melee slow."
+        cooldown: 10000
+        cone: Math.PI * 2
+        allies: false
+        enemies: true
+        accuracyRadius: 50
+
+        hitPlayer: (hitPlayer) ->
+            hitPlayer.applyState "slow", 5000
 
 module.exports = skills
