@@ -68,6 +68,10 @@ class GameState
         @barriers.push [barrier, @time + duration]
 
     castTargeted: (originP, castP, skill, team) ->
+        if originP.distance(castP) > skill.range
+            # Todo: UI message
+            return
+
         closestPlayer = null
         closestDistance = Infinity
         for playerId, player of @players
@@ -79,8 +83,9 @@ class GameState
                     closestPlayer = player
 
         # is the closest player close enough?
-        if closestDistance < (closestPlayer.radius + skill.accuracyRadius)
-            skill.hitPlayer closestPlayer
+        if closestPlayer?
+            if closestDistance < (closestPlayer.radius + skill.accuracyRadius)
+                skill.hitPlayer closestPlayer
 
     castGroundTargeted: (originP, castP, skill, team) ->
         skill.onLand @, castP, originP

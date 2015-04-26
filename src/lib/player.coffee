@@ -16,7 +16,7 @@ class GamePlayer
         @radius = 20
         @maxCastRadius = @radius * 2
         @destP = @p
-        @speed = 0.2 # pixels/ms
+        @speed = 0.15 # pixels/ms
         @startCastTime = null
         @castP = null
         @alive = true
@@ -82,7 +82,10 @@ class GamePlayer
         msDiff = newTime - @time
         if @alive
             # Location
-            newP = @p.towards @destP, (Utils.game.speed(@speed) * msDiff)
+
+            # Todo, effect should be encapsulated, and attached to skill.
+            speed = if @states["slow"] then @speed * 0.2 else @speed
+            newP = @p.towards @destP, (Utils.game.speed(speed) * msDiff)
             if gameState.allowedMovement newP, @
                 @p = newP
 
@@ -142,6 +145,15 @@ class GamePlayer
             ctx.lineWidth 6
             ctx.setLineDash [2, 5]
             ctx.strokeStyle Config.colors.invulnerable
+            ctx.stroke()
+            ctx.setLineDash []
+
+        if @states["slow"]
+            ctx.beginPath()
+            ctx.circle @p, (@radius+2)
+            ctx.lineWidth 3
+            ctx.setLineDash [4, 2, 6, 2]
+            ctx.strokeStyle Config.colors.barrierBrown
             ctx.stroke()
             ctx.setLineDash []
 
@@ -208,7 +220,7 @@ class UIPlayer extends BasePlayer
             h: 'flame'
             # b: 'gun'
             n: 'bomb'
-            # j: 'interrupt'
+            j: 'hamstring'
             m: 'invulnerable'
         addEventListener "mousedown", (event) =>
             radius = @gameState.players[@id].radius
