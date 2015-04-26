@@ -19,5 +19,6 @@ config =
         yellow: "#ddaa44"
         barrierBrown: "#554444"
         invulnerable: "#77cc77"
+        mineRed: "#dd7700"
 
 module.exports = config

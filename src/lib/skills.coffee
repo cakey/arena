@@ -4,6 +4,7 @@
 Point = require "./point"
 Config = require "./config"
 Barriers = require "./mechanics/barriers"
+Mine = require "./mechanics/mine"
 
 skills =
     orb:
@@ -120,7 +121,7 @@ skills =
         description: "Makes targeted ally invulnerable."
         cooldown: 8000
         type: "targeted"
-        accuracyRadius: 40
+        accuracyRadius: 100
         allies: true
         enemies: false
 
@@ -169,5 +170,26 @@ skills =
 
         hitPlayer: (hitPlayer) ->
             hitPlayer.applyState "slow", 5000
+
+    mine:
+        castTime: 1000
+        type: "ground_targeted"
+        radius: 22
+        color: Config.colors.mineRed
+        channeled: true
+        score: 15
+        description: "Mine that one hit kills."
+        cooldown: 10000
+        cone: Math.PI * 2
+
+        onLand: (gameState, castP, originP, castingTeam) ->
+            console.log castingTeam
+
+            for [x, y] in [[-13,-13],[13,-13],[-13,13],[13,13]]
+                center = originP.add new Point x, y
+                radius = 15
+                mine = new Mine.Circle center, radius, castingTeam
+
+                gameState.createMine mine, 5000
 
 module.exports = skills

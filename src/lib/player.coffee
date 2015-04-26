@@ -96,21 +96,23 @@ class GamePlayer
                 if newTime - @startCastTime > realCastTime
                     @startCastTime = null
 
+                    switch skill.type
+                        when "projectile"
+                            castAngle = @p.angle @castP
 
-                    if skill.type is "projectile"
-                        castAngle = @p.angle @castP
+                            edgeP = @p.bearing castAngle, @maxCastRadius
 
-                        edgeP = @p.bearing castAngle, @maxCastRadius
+                            # handle edgecase where castPoint was within casting circle
+                            if @castP.within @p, @maxCastRadius
+                                @castP = edgeP.bearing castAngle, 0.1
 
-                        # handle edgecase where castPoint was within casting circle
-                        if @castP.within @p, @maxCastRadius
-                            @castP = edgeP.bearing castAngle, 0.1
-
-                        gameState.addProjectile edgeP, @castP, skill, @team
-                    else if skill.type is "targeted"
-                        gameState.castTargeted @p, @castP, skill, @team
-                    else if skill.type is "ground_targeted"
-                        gameState.castGroundTargeted @p, @castP, skill, @team
+                            gameState.addProjectile edgeP, @castP, skill, @team
+                        when "targeted"
+                            gameState.castTargeted @p, @castP, skill, @team
+                        when "ground_targeted"
+                            gameState.castGroundTargeted @p, @castP, skill, @team
+                        else
+                            throw new Error "skill type not handled: #{skill.type}"
 
                 @_lastCasted[@castedSkill] = newTime
 
@@ -194,8 +196,8 @@ class AIPlayer extends BasePlayer
             otherPs = _.reject otherPs, alive: false
 
             if otherPs.length > 0
-                if Math.random() < Utils.game.speed(0.01) and not self.startCastTime?
-                    skill = _.sample ['bomb', 'flame', 'invulnerable', 'barrier']
+                if Math.random() < Utils.game.speed(0.015) and not self.startCastTime?
+                    skill = _.sample ['bomb', 'flame', 'invulnerable', 'barrier', 'mine', 'hamstring']
                     castP =
                         if Skills[skill].enemies
                             _.sample(otherPs).p
@@ -218,7 +220,7 @@ class UIPlayer extends BasePlayer
         @keyBindings =
             g: 'barrier'
             h: 'flame'
-            # b: 'gun'
+            b: 'mine'
             n: 'bomb'
             j: 'hamstring'
             m: 'invulnerable'
