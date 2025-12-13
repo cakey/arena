@@ -5,6 +5,8 @@ gutil = require "gulp-util"
 karma = require("karma").server
 $ = require('gulp-load-plugins')()
 express = require 'express'
+sass = require 'sass'
+gulpSass = require('gulp-sass')(sass)
 
 gulp.task 'scripts', ->
     return gulp.src('src/client/app.coffee', { read: false })
@@ -29,7 +31,7 @@ gulp.task 'tests', ->
 gulp.task "styles", ->
     return gulp.src(["./src/**/*.scss"])
         .pipe($.concat("app.css"))
-        .pipe($.sass(errLogToConsole: true).on("error", gutil.log).on("error", gutil.beep))
+        .pipe(gulpSass().on("error", gulpSass.logError))
         .pipe(gulp.dest("./public"))
         .pipe($.livereload())
 
