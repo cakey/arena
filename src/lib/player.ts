@@ -16,6 +16,7 @@ export class GamePlayer {
   startCastTime: number | null = null; castP: Point | null = null; alive = true
   states: Record<string, number> = {}; castedSkill: string = ""
   gunHits = 0
+  lastBarrierHit: { time: number; pushAngle: number; barrierVelocity: Point } | null = null
   private _lastCasted: Record<string, number> = {}
   private _shotCounts: Record<string, number> = {}
 
@@ -26,6 +27,7 @@ export class GamePlayer {
   kill(spawnLocation: Point) {
     this.alive = false; this.p = this.destP = spawnLocation
     this.castP = null; this.startCastTime = null; this.states = {}; this.gunHits = 0
+    this.lastBarrierHit = null
   }
 
   applyState(stateName: string, duration: number) { this.states[stateName] = this.time + duration }

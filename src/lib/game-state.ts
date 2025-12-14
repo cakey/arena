@@ -58,8 +58,12 @@ export default class GameState {
     this.pathGrid = generateGrid(this.map.size, this.barriers)
   }
 
-  findPath(from: Point, to: Point): { path: Point[], error: PathError } {
-    return pathfindingFindPath(from, to, this.pathGrid, this.barriers)
+  findPath(from: Point, to: Point, team: string = "", selfId: string = ""): { path: Point[], error: PathError } {
+    // Extract player positions for collision avoidance
+    const alivePlayers = Object.values(this.players)
+      .filter(p => p.alive)
+      .map(p => ({ p: p.p, radius: p.radius, id: p.id }))
+    return pathfindingFindPath(from, to, this.pathGrid, this.barriers, this.mines, team, alivePlayers, selfId)
   }
 
   getGridCellSize(): number {
@@ -177,6 +181,12 @@ export default class GameState {
           const radiusP = new Point(player.radius, player.radius)
           player.p = newP.bound(radiusP, this.map.size.subtract(radiusP))
           player.destP = player.p  // Stop movement
+          // Record hit for AI to escape
+          player.lastBarrierHit = {
+            time: this.time,
+            pushAngle,
+            barrierVelocity: barrier.velocity || new Point(0, 0)
+          }
         }
       }
     }

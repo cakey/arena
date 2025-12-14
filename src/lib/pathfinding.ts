@@ -2,10 +2,26 @@ import Point from "./point"
 
 const CELL_SIZE = 20  // Same as player radius
 const PLAYER_RADIUS = 20
+const MINE_COST = 15  // Extra cost for cells near mines (makes AI avoid but not panic)
+const PLAYER_COST = 8  // Extra cost for cells near other players (prefer to path around)
 
 // Barrier interface for pathfinding - use same collision as movement
 interface PathBarrier {
   circleIntersect(center: Point, radius: number): boolean
+}
+
+// Mine interface for weighted avoidance
+interface PathMine {
+  center: Point
+  radius: number
+  team: string
+}
+
+// Player position for weighted avoidance
+interface PathPlayer {
+  p: Point
+  radius: number
+  id: string
 }
 
 export interface PathGrid {
@@ -92,11 +108,47 @@ export function generateGrid(mapSize: Point, barriers: [PathBarrier, any][]): Pa
   return { width, height, cells }
 }
 
-// A* pathfinding on the grid
+// Calculate extra cost for a cell based on nearby enemy mines
+function getMineCost(gx: number, gy: number, mines: PathMine[], team: string): number {
+  const cellCenter = toWorld(gx, gy)
+  let cost = 0
+  for (const mine of mines) {
+    if (mine.team === team) continue  // Don't avoid own mines
+    const dist = cellCenter.distance(mine.center)
+    // Add cost for cells within mine radius + buffer
+    const dangerRadius = mine.radius + PLAYER_RADIUS + 20  // Extra buffer
+    if (dist < dangerRadius) {
+      cost += MINE_COST
+    }
+  }
+  return cost
+}
+
+// Calculate extra cost for a cell based on nearby players (avoid collision)
+function getPlayerCost(gx: number, gy: number, players: PathPlayer[], selfId: string): number {
+  const cellCenter = toWorld(gx, gy)
+  let cost = 0
+  for (const player of players) {
+    if (player.id === selfId) continue  // Don't avoid self
+    const dist = cellCenter.distance(player.p)
+    // Add cost for cells within player collision radius
+    const collisionRadius = PLAYER_RADIUS * 2 + 10  // Two player radii + buffer
+    if (dist < collisionRadius) {
+      cost += PLAYER_COST
+    }
+  }
+  return cost
+}
+
+// A* pathfinding on the grid with mine and player avoidance
 function astarGrid(
   startX: number, startY: number,
   goalX: number, goalY: number,
-  grid: PathGrid
+  grid: PathGrid,
+  mines: PathMine[],
+  team: string,
+  players: PathPlayer[],
+  selfId: string
 ): [number, number][] {
   const key = (x: number, y: number) => `${x},${y}`
 
@@ -158,7 +210,9 @@ function astarGrid(
       }
 
       const moveCost = dx !== 0 && dy !== 0 ? 1.414 : 1  // Diagonal vs cardinal
-      const tentativeG = (gScore.get(currentKey) ?? Infinity) + moveCost
+      const mineCost = getMineCost(nx, ny, mines, team)
+      const playerCost = getPlayerCost(nx, ny, players, selfId)
+      const tentativeG = (gScore.get(currentKey) ?? Infinity) + moveCost + mineCost + playerCost
 
       const nKey = key(nx, ny)
       if (tentativeG < (gScore.get(nKey) ?? Infinity)) {
@@ -174,7 +228,17 @@ function astarGrid(
 }
 
 // Main pathfinding function - returns { path, error }
-export function findPath(from: Point, to: Point, grid: PathGrid, barriers: [PathBarrier, any][]): { path: Point[], error: PathError } {
+// mines, team, players, selfId are optional - if provided, A* will weight paths to avoid hazards
+export function findPath(
+  from: Point,
+  to: Point,
+  grid: PathGrid,
+  barriers: [PathBarrier, any][],
+  mines: [PathMine, any][] = [],
+  team: string = "",
+  players: PathPlayer[] = [],
+  selfId: string = ""
+): { path: Point[], error: PathError } {
   const [startX, startY] = toGrid(from)
   const [goalX, goalY] = toGrid(to)
 
@@ -200,7 +264,9 @@ export function findPath(from: Point, to: Point, grid: PathGrid, barriers: [Path
     [adjGoalX, adjGoalY] = nearest
   }
 
-  const gridPath = astarGrid(clampedStartX, clampedStartY, adjGoalX, adjGoalY, grid)
+  // Extract mine data for A*
+  const mineData: PathMine[] = mines.map(([m]) => m)
+  const gridPath = astarGrid(clampedStartX, clampedStartY, adjGoalX, adjGoalY, grid, mineData, team, players, selfId)
 
   if (gridPath.length === 0) {
     // Couldn't find path - might be completely stuck

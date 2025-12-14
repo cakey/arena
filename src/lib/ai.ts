@@ -10,7 +10,6 @@ const AI_CONFIG = {
   bombRange: 250,
   dodgeDistance: 60,
   threatDetectionRadius: 150,
-  mineAvoidRadius: 80,
 }
 
 export interface AIDecision {
@@ -143,12 +142,15 @@ function getMostDangerousProjectile(gameState: GameState, self: GamePlayer): Pro
   return mostDangerous
 }
 
-function getNearbyEnemyMines(gameState: GameState, self: GamePlayer): { center: Point; radius: number }[] {
-  return gameState.mines
-    .filter(([mine]) => mine.team !== self.team)
-    .map(([mine]) => ({ center: mine.center, radius: mine.radius }))
-    .filter(mine => mine.center.distance(self.p) < mine.radius + AI_CONFIG.mineAvoidRadius)
+// Get ice zones that could be affecting us
+function getNearbyIceZones(gameState: GameState, self: GamePlayer): { center: Point; radius: number }[] {
+  return gameState.iceZones
+    .filter(([zone]) => zone.team !== self.team)
+    .map(([zone]) => ({ center: zone.center, radius: zone.currentRadius }))
+    .filter(zone => zone.center.distance(self.p) < zone.radius + 30)
 }
+
+const BARRIER_ESCAPE_WINDOW = 500  // React to barrier hits within last 500ms
 
 function getEnemiesApproaching(gameState: GameState, self: GamePlayer, capturePoint: CapturePoint): GamePlayer[] {
   return getEnemies(gameState, self).filter(enemy => {
@@ -260,17 +262,41 @@ export function decideAction(gameState: GameState, self: GamePlayer): AIDecision
     return { move: dodgePoint }
   }
 
-  // Avoid mines
-  const nearbyMines = getNearbyEnemyMines(gameState, self)
-  if (nearbyMines.length > 0) {
-    // Move away from nearest mine
-    const nearestMine = nearbyMines.reduce((a, b) =>
-      a.center.distance(self.p) < b.center.distance(self.p) ? a : b
-    )
-    const awayAngle = nearestMine.center.angle(self.p)
-    const fleePoint = self.p.bearing(awayAngle, 50)
-    aiDebugState[self.id] = { targetPoint: fleePoint, action: "avoid-mine" }
-    return { move: fleePoint }
+  // Escape slow state - move out of ice zones
+  if (self.states["slow"]) {
+    const nearbyIceZones = getNearbyIceZones(gameState, self)
+    if (nearbyIceZones.length > 0) {
+      // Move away from nearest ice zone center
+      const nearestZone = nearbyIceZones.reduce((a, b) =>
+        a.center.distance(self.p) < b.center.distance(self.p) ? a : b
+      )
+      const awayAngle = nearestZone.center.angle(self.p)
+      const escapePoint = self.p.bearing(awayAngle, nearestZone.radius + 30)
+      aiDebugState[self.id] = { targetPoint: escapePoint, action: "escape-slow" }
+      return { move: escapePoint }
+    }
+  }
+
+  // Escape barriers - move perpendicular to barrier velocity
+  const hit = self.lastBarrierHit
+  if (hit && (gameState.time - hit.time) < BARRIER_ESCAPE_WINDOW) {
+    // If barrier is moving, escape perpendicular to its velocity
+    if (hit.barrierVelocity.x !== 0 || hit.barrierVelocity.y !== 0) {
+      const velAngle = Math.atan2(hit.barrierVelocity.y, hit.barrierVelocity.x)
+      // Try both perpendicular directions, pick the one we were pushed toward
+      const perp1 = self.p.bearing(velAngle + Math.PI / 2, 60)
+      const perp2 = self.p.bearing(velAngle - Math.PI / 2, 60)
+      // Pick direction closer to where we were pushed (away from barrier)
+      const pushDir = self.p.bearing(hit.pushAngle, 10)
+      const escapePoint = perp1.distance(pushDir) < perp2.distance(pushDir) ? perp1 : perp2
+      aiDebugState[self.id] = { targetPoint: escapePoint, action: "escape-barrier" }
+      return { move: escapePoint }
+    } else {
+      // Static barrier - just keep moving in push direction
+      const escapePoint = self.p.bearing(hit.pushAngle, 60)
+      aiDebugState[self.id] = { targetPoint: escapePoint, action: "escape-barrier" }
+      return { move: escapePoint }
+    }
   }
 
   // ========== Priority 2: SURVIVE - use invulnerable ==========
@@ -349,8 +375,8 @@ export function decideAction(gameState: GameState, self: GamePlayer): AIDecision
   if (targetPoint) {
     const distToPoint = self.p.distance(targetPoint.p)
     if (distToPoint > 30) {
-      // Use pathfinding to navigate around barriers
-      const { path, error } = gameState.findPath(self.p, targetPoint.p)
+      // Use pathfinding to navigate around barriers, mines, and other players
+      const { path, error } = gameState.findPath(self.p, targetPoint.p, self.team, self.id)
       if (path.length > 0) {
         const nextWaypoint = path[0]
         aiDebugState[self.id] = { targetPoint: nextWaypoint, action: `move(${path.length})`, fullPath: path, pathError: error || undefined }
