@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/benshaw/Projects/arena log --oneline)",
+      "Bash(git -C /Users/benshaw/Projects/arena log --format=\"%ai %s\")",
+      "Bash(cat:*)",
+      "Bash(node --version:*)",
+      "Bash(npm --version)",
+      "Bash(npm install:*)",
+      "Bash(rm:*)",
+      "Bash(./node_modules/.bin/gulp:*)",
+      "Bash(timeout 30 ./node_modules/.bin/gulp:*)",
+      "Bash(curl:*)",
+      "Bash(git -C /Users/benshaw/Projects/arena status)",
+      "Bash(git -C /Users/benshaw/Projects/arena diff)",
+      "Bash(git -C /Users/benshaw/Projects/arena diff HEAD)",
+      "Bash(git -C /Users/benshaw/Projects/arena diff --name-only HEAD)",
+      "Bash(git -C /Users/benshaw/Projects/arena status -s)",
+      "Bash(npm test:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(pkill:*)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)"
+    ]
+  }
+}
