@@ -9,11 +9,19 @@ npm start          # dev server with live reload (port 8765)
 npm run server     # game server (port 8001)
 ```
 
+Open `http://localhost:8765` to play, or `http://localhost:8765?spectate` to watch AIs only.
+
 ## Test
 
 ```
 npm test
 ```
+
+Tests should be minimal - only add when fixing a bug that:
+1. Is generic enough we might reintroduce it
+2. Is simple enough to test without being tied to implementation details
+
+Don't add tests for every change.
 
 ## Principles
 

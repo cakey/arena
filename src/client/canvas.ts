@@ -20,6 +20,7 @@ export default class Canvas {
     const o = this.ctx
     const tc = {
       moveTo: (p: Point) => { const mp = p.add(map.p); o.moveTo(mp.x, mp.y) },
+      lineTo: (p: Point) => { const mp = p.add(map.p); o.lineTo(mp.x, mp.y) },
       arc: (p: Point, radius: number, startAngle: number, endAngle: number) => {
         const mp = p.add(map.p); o.arc(mp.x, mp.y, radius, startAngle, endAngle)
       },

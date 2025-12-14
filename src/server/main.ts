@@ -45,12 +45,7 @@ class GameHandler {
       }
     }
     this.gameState.update(newTime)
-    if (this.tick % 500 === 0) console.log(JSON.stringify(this.gameState, null, 4))
-    if (this.tick % 200 === 0) {
-      for (const [clientID] of Object.entries(clientHandler.clients)) {
-        console.log(clientID, clientHandler.clientPings[clientID].average())
-      }
-    }
+    // if (this.tick % 500 === 0) console.log(JSON.stringify(this.gameState, null, 4))
     if (this.tick % 10 === 0) clientHandler.sendPings()
     if (this.tick % 2 === 0) clientHandler.broadcast({ data: this.gameState, action: "sync" })
     this.tick++
@@ -118,7 +113,7 @@ class ClientHandler {
 
   sprayMessage(ws: WebSocket, unparsed: string) {
     this.messageCount++
-    if (this.messageCount % 100 === 0) console.log(this.messageCount)
+    // if (this.messageCount % 100 === 0) console.log(this.messageCount)
     try {
       const message = JSON.parse(unparsed)
       switch (message.action) {

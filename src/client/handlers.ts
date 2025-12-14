@@ -10,6 +10,7 @@ import type Camera from "./camera"
 export class Client {
   host: string; ws: WebSocket; client_uuid: string; locallyProcessed: AIPlayer[] = []
   focusedUIPlayer: UIPlayer | null = null; time = 0; tickNo = 0
+  debug = false
   private _ready: Promise<void>
 
   constructor(public gameState: GameState, public canvas: Canvas, public camera: Camera) {
@@ -96,7 +97,7 @@ export class Client {
     this.camera.update(newTime - this.time)
     this.gameState.update(newTime)
     this.canvas.begin()
-    Renderers.arena(this.gameState, this.canvas, this.camera, this.focusedUIPlayer)
+    Renderers.arena(this.gameState, this.canvas, this.camera, this.focusedUIPlayer, this.debug)
     if (this.tickNo % 5 === 0) Renderers.ui(this.gameState, this.canvas, this.camera, this.focusedUIPlayer)
     this.canvas.end()
     this.time = newTime

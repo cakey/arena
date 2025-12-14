@@ -3,12 +3,10 @@ import type GameState from "./game-state"
 import type { GamePlayer } from "./player"
 import type CapturePoint from "./mechanics/capture-point"
 
-// Tunable difficulty constants
 const AI_CONFIG = {
-  aimInaccuracy: 15,        // Random offset in pixels
+  aimInaccuracy: 15,
   gunRange: 120,
   bombRange: 250,
-  threatDetectionRange: 150,
 }
 
 export interface AIDecision {
@@ -16,6 +14,9 @@ export interface AIDecision {
   skill?: string
   castP?: Point
 }
+
+// Debug state - tracks what each AI is thinking
+export const aiDebugState: Record<string, { targetPoint?: Point; action: string; fullPath?: Point[] }> = {}
 
 // ============= Awareness Helpers =============
 
@@ -55,13 +56,13 @@ function getBestCapturePoint(gameState: GameState, self: GamePlayer): CapturePoi
   let bestScore = -Infinity
 
   for (const cp of gameState.capturePoints) {
-    // Check if ally is already on this point
-    const allyOnPoint = allies.some(ally => ally.p.distance(cp.p) < cp.radius)
-
-    // Score: prefer closer points, prefer points without allies
     const distance = self.p.distance(cp.p)
-    const allyPenalty = allyOnPoint ? 500 : 0
-    const score = -distance - allyPenalty
+    const allyOnPoint = allies.some(ally => ally.p.distance(cp.p) < cp.radius)
+    const isCapturedByUs = cp.current.captured && cp.current.team === self.team
+
+    let score = -distance
+    if (allyOnPoint) score -= 400
+    if (isCapturedByUs) score -= 500
 
     if (score > bestScore) {
       bestScore = score
@@ -72,72 +73,12 @@ function getBestCapturePoint(gameState: GameState, self: GamePlayer): CapturePoi
   return bestPoint
 }
 
-function getIncomingThreat(gameState: GameState, self: GamePlayer): { p: Point; velocity: Point } | null {
-  // Check for incoming projectiles
-  for (const proj of gameState.projectiles) {
-    if (proj.team === self.team) continue
-
-    const dist = self.p.distance(proj.p)
-    if (dist > AI_CONFIG.threatDetectionRange) continue
-
-    // Check if projectile is heading toward us
-    const projAngle = proj.p.angle(proj.destP)
-    const toSelfAngle = proj.p.angle(self.p)
-    const angleDiff = Math.abs(projAngle - toSelfAngle)
-
-    if (angleDiff < Math.PI / 4) {
-      const velocity = new Point(
-        Math.cos(projAngle) * proj.skill.speed,
-        Math.sin(projAngle) * proj.skill.speed
-      )
-      return { p: proj.p, velocity }
-    }
-  }
-
-  // Check for nearby mines
-  for (const [mine] of gameState.mines) {
-    if (mine.team === self.team) continue
-    const dist = self.p.distance(mine.center)
-    if (dist < mine.radius + 30) {
-      return { p: mine.center, velocity: new Point(0, 0) }
-    }
-  }
-
-  return null
-}
-
 // ============= Aiming =============
 
-function aimAt(self: GamePlayer, target: GamePlayer, projectileSpeed: number): Point {
-  // Simple prediction: where will target be when projectile arrives?
-  const distance = self.p.distance(target.p)
-  const timeToHit = distance / (projectileSpeed * 60) // Convert to approximate ms
-
-  // Predict target movement
-  const targetVelocity = target.destP.subtract(target.p)
-  const targetSpeed = target.states["slow"] ? target.speed * 0.2 : target.speed
-  const maxMove = targetSpeed * timeToHit
-
-  let predictedP = target.p
-  if (targetVelocity.x !== 0 || targetVelocity.y !== 0) {
-    const moveDir = Math.atan2(targetVelocity.y, targetVelocity.x)
-    predictedP = target.p.bearing(moveDir, Math.min(maxMove, target.p.distance(target.destP)))
-  }
-
-  return addInaccuracy(predictedP, AI_CONFIG.aimInaccuracy)
-}
-
-function addInaccuracy(p: Point, amount: number): Point {
-  const offsetX = (Math.random() - 0.5) * 2 * amount
-  const offsetY = (Math.random() - 0.5) * 2 * amount
-  return new Point(p.x + offsetX, p.y + offsetY)
-}
-
-function dodgeDirection(self: GamePlayer, threat: { p: Point; velocity: Point }): Point {
-  // Move perpendicular to threat direction
-  const threatAngle = threat.p.angle(self.p)
-  const perpAngle = threatAngle + Math.PI / 2 * (Math.random() > 0.5 ? 1 : -1)
-  return self.p.bearing(perpAngle, 60)
+function aimAt(self: GamePlayer, target: GamePlayer): Point {
+  const offsetX = (Math.random() - 0.5) * 2 * AI_CONFIG.aimInaccuracy
+  const offsetY = (Math.random() - 0.5) * 2 * AI_CONFIG.aimInaccuracy
+  return new Point(target.p.x + offsetX, target.p.y + offsetY)
 }
 
 // ============= Skill Checks =============
@@ -146,71 +87,58 @@ function canUseSkill(self: GamePlayer, skillName: string): boolean {
   return self.pctCooldown(skillName) >= 1 && !self.startCastTime
 }
 
-function isOnCapturePoint(gameState: GameState, self: GamePlayer): CapturePoint | null {
+function isOnCapturePoint(gameState: GameState, self: GamePlayer): boolean {
   for (const cp of gameState.capturePoints) {
-    if (self.p.distance(cp.p) < cp.radius) return cp
+    if (self.p.distance(cp.p) < cp.radius) return true
   }
-  return null
+  return false
 }
 
 // ============= Main Decision Function =============
 
 export function decideAction(gameState: GameState, self: GamePlayer): AIDecision {
   // Don't act if already casting
-  if (self.startCastTime !== null) return {}
+  if (self.startCastTime !== null) {
+    aiDebugState[self.id] = { action: "casting" }
+    return {}
+  }
 
   const nearestEnemy = getNearestEnemy(gameState, self)
 
   // Priority 1: Survival - use invulnerable if low health
   if (self.gunHits >= 4 && canUseSkill(self, "invulnerable")) {
+    aiDebugState[self.id] = { action: "invuln" }
     return { skill: "invulnerable", castP: self.p }
   }
 
-  // Priority 2: Threat avoidance - dodge incoming projectiles/mines
-  const threat = getIncomingThreat(gameState, self)
-  if (threat) {
-    return { move: dodgeDirection(self, threat) }
-  }
-
-  // Priority 3: Combat - attack nearby enemies
+  // Priority 2: Combat - attack nearby enemies
   if (nearestEnemy) {
-    // Gun range - fast projectile, direct aim
     if (nearestEnemy.distance < AI_CONFIG.gunRange && canUseSkill(self, "gun")) {
-      return { skill: "gun", castP: aimAt(self, nearestEnemy.player, 0.2) }
+      aiDebugState[self.id] = { targetPoint: nearestEnemy.player.p, action: "gun" }
+      return { skill: "gun", castP: aimAt(self, nearestEnemy.player) }
     }
-
-    // Bomb range - slow projectile, needs prediction
     if (nearestEnemy.distance < AI_CONFIG.bombRange && canUseSkill(self, "bomb")) {
-      return { skill: "bomb", castP: aimAt(self, nearestEnemy.player, 0.03) }
+      aiDebugState[self.id] = { targetPoint: nearestEnemy.player.p, action: "bomb" }
+      return { skill: "bomb", castP: aimAt(self, nearestEnemy.player) }
     }
   }
 
-  // Priority 4: Defense - if on capture point with approaching enemy, use defensive skills
-  const onPoint = isOnCapturePoint(gameState, self)
-  if (onPoint && nearestEnemy && nearestEnemy.distance < 200) {
-    // Ice slick to slow approaching enemies
-    if (canUseSkill(self, "iceslick")) {
-      return { skill: "iceslick", castP: nearestEnemy.player.p }
-    }
-    // Barrier to block approach
-    if (canUseSkill(self, "barrier")) {
-      return { skill: "barrier", castP: nearestEnemy.player.p }
-    }
-  }
-
-  // Priority 5: Objective - move toward best capture point
+  // Priority 3: Move toward best capture point
   const targetPoint = getBestCapturePoint(gameState, self)
   if (targetPoint) {
     const distToPoint = self.p.distance(targetPoint.p)
-    // Only move if not already on the point
-    if (distToPoint > targetPoint.radius * 0.5) {
-      return { move: targetPoint.p }
+    if (distToPoint > 30) {
+      // Use pathfinding to navigate around barriers
+      const path = gameState.findPath(self.p, targetPoint.p)
+      const nextWaypoint = path[0] || targetPoint.p
+      const pathLen = path.length
+      // Store full path for debug visualization
+      aiDebugState[self.id] = { targetPoint: nextWaypoint, action: `move(${pathLen})`, fullPath: path }
+      return { move: nextWaypoint }
     }
-  }
-
-  // Default: if on point and no threats, maybe place mine
-  if (onPoint && canUseSkill(self, "mine") && Math.random() < 0.01) {
-    return { skill: "mine", castP: self.p }
+    aiDebugState[self.id] = { action: "on point", fullPath: [] }
+  } else {
+    aiDebugState[self.id] = { action: "no target", fullPath: [] }
   }
 
   return {}

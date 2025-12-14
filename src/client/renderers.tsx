@@ -5,6 +5,7 @@ import { flushSync } from "react-dom"
 import Utils from "../lib/utils"
 import Point from "../lib/point"
 import skills from "../lib/skills"
+import { aiDebugState } from "../lib/ai"
 import type GameState from "../lib/game-state"
 import type Canvas from "./canvas"
 import type Camera from "./camera"
@@ -147,7 +148,7 @@ const Arena: React.FC<{ gameState: GameState; UIPlayer: UIPlayer | null; tick: n
   </div>
 )
 
-export function arena(gameState: GameState, canvas: Canvas, camera: Camera, focusedUIPlayer: UIPlayer | null) {
+export function arena(gameState: GameState, canvas: Canvas, camera: Camera, focusedUIPlayer: UIPlayer | null, debug = false) {
   const ctx = canvas.mapContext(camera)
   gameState.map.render(ctx)
   for (const cp of gameState.capturePoints) cp.render(ctx, gameState.teams)
@@ -156,6 +157,61 @@ export function arena(gameState: GameState, canvas: Canvas, camera: Camera, focu
   for (const [m] of gameState.mines) m.render(ctx)
   for (const [id, player] of Object.entries(gameState.players)) player.render(ctx, gameState, focusedUIPlayer ? id === focusedUIPlayer.id : false)
   for (const p of gameState.projectiles) p.render(ctx)
+
+  // Debug visualization (only when ?debug is in URL)
+  if (debug) {
+    // Draw pathfinding grid
+    const cellSize = gameState.getGridCellSize()
+    if (gameState.pathGrid?.cells) {
+      for (let gx = 0; gx < gameState.pathGrid.width; gx++) {
+        for (let gy = 0; gy < gameState.pathGrid.height; gy++) {
+          const walkable = gameState.pathGrid.cells[gx]?.[gy]
+          if (!walkable) {
+            // Draw blocked cells in red
+            ctx.fillStyle("#ff000033")
+            ctx.fillRect(
+              new Point(gx * cellSize, gy * cellSize),
+              new Point(cellSize, cellSize)
+            )
+          } else {
+            // Draw walkable cell borders faintly
+            ctx.strokeStyle("#00ff0011")
+            ctx.lineWidth(1)
+            ctx.strokeRect(
+              new Point(gx * cellSize, gy * cellSize),
+              new Point(cellSize, cellSize)
+            )
+          }
+        }
+      }
+    }
+
+    // AI debug visualization
+    for (const [id, player] of Object.entries(gameState.players)) {
+      const debug = aiDebugState[id]
+      if (debug) {
+        // Draw full path through all waypoints
+        if (debug.fullPath && debug.fullPath.length > 0) {
+          ctx.beginPath()
+          ctx.moveTo(player.p)
+          for (const waypoint of debug.fullPath) {
+            ctx.lineTo(waypoint)
+            // Draw waypoint dot
+            ctx.stroke()
+            ctx.filledCircle(waypoint, 4, "#ff6600")
+            ctx.beginPath()
+            ctx.moveTo(waypoint)
+          }
+          ctx.strokeStyle("#ff000088")
+          ctx.lineWidth(2)
+          ctx.stroke()
+        }
+        // Draw action label
+        ctx.fillStyle("#000000")
+        ctx.fillText(debug.action, new Point(player.p.x - 20, player.p.y - 30))
+      }
+    }
+  }
 }
 
 let root: ReturnType<typeof createRoot> | null = null

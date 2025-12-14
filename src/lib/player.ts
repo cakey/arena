@@ -138,7 +138,10 @@ export class AIPlayer extends BasePlayer {
     if (!self?.alive) return
 
     const decision = decideAction(gameState, self)
-    if (decision.move) this.handler.triggerMoveTo(this, decision.move)
+    // Only send move if destination changed significantly
+    if (decision.move && decision.move.distance(self.destP) > 10) {
+      this.handler.triggerMoveTo(this, decision.move)
+    }
     if (decision.skill && decision.castP) this.handler.triggerFire(this, decision.castP, decision.skill)
   }
 }

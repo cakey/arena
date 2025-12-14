@@ -5,8 +5,10 @@ import CapturePoint from "./mechanics/capture-point"
 import * as Barriers from "./mechanics/barriers"
 import * as Mine from "./mechanics/mine"
 import * as IceZone from "./mechanics/ice-zone"
+import { generateGrid, findPath as pathfindingFindPath, PathGrid, getGridCellSize } from "./pathfinding"
 import GameMap from "./map"
 import Config from "./config"
+import { aiDebugState } from "./ai"
 import type { Skill } from "./skills"
 import type { GamePlayer } from "./player"
 
@@ -20,6 +22,7 @@ export default class GameState {
   barriers: [Barriers.Rect, number | null][] = []
   mines: [Mine.Circle, number][] = []
   iceZones: [IceZone.IceZone, number][] = []
+  pathGrid: PathGrid = { width: 0, height: 0, cells: [] }
 
   constructor(public time: number) {
     // Capture points - left, center, right
@@ -48,6 +51,17 @@ export default class GameState {
     this.barriers.push([new Barriers.Rect(new Point(250, 360), new Point(290, 400)), null])
     this.barriers.push([new Barriers.Rect(new Point(910, 300), new Point(950, 340)), null])
     this.barriers.push([new Barriers.Rect(new Point(910, 360), new Point(950, 400)), null])
+
+    // Generate pathfinding grid
+    this.pathGrid = generateGrid(this.map.size, this.barriers)
+  }
+
+  findPath(from: Point, to: Point): Point[] {
+    return pathfindingFindPath(from, to, this.pathGrid, this.barriers)
+  }
+
+  getGridCellSize(): number {
+    return getGridCellSize()
   }
 
   addTeam(name: string, color: string) { this.teams[name] = { color, score: 0 } }
@@ -203,7 +217,13 @@ export default class GameState {
       deadPlayerIds: this.deadPlayerIds,
       barriers: this.barriers.map(([b, d]) => [b.toObject(), d]),
       mines: this.mines.map(([m, d]) => [m.toObject(), d]),
-      iceZones: this.iceZones.map(([z, d]) => [z.toObject(), d])
+      iceZones: this.iceZones.map(([z, d]) => [z.toObject(), d]),
+      aiDebug: _.mapValues(aiDebugState, (d) => ({
+        targetPoint: d.targetPoint ? { x: d.targetPoint.x, y: d.targetPoint.y } : null,
+        action: d.action,
+        fullPath: d.fullPath?.map(p => ({ x: p.x, y: p.y })) || []
+      })),
+      pathGrid: this.pathGrid
     }
   }
 
@@ -227,5 +247,19 @@ export default class GameState {
     this.mines = newState.mines.map(([obj, d]: [any, number]) => [Mine.fromObject(obj)!, d])
     this.iceZones = (newState.iceZones || []).map(([obj, d]: [any, number]) => [IceZone.fromObject(obj)!, d])
     this.deadPlayerIds = newState.deadPlayerIds
+    // Sync AI debug state
+    if (newState.aiDebug) {
+      for (const [id, debug] of Object.entries(newState.aiDebug) as [string, any][]) {
+        aiDebugState[id] = {
+          targetPoint: debug.targetPoint ? new Point(debug.targetPoint.x, debug.targetPoint.y) : undefined,
+          action: debug.action,
+          fullPath: debug.fullPath?.map((p: any) => new Point(p.x, p.y)) || []
+        }
+      }
+    }
+    // Sync path grid
+    if (newState.pathGrid) {
+      this.pathGrid = newState.pathGrid
+    }
   }
 }

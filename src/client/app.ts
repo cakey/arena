@@ -12,9 +12,12 @@ const camera = new Camera()
 const canvas = new Canvas("canvas")
 const gameState = new GameState(Date.now())
 
-const isSpectator = new URLSearchParams(window.location.search).has("spectate")
+const params = new URLSearchParams(window.location.search)
+const isSpectator = params.has("spectate")
+const isDebug = params.has("debug")
 
 const handler = new Client(gameState, canvas, camera)
+handler.debug = isDebug
 handler.ready().then(() => {
   try {
     gameState.addTeam("red", Config.colors.red)
