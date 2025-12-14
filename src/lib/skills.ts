@@ -20,8 +20,8 @@ export interface Skill {
 const skills: Record<string, Skill> = {
   gun: {
     cone: Math.PI / 2, radius: 6, castTime: 1, speed: 0.2, range: 120,
-    color: "#990099", channeled: false, score: 0, description: "6 hits to kill. Knockback increases per hit. 5 shots then 2.5s cooldown.",
-    cooldown: 50, enemies: true, type: "projectile", shotsBeforeCooldown: 5, actualCooldown: 2500,
+    color: "#990099", channeled: false, score: 0, description: "6 hits to kill. Knockback increases per hit. 7 shots then 2s cooldown.",
+    cooldown: 35, enemies: true, type: "projectile", shotsBeforeCooldown: 9, actualCooldown: 2500,
     hitPlayer: (hitPlayer, projectile, gameState) => {
       if (!hitPlayer.states["invulnerable"]) {
         hitPlayer.gunHits++
@@ -41,7 +41,7 @@ const skills: Record<string, Skill> = {
     }
   },
   bomb: {
-    cone: Math.PI / 1.5, radius: 50, castTime: 1, speed: 0.03, range: 300,
+    cone: Math.PI / 1.5, radius: 50, castTime: 1, speed: 0.026, range: 300,
     color: "#00bbbb", channeled: false, score: 0, description: "Slow heavy projectile. Shrinks on wall hits.",
     cooldown: 3000, enemies: true, type: "projectile",
     hitPlayer: (p, proj, gs) => gs.killPlayer(p.id)
@@ -63,13 +63,13 @@ const skills: Record<string, Skill> = {
     channeled: false, score: 0, description: "Moving barrier wall", cooldown: 8000, cone: Math.PI, speed: 0,
     onLand: (gameState, castP, originP) => {
       const moveAngle = originP.angle(castP)
-      const velocity = new Point(Math.cos(moveAngle) * 0.08, Math.sin(moveAngle) * 0.08)
+      const velocity = new Point(Math.cos(moveAngle) * 0.056, Math.sin(moveAngle) * 0.056)  // 30% slower
       const barrierAngle = moveAngle + Math.PI / 2
       for (let i = -5; i <= 5; i++) {
-        const loc = originP.bearing(barrierAngle, 16 * i)  // Tighter spacing
-        const tl = loc.subtract(new Point(10, 10))  // Larger blocks
+        const loc = originP.bearing(barrierAngle, 16 * i)
+        const tl = loc.subtract(new Point(10, 10))
         const br = loc.add(new Point(10, 10))
-        gameState.createBarrier(new Barriers.Rect(tl, br, velocity), 4000 - Math.abs(i) * 100)
+        gameState.createBarrier(new Barriers.Rect(tl, br, velocity), 3200 - Math.abs(i) * 80)  // 20% shorter
       }
     }
   },

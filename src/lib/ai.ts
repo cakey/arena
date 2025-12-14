@@ -293,10 +293,17 @@ export function decideAction(gameState: GameState, self: GamePlayer): AIDecision
       return { skill: "barrier", castP: blockP }
     }
 
-    // Use ice slick on the capture point to slow enemies
+    // Use ice slick on the capture point to slow enemies - with jitter toward enemy
     if (approachingEnemies.length > 0 && canUseSkill(self, "iceslick")) {
-      aiDebugState[self.id] = { targetPoint: currentCapturePoint.p, action: "iceslick" }
-      return { skill: "iceslick", castP: currentCapturePoint.p }
+      const nearestApproaching = approachingEnemies.reduce((a, b) =>
+        a.p.distance(self.p) < b.p.distance(self.p) ? a : b
+      )
+      // Place slightly toward the approaching enemy, with some randomness
+      const jitterAngle = currentCapturePoint.p.angle(nearestApproaching.p) + (Math.random() - 0.5) * 0.8
+      const jitterDist = 15 + Math.random() * 25  // 15-40 units from center
+      const iceP = currentCapturePoint.p.bearing(jitterAngle, jitterDist)
+      aiDebugState[self.id] = { targetPoint: iceP, action: "iceslick" }
+      return { skill: "iceslick", castP: iceP }
     }
   }
 

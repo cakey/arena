@@ -126,13 +126,15 @@ export class GamePlayer {
     }
     if (this.alive) {
       const teamColor = gameState.teams[this.team]?.color || "#888888"
-      ctx.filledCircle(this.p, this.radius, teamColor)
-      // Health ring showing gun hits taken
+      // Health shown by shrinking player circle and fading inner core
+      const healthPct = (6 - this.gunHits) / 6
+      const displayRadius = this.radius * (0.7 + 0.3 * healthPct)  // Shrinks from 100% to 70%
+      ctx.filledCircle(this.p, displayRadius, teamColor)
+      // Inner darker circle that shrinks faster to show damage
       if (this.gunHits > 0) {
-        const healthPct = (6 - this.gunHits) / 6
-        const healthRadius = this.radius + 3 + (5 * healthPct)
-        ctx.beginPath(); ctx.circle(this.p, healthRadius); ctx.lineWidth(2 + healthPct * 2)
-        ctx.strokeStyle(healthPct > 0.5 ? "#44aa44" : healthPct > 0.2 ? "#aaaa44" : "#aa4444"); ctx.stroke()
+        const innerRadius = displayRadius * healthPct * 0.6
+        ctx.beginPath(); ctx.circle(this.p, innerRadius)
+        ctx.globalAlpha(0.4); ctx.fillStyle("#000000"); ctx.fill(); ctx.globalAlpha(1)
       }
     } else {
       const deathTime = gameState.deadPlayerIds[this.id]

@@ -152,9 +152,9 @@ export function arena(gameState: GameState, canvas: Canvas, camera: Camera, focu
   const ctx = canvas.mapContext(camera)
   gameState.map.render(ctx)
   for (const cp of gameState.capturePoints) cp.render(ctx, gameState.teams)
-  for (const [z] of gameState.iceZones) z.render(ctx)
+  for (const [z, expiry] of gameState.iceZones) z.render(ctx, gameState.teams, expiry, gameState.time)
   for (const [b] of gameState.barriers) b.render(ctx)
-  for (const [m] of gameState.mines) m.render(ctx, gameState.teams)
+  for (const [m, expiry] of gameState.mines) m.render(ctx, gameState.teams, expiry, gameState.time)
   for (const [id, player] of Object.entries(gameState.players)) player.render(ctx, gameState, focusedUIPlayer ? id === focusedUIPlayer.id : false)
   for (const p of gameState.projectiles) p.render(ctx)
 
