@@ -63,13 +63,13 @@ const skills: Record<string, Skill> = {
     channeled: false, score: 0, description: "Moving barrier wall", cooldown: 8000, cone: Math.PI, speed: 0,
     onLand: (gameState, castP, originP) => {
       const moveAngle = originP.angle(castP)
-      const velocity = new Point(Math.cos(moveAngle) * 0.056, Math.sin(moveAngle) * 0.056)  // 30% slower
+      const velocity = new Point(Math.cos(moveAngle) * 0.025, Math.sin(moveAngle) * 0.025)
       const barrierAngle = moveAngle + Math.PI / 2
-      for (let i = -5; i <= 5; i++) {
+      for (let i = -3; i <= 3; i++) {
         const loc = originP.bearing(barrierAngle, 16 * i)
         const tl = loc.subtract(new Point(10, 10))
         const br = loc.add(new Point(10, 10))
-        gameState.createBarrier(new Barriers.Rect(tl, br, velocity), 3200 - Math.abs(i) * 80)  // 20% shorter
+        gameState.createBarrier(new Barriers.Rect(tl, br, velocity), 3200 - Math.abs(i) * 80)
       }
     }
   },
