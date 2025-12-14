@@ -37,7 +37,13 @@ class GameHandler {
   loop = () => {
     this.loopTimeout = setTimeout(this.loop, Config.game.tickTime)
     const newTime = Date.now()
-    for (const ai of this.locallyProccessed) ai.update(newTime, this.gameState)
+    for (const ai of this.locallyProccessed) {
+      try {
+        ai.update(newTime, this.gameState)
+      } catch (e: any) {
+        console.error(`AI ${ai.id.slice(0, 8)} error:`, e.message)
+      }
+    }
     this.gameState.update(newTime)
     if (this.tick % 500 === 0) console.log(JSON.stringify(this.gameState, null, 4))
     if (this.tick % 200 === 0) {

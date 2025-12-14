@@ -9,7 +9,7 @@ import type Camera from "./camera"
 
 export class Client {
   host: string; ws: WebSocket; client_uuid: string; locallyProcessed: AIPlayer[] = []
-  focusedUIPlayer!: UIPlayer; time = 0; tickNo = 0
+  focusedUIPlayer: UIPlayer | null = null; time = 0; tickNo = 0
   private _ready: Promise<void>
 
   constructor(public gameState: GameState, public canvas: Canvas, public camera: Camera) {

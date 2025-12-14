@@ -1,9 +1,9 @@
-import _ from "lodash"
 import { v4 as uuid } from "uuid"
 import Utils from "./utils"
 import skills from "./skills"
 import Point from "./point"
 import Config from "./config"
+import { decideAction } from "./ai"
 import type GameState from "./game-state"
 
 class BasePlayer {
@@ -135,21 +135,11 @@ export class AIPlayer extends BasePlayer {
 
   update(newTime: number, gameState: GameState) {
     const self = gameState.players[this.id]
-    if (!self) return
-    if (self.alive) {
-      let otherPs = _.reject(Object.values(gameState.players), { team: this.team })
-      otherPs = _.reject(otherPs, { alive: false })
-      if (otherPs.length > 0 && Math.random() < Utils.game.speed(0.015) && !self.startCastTime) {
-        const skill = _.sample(["bomb", "gun", "invulnerable", "barrier", "mine", "iceslick"])!
-        const castP = skills[skill].enemies ? _.sample(otherPs)!.p
-          : skills[skill].allies ? self.p : _.sample(otherPs)!.p.towards(self.p, 50)
-        this.handler.triggerFire(this, castP, skill)
-      }
-      const chanceToMove = Math.random() < Utils.game.speed(0.03)
-      if (!self.startCastTime && (chanceToMove || self.p.equal(self.destP))) {
-        this.handler.triggerMoveTo(this, gameState.map.randomPoint())
-      }
-    }
+    if (!self?.alive) return
+
+    const decision = decideAction(gameState, self)
+    if (decision.move) this.handler.triggerMoveTo(this, decision.move)
+    if (decision.skill && decision.castP) this.handler.triggerFire(this, decision.castP, decision.skill)
   }
 }
 

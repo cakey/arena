@@ -140,27 +140,27 @@ const SkillUI: React.FC<{ UIPlayer: UIPlayer; gameState: GameState }> = ({ UIPla
   )
 }
 
-const Arena: React.FC<{ gameState: GameState; UIPlayer: UIPlayer; tick: number }> = ({ gameState, UIPlayer }) => (
+const Arena: React.FC<{ gameState: GameState; UIPlayer: UIPlayer | null; tick: number }> = ({ gameState, UIPlayer }) => (
   <div>
     <ScoreBoard teams={gameState.teams} />
-    <SkillUI UIPlayer={UIPlayer} gameState={gameState} />
+    {UIPlayer && <SkillUI UIPlayer={UIPlayer} gameState={gameState} />}
   </div>
 )
 
-export function arena(gameState: GameState, canvas: Canvas, camera: Camera, focusedUIPlayer: UIPlayer) {
+export function arena(gameState: GameState, canvas: Canvas, camera: Camera, focusedUIPlayer: UIPlayer | null) {
   const ctx = canvas.mapContext(camera)
   gameState.map.render(ctx)
   for (const cp of gameState.capturePoints) cp.render(ctx, gameState.teams)
   for (const [z] of gameState.iceZones) z.render(ctx)
   for (const [b] of gameState.barriers) b.render(ctx)
   for (const [m] of gameState.mines) m.render(ctx)
-  for (const [id, player] of Object.entries(gameState.players)) player.render(ctx, gameState, id === focusedUIPlayer.id)
+  for (const [id, player] of Object.entries(gameState.players)) player.render(ctx, gameState, focusedUIPlayer ? id === focusedUIPlayer.id : false)
   for (const p of gameState.projectiles) p.render(ctx)
 }
 
 let root: ReturnType<typeof createRoot> | null = null
 let tick = 0
-export function ui(gameState: GameState, canvas: Canvas, camera: Camera, focusedUIPlayer: UIPlayer) {
+export function ui(gameState: GameState, canvas: Canvas, camera: Camera, focusedUIPlayer: UIPlayer | null) {
   const el = document.getElementById("arena")!
   if (!root) root = createRoot(el)
   tick++

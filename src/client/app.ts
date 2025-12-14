@@ -12,14 +12,18 @@ const camera = new Camera()
 const canvas = new Canvas("canvas")
 const gameState = new GameState(Date.now())
 
+const isSpectator = new URLSearchParams(window.location.search).has("spectate")
+
 const handler = new Client(gameState, canvas, camera)
 handler.ready().then(() => {
   try {
     gameState.addTeam("red", Config.colors.red)
     gameState.addTeam("blue", Config.colors.blue)
-    const randomTeam = _.sample(Object.keys(gameState.teams))!
-    handler.focusedUIPlayer = new UIPlayer(gameState, handler, gameState.map.randomPoint(), randomTeam)
-    handler.registerLocal(handler.focusedUIPlayer)
+    if (!isSpectator) {
+      const randomTeam = _.sample(Object.keys(gameState.teams))!
+      handler.focusedUIPlayer = new UIPlayer(gameState, handler, gameState.map.randomPoint(), randomTeam)
+      handler.registerLocal(handler.focusedUIPlayer)
+    }
     if (Config.game.numAIs > 0) {
       gameState.addTeam("yellowAI", Config.colors.yellow)
       gameState.addTeam("greenAI", Config.colors.green)
