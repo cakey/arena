@@ -4,6 +4,7 @@ import Projectile from "./projectile"
 import CapturePoint from "./mechanics/capture-point"
 import * as Barriers from "./mechanics/barriers"
 import * as Mine from "./mechanics/mine"
+import * as IceZone from "./mechanics/ice-zone"
 import GameMap from "./map"
 import Config from "./config"
 import type { Skill } from "./skills"
@@ -18,6 +19,7 @@ export default class GameState {
   capturePoints: CapturePoint[] = []
   barriers: [Barriers.Rect, number | null][] = []
   mines: [Mine.Circle, number][] = []
+  iceZones: [IceZone.IceZone, number][] = []
 
   constructor(public time: number) {
     // Capture points on far left and right sides
@@ -77,6 +79,7 @@ export default class GameState {
 
   createBarrier(barrier: Barriers.Rect, duration: number) { this.barriers.push([barrier, this.time + duration]) }
   createMine(mine: Mine.Circle, duration: number) { this.mines.push([mine, this.time + duration]) }
+  createIceZone(zone: IceZone.IceZone, duration: number) { this.iceZones.push([zone, this.time + duration]) }
 
   castTargeted(originP: Point, castP: Point, skill: Skill, team: string) {
     if (originP.distance(castP) > skill.range) return
@@ -129,8 +132,13 @@ export default class GameState {
   }
 
   update(updateTime: number) {
+    const msDiff = updateTime - this.time
     this.barriers = this.barriers.filter(([, expiry]) => !expiry || expiry > this.time)
     this.mines = this.mines.filter(([, expiry]) => !expiry || expiry > this.time)
+    this.iceZones = this.iceZones.filter(([, expiry]) => expiry > this.time)
+
+    for (const [barrier] of this.barriers) barrier.update(msDiff)
+    for (const [zone] of this.iceZones) zone.update(msDiff)
 
     for (const player of Object.values(this.players)) player.update(updateTime, this)
 
@@ -142,6 +150,11 @@ export default class GameState {
             this.mines[i][1] = 0
             this.teams[mine.team].score += 1500
           }
+        }
+      }
+      for (const [zone] of this.iceZones) {
+        if (player.team !== zone.team && zone.center.distance(player.p) < zone.currentRadius + player.radius) {
+          player.applyState("slow", 500)
         }
       }
     }
@@ -183,7 +196,8 @@ export default class GameState {
       capturePoints: this.capturePoints.map((cp) => cp.current),
       deadPlayerIds: this.deadPlayerIds,
       barriers: this.barriers.map(([b, d]) => [b.toObject(), d]),
-      mines: this.mines.map(([m, d]) => [m.toObject(), d])
+      mines: this.mines.map(([m, d]) => [m.toObject(), d]),
+      iceZones: this.iceZones.map(([z, d]) => [z.toObject(), d])
     }
   }
 
@@ -204,6 +218,7 @@ export default class GameState {
     }
     this.barriers = newState.barriers.map(([obj, d]: [any, number]) => [Barriers.fromObject(obj)!, d])
     this.mines = newState.mines.map(([obj, d]: [any, number]) => [Mine.fromObject(obj)!, d])
+    this.iceZones = (newState.iceZones || []).map(([obj, d]: [any, number]) => [IceZone.fromObject(obj)!, d])
     this.deadPlayerIds = newState.deadPlayerIds
   }
 }

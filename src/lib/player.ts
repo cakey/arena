@@ -93,8 +93,11 @@ export class GamePlayer {
       ctx.moveTo(this.p); ctx.fillStyle(skills[this.castedSkill].color); ctx.fill()
     }
     if (this.states["invulnerable"]) {
-      ctx.beginPath(); ctx.circle(this.p, this.radius + 8); ctx.lineWidth(6)
-      ctx.setLineDash([2, 5]); ctx.strokeStyle(Config.colors.invulnerable); ctx.stroke(); ctx.setLineDash([])
+      const timeRemaining = this.states["invulnerable"] - this.time
+      const pctRemaining = Math.max(0, Math.min(1, timeRemaining / 3500))
+      const shieldRadius = this.radius + 5 + (15 * pctRemaining)
+      ctx.beginPath(); ctx.circle(this.p, shieldRadius); ctx.lineWidth(4 + 4 * pctRemaining)
+      ctx.strokeStyle(Config.colors.invulnerable); ctx.stroke()
     }
     if (this.states["slow"]) {
       ctx.beginPath(); ctx.circle(this.p, this.radius + 2); ctx.lineWidth(3)

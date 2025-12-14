@@ -85,8 +85,9 @@ const SkillBoxUI: React.FC<{ skill: any; skillName: string; boundKey: string; le
           const descLines = Utils.string.wordWrap(skill.description, maxChars)
           const skillKeys = ["castTime", "speed", "range", "score", "cooldown"]
           const overLayY = (skillKeys.length + descLines.length / 2 + 1) * fontSize * 2
+          const tooltipLeft = Math.max(-left, -(overLayX / 2))
           return (
-            <div className="skillTooltip box" style={{ width: overLayX, height: overLayY, position: "absolute", top: -(overLayY + 75), left: -(overLayX / 2) }}>
+            <div className="skillTooltip box" style={{ width: overLayX, height: overLayY, position: "absolute", top: -(overLayY + 75), left: tooltipLeft }}>
               <div style={{ color: skill.color }}>{skillName}</div>
               {skillKeys.map((textType, i) => (
                 <div key={i}>
@@ -137,6 +138,7 @@ export function arena(gameState: GameState, canvas: Canvas, camera: Camera, focu
   const ctx = canvas.mapContext(camera)
   gameState.map.render(ctx)
   for (const cp of gameState.capturePoints) cp.render(ctx, gameState.teams)
+  for (const [z] of gameState.iceZones) z.render(ctx)
   for (const [b] of gameState.barriers) b.render(ctx)
   for (const [m] of gameState.mines) m.render(ctx)
   for (const [id, player] of Object.entries(gameState.players)) player.render(ctx, gameState, id === focusedUIPlayer.id)

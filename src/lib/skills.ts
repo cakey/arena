@@ -2,6 +2,7 @@ import Point from "./point"
 import Config from "./config"
 import * as Barriers from "./mechanics/barriers"
 import * as Mine from "./mechanics/mine"
+import { IceZone } from "./mechanics/ice-zone"
 import type GameState from "./game-state"
 import type { GamePlayer } from "./player"
 import type Projectile from "./projectile"
@@ -22,7 +23,7 @@ const skills: Record<string, Skill> = {
     cooldown: 0, enemies: true, type: "projectile"
   },
   gun: {
-    cone: Math.PI / 10, radius: 2, castTime: 10, speed: 0.5, range: 800,
+    cone: Math.PI / 10, radius: 2, castTime: 1, speed: 0.5, range: 800,
     color: "#000000", channeled: false, score: 0, description: "High rate, low damage, long range machine gun.",
     cooldown: 0, enemies: true, type: "projectile",
     hitPlayer: (p, proj, gs) => gs.killPlayer(p.id)
@@ -34,7 +35,7 @@ const skills: Record<string, Skill> = {
     hitPlayer: (p, proj, gs) => gs.killPlayer(p.id)
   },
   flame: {
-    cone: Math.PI / 2, radius: 6, castTime: 150, speed: 0.2, range: 250,
+    cone: Math.PI / 2, radius: 6, castTime: 1, speed: 0.2, range: 250,
     color: "#990099", channeled: false, score: 0, description: "Close range, low damage. Knocks back targets.",
     cooldown: 2000, enemies: true, type: "projectile",
     hitPlayer: (hitPlayer, projectile, gameState) => {
@@ -57,36 +58,39 @@ const skills: Record<string, Skill> = {
   },
   invulnerable: {
     castTime: 50, radius: 5, cone: Math.PI * 2, color: Config.colors.invulnerable, range: 1000,
-    channeled: false, score: 0, description: "Makes targeted ally invulnerable.", cooldown: 8000,
+    channeled: false, score: 0, description: "Makes targeted ally invulnerable.", cooldown: 12000,
     type: "targeted", accuracyRadius: 100, allies: true, enemies: false, speed: 0,
-    hitPlayer: (p) => { p.applyState("invulnerable", 2000) }
+    hitPlayer: (p) => { p.applyState("invulnerable", 3500) }
   },
   barrier: {
-    castTime: 150, type: "ground_targeted", radius: 4, color: Config.colors.barrierBrown, range: 1000,
-    channeled: false, score: 0, description: "Create a ground barrier", cooldown: 8000, cone: Math.PI, speed: 0,
+    castTime: 1, type: "ground_targeted", radius: 8, color: Config.colors.barrierBrown, range: 1000,
+    channeled: false, score: 0, description: "Moving barrier wall", cooldown: 8000, cone: Math.PI, speed: 0,
     onLand: (gameState, castP, originP) => {
-      const barrierAngle = castP.angle(originP) + Math.PI / 2
-      for (let i = -6; i <= 6; i++) {
-        const loc = castP.bearing(barrierAngle, 12 * i)
-        const tl = loc.subtract(new Point(4, 4))
-        const br = loc.add(new Point(4, 4))
-        gameState.createBarrier(new Barriers.Rect(tl, br), 3250 - Math.abs(i) * 80)
+      const moveAngle = originP.angle(castP)
+      const velocity = new Point(Math.cos(moveAngle) * 0.08, Math.sin(moveAngle) * 0.08)
+      const barrierAngle = moveAngle + Math.PI / 2
+      for (let i = -5; i <= 5; i++) {
+        const loc = originP.bearing(barrierAngle, 18 * i)
+        const tl = loc.subtract(new Point(8, 8))
+        const br = loc.add(new Point(8, 8))
+        gameState.createBarrier(new Barriers.Rect(tl, br, velocity), 4000 - Math.abs(i) * 100)
       }
     }
   },
   hamstring: {
-    castTime: 250, type: "targeted", radius: 12, color: Config.colors.barrierBrown, range: 100,
-    channeled: false, score: 0, description: "Melee slow.", cooldown: 10000, cone: Math.PI * 2,
-    allies: false, enemies: true, accuracyRadius: 50, speed: 0,
-    hitPlayer: (p) => { p.applyState("slow", 5000) }
+    castTime: 1, type: "ground_targeted", radius: 8, color: "#88ccff", range: 1000,
+    channeled: false, score: 0, description: "Ice zone that slows enemies.", cooldown: 15000, cone: Math.PI * 2, speed: 0,
+    onLand: (gameState, castP, originP, team) => {
+      gameState.createIceZone(new IceZone(castP, 10, 80, 0.015, team), 8000)
+    }
   },
   mine: {
-    castTime: 1000, type: "ground_targeted", radius: 22, color: Config.colors.mineRed,
+    castTime: 1000, type: "ground_targeted", radius: 33, color: Config.colors.mineRed,
     channeled: true, score: 15, description: "Mine that one hit kills.", cooldown: 10000, cone: Math.PI * 2, range: 0, speed: 0,
     onLand: (gameState, castP, originP, team) => {
-      for (const [x, y] of [[-13, -13], [13, -13], [-13, 13], [13, 13]]) {
+      for (const [x, y] of [[-20, -20], [20, -20], [-20, 20], [20, 20]]) {
         const center = originP.add(new Point(x, y))
-        gameState.createMine(new Mine.Circle(center, 15, team), 5000)
+        gameState.createMine(new Mine.Circle(center, 22, team), 5000)
       }
     }
   }
