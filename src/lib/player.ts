@@ -17,6 +17,7 @@ export class GamePlayer {
   states: Record<string, number> = {}; castedSkill: string = ""
   gunHits = 0
   private _lastCasted: Record<string, number> = {}
+  private _shotCounts: Record<string, number> = {}
 
   constructor(initTime: number, public p: Point, public team: string, public id: string = uuid()) {
     this.time = initTime; this.destP = p
@@ -36,8 +37,23 @@ export class GamePlayer {
   }
 
   pctCooldown(castedSkill: string) {
-    const realCooldown = Utils.game.speedInverse(skills[castedSkill].cooldown)
+    const skill = skills[castedSkill]
     const lastCasted = this._lastCasted[castedSkill]
+
+    // Handle burst weapons (like gun) - short cooldown between shots, long cooldown after burst
+    if (skill.shotsBeforeCooldown && skill.actualCooldown) {
+      const shotCount = this._shotCounts[castedSkill] || 0
+      if (shotCount >= skill.shotsBeforeCooldown) {
+        // In long cooldown after burst
+        const realCooldown = Utils.game.speedInverse(skill.actualCooldown)
+        if (!lastCasted) return 1
+        const pct = Math.min((this.time - lastCasted) / realCooldown, 1)
+        if (pct >= 1) this._shotCounts[castedSkill] = 0  // Reset shot count
+        return pct
+      }
+    }
+
+    const realCooldown = Utils.game.speedInverse(skill.cooldown)
     if (realCooldown === 0 || !lastCasted) return 1
     if (lastCasted === this.time) return 0
     return Math.min((this.time - lastCasted) / realCooldown, 1)
@@ -68,6 +84,10 @@ export class GamePlayer {
             let destP = this.castP!
             if (this.castP!.within(this.p, this.maxCastRadius)) destP = edgeP.bearing(castAngle, 0.1)
             gameState.addProjectile(edgeP, destP, skill, this.team)
+            // Track shots for burst weapons
+            if (skill.shotsBeforeCooldown) {
+              this._shotCounts[this.castedSkill] = (this._shotCounts[this.castedSkill] || 0) + 1
+            }
           } else if (skill.type === "targeted") {
             gameState.castTargeted(this.p, this.castP!, skill, this.team)
           } else if (skill.type === "ground_targeted") {

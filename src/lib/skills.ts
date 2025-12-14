@@ -12,6 +12,7 @@ export interface Skill {
   color: string; channeled: boolean; score: number; description: string; cooldown: number
   type: "projectile" | "targeted" | "ground_targeted"
   enemies?: boolean; allies?: boolean; accuracyRadius?: number; continue?: boolean
+  shotsBeforeCooldown?: number; actualCooldown?: number  // For burst weapons like gun
   hitPlayer?: (player: GamePlayer, projectile: Projectile, gameState: GameState) => void
   onLand?: (gameState: GameState, castP: Point, originP: Point, team: string) => void
 }
@@ -19,8 +20,8 @@ export interface Skill {
 const skills: Record<string, Skill> = {
   gun: {
     cone: Math.PI / 2, radius: 6, castTime: 1, speed: 0.2, range: 120,
-    color: "#990099", channeled: false, score: 0, description: "6 hits to kill. Knockback increases per hit.",
-    cooldown: 0, enemies: true, type: "projectile",
+    color: "#990099", channeled: false, score: 0, description: "6 hits to kill. Knockback increases per hit. 5 shots then 2.5s cooldown.",
+    cooldown: 50, enemies: true, type: "projectile", shotsBeforeCooldown: 5, actualCooldown: 2500,
     hitPlayer: (hitPlayer, projectile, gameState) => {
       if (!hitPlayer.states["invulnerable"]) {
         hitPlayer.gunHits++
@@ -65,9 +66,9 @@ const skills: Record<string, Skill> = {
       const velocity = new Point(Math.cos(moveAngle) * 0.08, Math.sin(moveAngle) * 0.08)
       const barrierAngle = moveAngle + Math.PI / 2
       for (let i = -5; i <= 5; i++) {
-        const loc = originP.bearing(barrierAngle, 18 * i)
-        const tl = loc.subtract(new Point(8, 8))
-        const br = loc.add(new Point(8, 8))
+        const loc = originP.bearing(barrierAngle, 16 * i)  // Tighter spacing
+        const tl = loc.subtract(new Point(10, 10))  // Larger blocks
+        const br = loc.add(new Point(10, 10))
         gameState.createBarrier(new Barriers.Rect(tl, br, velocity), 4000 - Math.abs(i) * 100)
       }
     }
@@ -83,10 +84,7 @@ const skills: Record<string, Skill> = {
     castTime: 1000, type: "ground_targeted", radius: 66, color: Config.colors.mineRed,
     channeled: true, score: 15, description: "Mine that one hit kills.", cooldown: 10000, cone: Math.PI * 2, range: 0, speed: 0,
     onLand: (gameState, castP, originP, team) => {
-      for (const [x, y] of [[-40, -40], [40, -40], [-40, 40], [40, 40]]) {
-        const center = originP.add(new Point(x, y))
-        gameState.createMine(new Mine.Circle(center, 44, team), 5000)
-      }
+      gameState.createMine(new Mine.Circle(originP, 60, team), 6000)
     }
   }
 }

@@ -126,8 +126,12 @@ export default class GameState {
       }
     }
     for (const [barrier] of this.barriers) {
-      if (barrier.circleIntersect(player.p, player.radius)) currentUnallowed += player.radius
-      if (barrier.circleIntersect(newP, player.radius)) newUnallowed += player.radius
+      const currentIntersect = barrier.circleIntersect(player.p, player.radius)
+      const newIntersect = barrier.circleIntersect(newP, player.radius)
+      // Block movement INTO a barrier (even if we're not currently in one)
+      if (!currentIntersect && newIntersect) return false
+      if (currentIntersect) currentUnallowed += player.radius
+      if (newIntersect) newUnallowed += player.radius
     }
     if (0 < newUnallowed && newUnallowed < 2) return true
     return newUnallowed <= currentUnallowed
@@ -153,6 +157,27 @@ export default class GameState {
 
     for (const [barrier] of this.barriers) barrier.update(msDiff)
     for (const [zone] of this.iceZones) zone.update(msDiff)
+
+    // Push players out of barriers
+    for (const player of Object.values(this.players)) {
+      if (!player.alive) continue
+      for (const [barrier] of this.barriers) {
+        if (barrier.circleIntersect(player.p, player.radius)) {
+          // Find barrier center and push player away from it
+          const barrierCenter = new Point(
+            (barrier.topleft.x + barrier.bottomright.x) / 2,
+            (barrier.topleft.y + barrier.bottomright.y) / 2
+          )
+          const pushAngle = barrierCenter.angle(player.p)
+          const pushDist = 5  // Push 5 pixels per tick
+          const newP = player.p.bearing(pushAngle, pushDist)
+          // Bound to map
+          const radiusP = new Point(player.radius, player.radius)
+          player.p = newP.bound(radiusP, this.map.size.subtract(radiusP))
+          player.destP = player.p  // Stop movement
+        }
+      }
+    }
 
     for (const player of Object.values(this.players)) player.update(updateTime, this)
 

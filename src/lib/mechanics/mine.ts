@@ -4,7 +4,17 @@ import Config from "../config"
 export class Circle {
   constructor(public center: Point, public radius: number, public team: string) {}
 
-  render(ctx: any) { ctx.filledCircle(this.center, this.radius, Config.colors.mineRed) }
+  render(ctx: any, teams: Record<string, { color: string }>) {
+    // Fill with mine color
+    ctx.filledCircle(this.center, this.radius, Config.colors.mineRed)
+    // Team color ring
+    const teamColor = teams[this.team]?.color || "#888888"
+    ctx.beginPath()
+    ctx.circle(this.center, this.radius - 3)
+    ctx.strokeStyle(teamColor)
+    ctx.lineWidth(4)
+    ctx.stroke()
+  }
 
   circleIntersect(center: Point, radius: number) {
     return this.center.distance(center) < this.radius + radius

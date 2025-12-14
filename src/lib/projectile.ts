@@ -24,10 +24,11 @@ export default class Projectile {
   render(ctx: any) {
     ctx.filledCircle(this.p, this.radius, this.skill.color)
     ctx.beginPath()
-    ctx.circle(this.p, this.radius - 1)
+    ctx.circle(this.p, this.radius - 2)
     const teamColor = this.arena.teams[this.team]?.color || "#888888"
     ctx.strokeStyle(teamColor)
-    ctx.lineWidth(1)
+    // Thicker ring for larger projectiles (bombs)
+    ctx.lineWidth(this.radius > 20 ? 4 : 2)
     ctx.stroke()
   }
 }

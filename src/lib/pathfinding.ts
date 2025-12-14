@@ -43,16 +43,13 @@ export function generateGrid(mapSize: Point, barriers: [Rect, any][]): PathGrid 
   const height = Math.ceil(mapSize.y / CELL_SIZE)
   const cells: boolean[][] = []
 
-  let blockedCount = 0
   for (let gx = 0; gx < width; gx++) {
     cells[gx] = []
     for (let gy = 0; gy < height; gy++) {
       cells[gx][gy] = !isCellBlocked(gx, gy, barriers)
-      if (!cells[gx][gy]) blockedCount++
     }
   }
 
-  console.log(`Generated ${width}x${height} grid with ${blockedCount} blocked cells`)
   return { width, height, cells }
 }
 
@@ -204,10 +201,7 @@ export function findPath(from: Point, to: Point, grid: PathGrid, barriers: [Rect
 
   const gridPath = astarGrid(startX, startY, goalX, goalY, grid)
 
-  console.log(`Path from (${startX},${startY}) to (${goalX},${goalY}): ${gridPath.length} cells`, gridPath.slice(0, 5))
-
   if (gridPath.length === 0) {
-    console.log("No path found!")
     return [to]  // No path found, try direct
   }
 
