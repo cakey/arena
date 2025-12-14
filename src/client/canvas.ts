@@ -26,6 +26,10 @@ export default class Canvas {
       },
       strokeRect: (p: Point, size: Point) => { const mp = p.add(map.p); o.strokeRect(mp.x, mp.y, size.x, size.y) },
       fillRect: (p: Point, size: Point) => { const mp = p.add(map.p); o.fillRect(mp.x, mp.y, size.x, size.y) },
+      roundRect: (p: Point, size: Point, radius: number) => { const mp = p.add(map.p); o.roundRect(mp.x, mp.y, size.x, size.y, radius) },
+      filledRoundRect: (p: Point, size: Point, radius: number, color: string) => {
+        tc.beginPath(); tc.roundRect(p, size, radius); tc.fillStyle(color); tc.fill()
+      },
       fillText: (arg: string, p: Point) => { const mp = p.add(map.p); o.fillText(arg, mp.x, mp.y) },
       strokeText: (arg: string, p: Point) => { const mp = p.add(map.p); o.strokeText(arg, mp.x, mp.y) },
       circle: (p: Point, radius: number) => tc.arc(p, radius, 0, 2 * Math.PI),

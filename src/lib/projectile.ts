@@ -22,13 +22,15 @@ export default class Projectile {
   }
 
   render(ctx: any) {
-    ctx.filledCircle(this.p, this.radius, this.skill.color)
-    ctx.beginPath()
-    ctx.circle(this.p, this.radius - 2)
     const teamColor = this.arena.teams[this.team]?.color || "#888888"
-    ctx.strokeStyle(teamColor)
-    // Thicker ring for larger projectiles (bombs)
-    ctx.lineWidth(this.radius > 20 ? 4 : 2)
-    ctx.stroke()
+    // Soft body
+    ctx.filledCircle(this.p, this.radius, this.skill.color)
+    // Cute highlight
+    ctx.globalAlpha(0.5)
+    ctx.filledCircle(this.p.add(new Point(-this.radius * 0.25, -this.radius * 0.25)), this.radius * 0.35, "#ffffff")
+    ctx.globalAlpha(1)
+    // Team color outline
+    ctx.beginPath(); ctx.circle(this.p, this.radius)
+    ctx.strokeStyle(teamColor); ctx.lineWidth(this.radius > 20 ? 3 : 2); ctx.stroke()
   }
 }

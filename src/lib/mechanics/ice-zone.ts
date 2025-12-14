@@ -21,29 +21,24 @@ export class IceZone {
 
   render(ctx: any, teams: Record<string, { color: string }>, expiry: number, currentTime: number) {
     const timeRemaining = expiry - currentTime
-    const pctRemaining = Math.max(0, Math.min(1, timeRemaining / 8000))  // 8000ms total duration
-
-    ctx.beginPath()
-    ctx.circle(this.center, this.currentRadius)
-    ctx.globalAlpha(0.3 + 0.2 * pctRemaining)  // Fade out as it expires
-    ctx.fillStyle("#88ccff")
-    ctx.fill()
-    ctx.globalAlpha(1)
-
-    // Team color ring
+    const pctRemaining = Math.max(0, Math.min(1, timeRemaining / 8000))
     const teamColor = teams[this.team]?.color || "#888888"
-    ctx.beginPath()
-    ctx.circle(this.center, this.currentRadius - 3)
-    ctx.lineWidth(4)
-    ctx.strokeStyle(teamColor)
-    ctx.stroke()
-
-    // Expiry indicator - shrinking outer ring
-    ctx.beginPath()
-    ctx.circle(this.center, this.currentRadius * pctRemaining)
-    ctx.lineWidth(2)
-    ctx.strokeStyle("#4488cc")
-    ctx.stroke()
+    // Soft puddle
+    ctx.globalAlpha(0.25 + 0.2 * pctRemaining)
+    ctx.filledCircle(this.center, this.currentRadius, "#b8e0f0")
+    ctx.globalAlpha(1)
+    // Team color soft ring
+    ctx.beginPath(); ctx.circle(this.center, this.currentRadius - 3)
+    ctx.lineWidth(3); ctx.strokeStyle(teamColor); ctx.stroke()
+    // Cute sparkles
+    ctx.globalAlpha(0.4 * pctRemaining)
+    const sparkleOffset = (currentTime / 200) % (Math.PI * 2)
+    for (let i = 0; i < 4; i++) {
+      const angle = sparkleOffset + (i * Math.PI / 2)
+      const sparkleP = this.center.bearing(angle, this.currentRadius * 0.5)
+      ctx.filledCircle(sparkleP, 3, "#ffffff")
+    }
+    ctx.globalAlpha(1)
   }
 
   toObject() {

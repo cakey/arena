@@ -48,6 +48,8 @@ AI:
 
 Categories: Balance, Visual, AI, Bugfix, Other
 
+Remind user to commit after large changes (5+ files modified).
+
 ## Avoiding Over-Engineering
 
 Before proposing an abstraction or refactor, ask:

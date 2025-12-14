@@ -6,24 +6,28 @@ export class Circle {
 
   render(ctx: any, teams: Record<string, { color: string }>, expiry: number, currentTime: number) {
     const timeRemaining = expiry - currentTime
-    const pctRemaining = Math.max(0, Math.min(1, timeRemaining / 6000))  // 6000ms total duration
-
-    // Fill with mine color - fade out as it expires
-    ctx.beginPath()
-    ctx.circle(this.center, this.radius)
-    ctx.globalAlpha(0.5 + 0.3 * pctRemaining)
-    ctx.fillStyle(Config.colors.mineRed)
-    ctx.fill()
-    ctx.globalAlpha(1)
-
-    // Team color ring - shrinks as expiry indicator
+    const pctRemaining = Math.max(0, Math.min(1, timeRemaining / 6000))
     const teamColor = teams[this.team]?.color || "#888888"
-    const ringRadius = (this.radius - 3) * pctRemaining
-    ctx.beginPath()
-    ctx.circle(this.center, ringRadius)
-    ctx.strokeStyle(teamColor)
-    ctx.lineWidth(4)
-    ctx.stroke()
+    // Soft danger puff
+    ctx.globalAlpha(0.3 + 0.3 * pctRemaining)
+    ctx.filledCircle(this.center, this.radius, Config.colors.mineRed)
+    ctx.globalAlpha(1)
+    // Team color ring
+    ctx.beginPath(); ctx.circle(this.center, this.radius * pctRemaining)
+    ctx.lineWidth(3); ctx.strokeStyle(teamColor); ctx.stroke()
+    // Warning pattern - cute dots
+    ctx.globalAlpha(0.5 * pctRemaining)
+    const dotOffset = (currentTime / 300) % (Math.PI * 2)
+    for (let i = 0; i < 6; i++) {
+      const angle = dotOffset + (i * Math.PI / 3)
+      const dotP = this.center.bearing(angle, this.radius * 0.6)
+      ctx.filledCircle(dotP, 4, "#ffffff")
+    }
+    ctx.globalAlpha(1)
+    // Center highlight
+    ctx.globalAlpha(0.4)
+    ctx.filledCircle(this.center.add(new Point(-8, -8)), 10, "#ffffff")
+    ctx.globalAlpha(1)
   }
 
   circleIntersect(center: Point, radius: number) {

@@ -126,24 +126,52 @@ export class GamePlayer {
     }
     if (this.alive) {
       const teamColor = gameState.teams[this.team]?.color || "#888888"
-      // Health shown by shrinking player circle and fading inner core
       const healthPct = (6 - this.gunHits) / 6
-      const displayRadius = this.radius * (0.7 + 0.3 * healthPct)  // Shrinks from 100% to 70%
+      const displayRadius = this.radius * (0.85 + 0.15 * healthPct)
+      // Body
       ctx.filledCircle(this.p, displayRadius, teamColor)
-      // Inner darker circle that shrinks faster to show damage
-      if (this.gunHits > 0) {
-        const innerRadius = displayRadius * healthPct * 0.6
-        ctx.beginPath(); ctx.circle(this.p, innerRadius)
-        ctx.globalAlpha(0.4); ctx.fillStyle("#000000"); ctx.fill(); ctx.globalAlpha(1)
+      // Highlight/shine
+      ctx.globalAlpha(0.4)
+      ctx.filledCircle(this.p.add(new Point(-5, -5)), displayRadius * 0.3, "#ffffff")
+      ctx.globalAlpha(1)
+      // Face - eyes look toward destination
+      const lookAngle = this.p.angle(this.destP)
+      const eyeOffset = 5
+      const eyeDist = 6
+      const leftEyeBase = this.p.add(new Point(-eyeDist, -2))
+      const rightEyeBase = this.p.add(new Point(eyeDist, -2))
+      const pupilOffset = new Point(Math.cos(lookAngle) * 2, Math.sin(lookAngle) * 2)
+      // Eye whites
+      ctx.filledCircle(leftEyeBase, 5, "#ffffff")
+      ctx.filledCircle(rightEyeBase, 5, "#ffffff")
+      // Pupils - look toward movement
+      if (this.gunHits >= 4) {
+        // Worried X eyes when low health
+        ctx.strokeStyle("#444444"); ctx.lineWidth(2)
+        ctx.beginPath(); ctx.moveTo(leftEyeBase.add(new Point(-3, -3))); ctx.lineTo(leftEyeBase.add(new Point(3, 3))); ctx.stroke()
+        ctx.beginPath(); ctx.moveTo(leftEyeBase.add(new Point(3, -3))); ctx.lineTo(leftEyeBase.add(new Point(-3, 3))); ctx.stroke()
+        ctx.beginPath(); ctx.moveTo(rightEyeBase.add(new Point(-3, -3))); ctx.lineTo(rightEyeBase.add(new Point(3, 3))); ctx.stroke()
+        ctx.beginPath(); ctx.moveTo(rightEyeBase.add(new Point(3, -3))); ctx.lineTo(rightEyeBase.add(new Point(-3, 3))); ctx.stroke()
+      } else {
+        ctx.filledCircle(leftEyeBase.add(pupilOffset), 2.5, "#444444")
+        ctx.filledCircle(rightEyeBase.add(pupilOffset), 2.5, "#444444")
       }
+      // Soft blush marks - subtle and blended
+      ctx.globalAlpha(0.15)
+      ctx.filledCircle(this.p.add(new Point(-9, 5)), 6, "#e07878")
+      ctx.filledCircle(this.p.add(new Point(9, 5)), 6, "#e07878")
+      ctx.globalAlpha(1)
     } else {
       const deathTime = gameState.deadPlayerIds[this.id]
       const pctRespawn = (this.time - deathTime) / Config.game.respawnTime
       const teamColor = gameState.teams[this.team]?.color || "#888888"
-      ctx.filledCircle(this.p, this.radius - 1, Config.colors.barrierBrown)
+      // Ghost/respawning - faded with swirl eyes
+      ctx.globalAlpha(0.4)
+      ctx.filledCircle(this.p, this.radius, teamColor)
+      ctx.globalAlpha(1)
       ctx.filledCircle(this.p, this.radius * pctRespawn, teamColor)
     }
-    if (focused) ctx.filledCircle(this.p, 3, "#000000")
+    if (focused) ctx.filledCircle(this.p, 4, "#ffffff")
     if (Config.UI.castingCircles) {
       ctx.beginPath(); ctx.circle(this.p, this.maxCastRadius); ctx.lineWidth(1)
       ctx.setLineDash([3, 12]); ctx.strokeStyle("#777777"); ctx.stroke(); ctx.setLineDash([])

@@ -8,21 +8,31 @@ export default class CapturePoint {
   constructor(public p: Point, public radius: number) {}
 
   render(ctx: any, teams: Record<string, { color: string }>) {
+    const baseColor = "#e8e0d8"
+    const teamColor = this.current.team && teams[this.current.team] ? teams[this.current.team].color : baseColor
+    const size = this.radius * 2
+    const corner = this.radius * 0.4
+    const topLeft = this.p.subtract(new Point(this.radius, this.radius))
+    // Soft platform base - rounded square
+    ctx.filledRoundRect(topLeft.subtract(new Point(4, 4)), new Point(size + 8, size + 8), corner, "#d0c8c0")
+    ctx.filledRoundRect(topLeft, new Point(size, size), corner, baseColor)
+    // Capture progress - inner rounded square fills up
     if (this.current.team && teams[this.current.team]) {
       const percent = this.current.strength / this.maxStrength
-      ctx.beginPath()
-      ctx.moveTo(this.p)
-      ctx.arc(this.p, this.radius + 10, -Math.PI / 2, 2 * Math.PI * percent - Math.PI / 2)
-      ctx.fillStyle(teams[this.current.team].color)
-      ctx.fill()
+      const innerSize = (size - 16) * percent
+      const innerTopLeft = this.p.subtract(new Point(innerSize / 2, innerSize / 2))
+      ctx.filledRoundRect(innerTopLeft, new Point(innerSize, innerSize), corner * 0.5, teamColor)
     }
-    const color = this.current.captured && teams[this.current.team!] ? teams[this.current.team!].color : "#ffffff"
-    ctx.beginPath()
-    ctx.moveTo(this.p)
-    ctx.arc(this.p, this.radius + 3, 0, 2 * Math.PI)
-    ctx.fillStyle(color)
-    ctx.fill()
-    ctx.filledCircle(this.p, this.radius, "#bbbbbb")
+    // Captured indicator - full inner square
+    if (this.current.captured) {
+      const innerSize = size - 20
+      const innerTopLeft = this.p.subtract(new Point(innerSize / 2, innerSize / 2))
+      ctx.filledRoundRect(innerTopLeft, new Point(innerSize, innerSize), corner * 0.4, teamColor)
+    }
+    // Cute highlight
+    ctx.globalAlpha(0.25)
+    ctx.filledRoundRect(topLeft.add(new Point(6, 6)), new Point(size * 0.5, size * 0.25), corner * 0.3, "#ffffff")
+    ctx.globalAlpha(1)
   }
 
   update(gameState: GameState) {

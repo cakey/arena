@@ -20,7 +20,7 @@ export interface Skill {
 const skills: Record<string, Skill> = {
   gun: {
     cone: Math.PI / 2, radius: 6, castTime: 1, speed: 0.2, range: 120,
-    color: "#990099", channeled: false, score: 0, description: "6 hits to kill. Knockback increases per hit. 7 shots then 2s cooldown.",
+    color: "#d8a0d8", channeled: false, score: 0, description: "6 hits to kill. Knockback increases per hit. 7 shots then 2s cooldown.",
     cooldown: 35, enemies: true, type: "projectile", shotsBeforeCooldown: 9, actualCooldown: 2500,
     hitPlayer: (hitPlayer, projectile, gameState) => {
       if (!hitPlayer.states["invulnerable"]) {
@@ -42,7 +42,7 @@ const skills: Record<string, Skill> = {
   },
   bomb: {
     cone: Math.PI / 1.5, radius: 50, castTime: 1, speed: 0.026, range: 300,
-    color: "#00bbbb", channeled: false, score: 0, description: "Slow heavy projectile. Shrinks on wall hits.",
+    color: "#98d8d8", channeled: false, score: 0, description: "Slow heavy projectile. Shrinks on wall hits.",
     cooldown: 3000, enemies: true, type: "projectile",
     hitPlayer: (p, proj, gs) => gs.killPlayer(p.id)
   },

@@ -17,9 +17,14 @@ export class Rect {
   }
 
   render(ctx: any) {
-    ctx.beginPath()
-    ctx.fillStyle(Config.colors.barrierBrown)
-    ctx.fillRect(this.topleft, this.bottomright.subtract(this.topleft))
+    const size = this.bottomright.subtract(this.topleft)
+    const radius = Math.min(size.x, size.y) * 0.3
+    // Soft cushion with rounded corners
+    ctx.filledRoundRect(this.topleft, size, radius, Config.colors.barrierBrown)
+    // Highlight
+    ctx.globalAlpha(0.25)
+    ctx.filledRoundRect(this.topleft.add(new Point(3, 3)), new Point(size.x - 6, size.y * 0.35), radius * 0.5, "#ffffff")
+    ctx.globalAlpha(1)
   }
 
   circleIntersect(center: Point, radius: number) {
