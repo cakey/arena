@@ -20,7 +20,7 @@ export interface AIDecision {
 }
 
 // Debug state - tracks what each AI is thinking
-export const aiDebugState: Record<string, { targetPoint?: Point; action: string; fullPath?: Point[] }> = {}
+export const aiDebugState: Record<string, { targetPoint?: Point; action: string; fullPath?: Point[]; pathError?: string }> = {}
 
 // ============= Geometry Helpers =============
 
@@ -350,14 +350,18 @@ export function decideAction(gameState: GameState, self: GamePlayer): AIDecision
     const distToPoint = self.p.distance(targetPoint.p)
     if (distToPoint > 30) {
       // Use pathfinding to navigate around barriers
-      const path = gameState.findPath(self.p, targetPoint.p)
-      const nextWaypoint = path[0] || targetPoint.p
-      const pathLen = path.length
-      // Store full path for debug visualization
-      aiDebugState[self.id] = { targetPoint: nextWaypoint, action: `move(${pathLen})`, fullPath: path }
-      return { move: nextWaypoint }
+      const { path, error } = gameState.findPath(self.p, targetPoint.p)
+      if (path.length > 0) {
+        const nextWaypoint = path[0]
+        aiDebugState[self.id] = { targetPoint: nextWaypoint, action: `move(${path.length})`, fullPath: path, pathError: error || undefined }
+        return { move: nextWaypoint }
+      } else {
+        // No path found - record error, don't move
+        aiDebugState[self.id] = { action: "stuck", fullPath: [], pathError: error || "unknown" }
+      }
+    } else {
+      aiDebugState[self.id] = { action: "on point", fullPath: [] }
     }
-    aiDebugState[self.id] = { action: "on point", fullPath: [] }
   } else {
     aiDebugState[self.id] = { action: "no target", fullPath: [] }
   }

@@ -1,14 +1,21 @@
 import Point from "./point"
-import type { Rect } from "./mechanics/barriers"
 
-const CELL_SIZE = 30  // Grid cell size in pixels
-const PLAYER_RADIUS = 20  // Player collision radius
+const CELL_SIZE = 20  // Same as player radius
+const PLAYER_RADIUS = 20
+
+// Barrier interface for pathfinding - use same collision as movement
+interface PathBarrier {
+  circleIntersect(center: Point, radius: number): boolean
+}
 
 export interface PathGrid {
   width: number
   height: number
   cells: boolean[][]  // true = walkable, false = blocked
 }
+
+// Pathfinding error for debug display
+export type PathError = "start_blocked" | "goal_blocked" | "no_path" | null
 
 // Convert world position to grid cell
 function toGrid(p: Point): [number, number] {
@@ -20,25 +27,57 @@ function toWorld(gx: number, gy: number): Point {
   return new Point(gx * CELL_SIZE + CELL_SIZE / 2, gy * CELL_SIZE + CELL_SIZE / 2)
 }
 
-// Check if a cell is blocked by any barrier (with player radius padding)
-function isCellBlocked(gx: number, gy: number, barriers: [Rect, any][]): boolean {
+// Check if a cell is blocked by any barrier
+function isCellBlocked(gx: number, gy: number, barriers: [PathBarrier, any][]): boolean {
   const cellCenter = toWorld(gx, gy)
-  // Just use player radius - the cell grid already provides some buffer
-  const padding = PLAYER_RADIUS
-
   for (const [barrier] of barriers) {
-    // Expand barrier by padding and check if cell center is inside
-    const expandedTL = new Point(barrier.topleft.x - padding, barrier.topleft.y - padding)
-    const expandedBR = new Point(barrier.bottomright.x + padding, barrier.bottomright.y + padding)
-    if (cellCenter.inside(expandedTL, expandedBR)) {
+    if (barrier.circleIntersect(cellCenter, PLAYER_RADIUS)) {
       return true
     }
   }
   return false
 }
 
+// Find nearest walkable cell using BFS
+function findNearestWalkable(startX: number, startY: number, grid: PathGrid, maxRadius: number = 5): [number, number] | null {
+  // If already walkable, return it
+  if (startX >= 0 && startY >= 0 && startX < grid.width && startY < grid.height && grid.cells[startX]?.[startY]) {
+    return [startX, startY]
+  }
+
+  // BFS to find nearest walkable cell
+  const visited = new Set<string>()
+  const queue: [number, number, number][] = [[startX, startY, 0]]  // x, y, distance
+
+  while (queue.length > 0) {
+    const [x, y, dist] = queue.shift()!
+    const key = `${x},${y}`
+
+    if (visited.has(key) || dist > maxRadius) continue
+    visited.add(key)
+
+    // Bounds check
+    if (x < 0 || y < 0 || x >= grid.width || y >= grid.height) continue
+
+    // Found walkable cell
+    if (grid.cells[x]?.[y]) {
+      return [x, y]
+    }
+
+    // Add neighbors
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        if (dx === 0 && dy === 0) continue
+        queue.push([x + dx, y + dy, dist + 1])
+      }
+    }
+  }
+
+  return null  // No walkable cell found within radius
+}
+
 // Generate the pathfinding grid
-export function generateGrid(mapSize: Point, barriers: [Rect, any][]): PathGrid {
+export function generateGrid(mapSize: Point, barriers: [PathBarrier, any][]): PathGrid {
   const width = Math.ceil(mapSize.x / CELL_SIZE)
   const height = Math.ceil(mapSize.y / CELL_SIZE)
   const cells: boolean[][] = []
@@ -134,88 +173,49 @@ function astarGrid(
   return []  // No path found
 }
 
-// Smooth the path by removing unnecessary waypoints
-function smoothPath(path: Point[], barriers: [Rect, any][]): Point[] {
-  if (path.length <= 2) return path
-
-  const result: Point[] = [path[0]]
-
-  for (let i = 1; i < path.length - 1; i++) {
-    const prev = result[result.length - 1]
-    const next = path[i + 1]
-
-    // Check if we can skip this waypoint (direct line to next)
-    let canSkip = true
-    const steps = Math.ceil(prev.distance(next) / (CELL_SIZE / 2))
-    for (let s = 0; s <= steps; s++) {
-      const t = s / steps
-      const testPoint = new Point(
-        prev.x + (next.x - prev.x) * t,
-        prev.y + (next.y - prev.y) * t
-      )
-      const [gx, gy] = toGrid(testPoint)
-      // Bounds check before accessing grid
-      if (gx < 0 || gy < 0) {
-        canSkip = false
-        break
-      }
-      // Check if point is inside any expanded barrier
-      for (const [barrier] of barriers) {
-        const expandedTL = new Point(barrier.topleft.x - PLAYER_RADIUS, barrier.topleft.y - PLAYER_RADIUS)
-        const expandedBR = new Point(barrier.bottomright.x + PLAYER_RADIUS, barrier.bottomright.y + PLAYER_RADIUS)
-        if (testPoint.inside(expandedTL, expandedBR)) {
-          canSkip = false
-          break
-        }
-      }
-      if (!canSkip) break
-    }
-
-    if (!canSkip) {
-      result.push(path[i])
-    }
-  }
-
-  result.push(path[path.length - 1])
-  return result
-}
-
-// Main pathfinding function
-export function findPath(from: Point, to: Point, grid: PathGrid, barriers: [Rect, any][]): Point[] {
+// Main pathfinding function - returns { path, error }
+export function findPath(from: Point, to: Point, grid: PathGrid, barriers: [PathBarrier, any][]): { path: Point[], error: PathError } {
   const [startX, startY] = toGrid(from)
   const [goalX, goalY] = toGrid(to)
 
-  // Bounds check
-  if (startX < 0 || startY < 0 || startX >= grid.width || startY >= grid.height) return [to]
-  if (goalX < 0 || goalY < 0 || goalX >= grid.width || goalY >= grid.height) return [to]
-
-  // If start or goal is blocked, try to find nearest walkable cell
-  if (!grid.cells[startX]?.[startY] || !grid.cells[goalX]?.[goalY]) {
-    return [to]  // Fallback to direct
-  }
+  // Clamp to grid bounds
+  const clampedStartX = Math.max(0, Math.min(startX, grid.width - 1))
+  const clampedStartY = Math.max(0, Math.min(startY, grid.height - 1))
+  const clampedGoalX = Math.max(0, Math.min(goalX, grid.width - 1))
+  const clampedGoalY = Math.max(0, Math.min(goalY, grid.height - 1))
 
   // Same cell - just go directly
-  if (startX === goalX && startY === goalY) {
-    return [to]
+  if (clampedStartX === clampedGoalX && clampedStartY === clampedGoalY) {
+    return { path: [to], error: null }
   }
 
-  const gridPath = astarGrid(startX, startY, goalX, goalY, grid)
+  // A* can handle blocked start - it will find walkable neighbors
+  // If goal is blocked, find nearest walkable goal
+  let adjGoalX = clampedGoalX, adjGoalY = clampedGoalY
+  if (!grid.cells[clampedGoalX]?.[clampedGoalY]) {
+    const nearest = findNearestWalkable(clampedGoalX, clampedGoalY, grid)
+    if (!nearest) {
+      return { path: [], error: "goal_blocked" }
+    }
+    [adjGoalX, adjGoalY] = nearest
+  }
+
+  const gridPath = astarGrid(clampedStartX, clampedStartY, adjGoalX, adjGoalY, grid)
 
   if (gridPath.length === 0) {
-    return [to]  // No path found, try direct
+    // Couldn't find path - might be completely stuck
+    return { path: [], error: "no_path" }
   }
 
-  // Convert to world coordinates (skip smoothing for now to debug)
+  // Convert to world coordinates and add destination
   const worldPath = gridPath.map(([gx, gy]) => toWorld(gx, gy))
-
-  // Add actual destination at the end
   worldPath.push(to)
 
-  // Skip first point if it's where we already are
-  return worldPath.slice(1)
+  // Skip first point (where we already are)
+  return { path: worldPath.slice(1), error: null }
 }
 
-// For debug visualization - export grid info
+// For debug visualization
 export function getGridCellSize(): number {
   return CELL_SIZE
 }
@@ -227,5 +227,5 @@ export interface Waypoint {
 }
 
 export function generateWaypoints(): Waypoint[] {
-  return []  // No longer used
+  return []
 }

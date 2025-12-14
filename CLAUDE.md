@@ -50,6 +50,39 @@ Categories: Balance, Visual, AI, Bugfix, Other
 
 Remind user to commit after large changes (5+ files modified).
 
+## Pathfinding & Collision Considerations
+
+**Two separate collision methods:**
+- `circleIntersect` - for player movement, shrunk bounds to match rounded visual corners
+- `circleIntersectForPathfinding` - for AI pathfinding, uses full rectangle bounds (more conservative)
+
+This separation ensures:
+- Players can get close to visually rounded corners
+- AI paths stay well clear of barriers
+
+**Visual vs Collision mismatch:**
+- Barriers render with rounded corners (30% of smaller dimension)
+- `getCollisionBounds()` shrinks by 70% of corner radius for movement collision
+- Debug with `Config.UI.debugCollision = true` to see actual collision bounds
+
+**Grid alignment issues:**
+- Pathfinding uses a discrete grid (CELL_SIZE pixels), but barriers aren't grid-aligned
+- A cell center might be "safe" but the cell edges could overlap barriers
+- isCellBlocked uses `PLAYER_RADIUS + PATH_BUFFER` to mark cells near barriers as blocked
+
+**Key constants in pathfinding.ts:**
+- `CELL_SIZE` - smaller = more precise but slower (currently 15)
+- `PLAYER_RADIUS` - must match actual player radius (20)
+- `PATH_BUFFER` - extra margin to keep AIs away from walls (5)
+- Grid blocking uses `PLAYER_RADIUS + PATH_BUFFER` (25px) - don't add more or players will be in "blocked" cells
+
+**When modifying barriers or collision:**
+1. Test with debugCollision enabled
+2. Check that red debug boxes align reasonably with visuals
+3. If AIs get stuck, increase PATH_BUFFER or decrease CELL_SIZE
+4. Remember: pathfinding grid is generated once at startup from static barriers
+5. Both circleIntersect methods must be updated if collision logic changes
+
 ## Avoiding Over-Engineering
 
 Before proposing an abstraction or refactor, ask:

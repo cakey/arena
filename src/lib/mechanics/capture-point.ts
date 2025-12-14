@@ -9,29 +9,35 @@ export default class CapturePoint {
 
   render(ctx: any, teams: Record<string, { color: string }>) {
     const baseColor = "#e8e0d8"
-    const teamColor = this.current.team && teams[this.current.team] ? teams[this.current.team].color : baseColor
+    const baseBorder = "#d0c8c0"
+    const teamColor = this.current.team && teams[this.current.team] ? teams[this.current.team].color : null
     const size = this.radius * 2
     const corner = this.radius * 0.4
     const topLeft = this.p.subtract(new Point(this.radius, this.radius))
-    // Soft platform base - rounded square
-    ctx.filledRoundRect(topLeft.subtract(new Point(4, 4)), new Point(size + 8, size + 8), corner, "#d0c8c0")
-    ctx.filledRoundRect(topLeft, new Point(size, size), corner, baseColor)
-    // Capture progress - inner rounded square fills up
-    if (this.current.team && teams[this.current.team]) {
-      const percent = this.current.strength / this.maxStrength
-      const innerSize = (size - 16) * percent
-      const innerTopLeft = this.p.subtract(new Point(innerSize / 2, innerSize / 2))
-      ctx.filledRoundRect(innerTopLeft, new Point(innerSize, innerSize), corner * 0.5, teamColor)
+
+    if (this.current.captured && teamColor) {
+      // Fully captured - entire point is team colored with matching border
+      ctx.filledRoundRect(topLeft.subtract(new Point(5, 5)), new Point(size + 10, size + 10), corner + 2, teamColor)
+      ctx.filledRoundRect(topLeft, new Point(size, size), corner, teamColor)
+      // Brighter inner to show it's "active"
+      ctx.globalAlpha(0.3)
+      ctx.filledRoundRect(topLeft.add(new Point(8, 8)), new Point(size - 16, size - 16), corner * 0.5, "#ffffff")
+      ctx.globalAlpha(1)
+    } else {
+      // Not captured - neutral base with progress indicator
+      ctx.filledRoundRect(topLeft.subtract(new Point(4, 4)), new Point(size + 8, size + 8), corner, baseBorder)
+      ctx.filledRoundRect(topLeft, new Point(size, size), corner, baseColor)
+      // Capture progress - fills from center outward
+      if (teamColor) {
+        const percent = this.current.strength / this.maxStrength
+        const progressSize = size * percent
+        const progressTopLeft = this.p.subtract(new Point(progressSize / 2, progressSize / 2))
+        ctx.filledRoundRect(progressTopLeft, new Point(progressSize, progressSize), corner * percent, teamColor)
+      }
     }
-    // Captured indicator - full inner square
-    if (this.current.captured) {
-      const innerSize = size - 20
-      const innerTopLeft = this.p.subtract(new Point(innerSize / 2, innerSize / 2))
-      ctx.filledRoundRect(innerTopLeft, new Point(innerSize, innerSize), corner * 0.4, teamColor)
-    }
-    // Cute highlight
-    ctx.globalAlpha(0.25)
-    ctx.filledRoundRect(topLeft.add(new Point(6, 6)), new Point(size * 0.5, size * 0.25), corner * 0.3, "#ffffff")
+    // Highlight
+    ctx.globalAlpha(0.2)
+    ctx.filledRoundRect(topLeft.add(new Point(6, 6)), new Point(size * 0.4, size * 0.2), corner * 0.3, "#ffffff")
     ctx.globalAlpha(1)
   }
 

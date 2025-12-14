@@ -5,7 +5,7 @@ import CapturePoint from "./mechanics/capture-point"
 import * as Barriers from "./mechanics/barriers"
 import * as Mine from "./mechanics/mine"
 import * as IceZone from "./mechanics/ice-zone"
-import { generateGrid, findPath as pathfindingFindPath, PathGrid, getGridCellSize } from "./pathfinding"
+import { generateGrid, findPath as pathfindingFindPath, PathGrid, getGridCellSize, PathError } from "./pathfinding"
 import GameMap from "./map"
 import Config from "./config"
 import { aiDebugState } from "./ai"
@@ -19,7 +19,7 @@ export default class GameState {
   map = new GameMap()
   deadPlayerIds: Record<string, number> = {}
   capturePoints: CapturePoint[] = []
-  barriers: [Barriers.Rect, number | null][] = []
+  barriers: [Barriers.Rect | Barriers.LShape | Barriers.TShape | Barriers.PlusShape, number | null][] = []
   mines: [Mine.Circle, number][] = []
   iceZones: [IceZone.IceZone, number][] = []
   pathGrid: PathGrid = { width: 0, height: 0, cells: [] }
@@ -30,33 +30,35 @@ export default class GameState {
     this.capturePoints.push(new CapturePoint(new Point(600, 350), 60))
     this.capturePoints.push(new CapturePoint(new Point(1050, 350), 70))
 
-    // Walls around center capture point
-    this.barriers.push([new Barriers.Rect(new Point(580, 180), new Point(620, 270)), null])  // top
-    this.barriers.push([new Barriers.Rect(new Point(580, 430), new Point(620, 520)), null])  // bottom
+    // L-shaped walls around center capture point
+    this.barriers.push([new Barriers.LShape(new Point(540, 180), 80, 30, "tl"), null])  // top-left L
+    this.barriers.push([new Barriers.LShape(new Point(660, 180), 80, 30, "tr"), null])  // top-right L (mirror)
+    this.barriers.push([new Barriers.LShape(new Point(540, 520), 80, 30, "bl"), null])  // bottom-left L
+    this.barriers.push([new Barriers.LShape(new Point(660, 520), 80, 30, "br"), null])  // bottom-right L (mirror)
 
-    // Diagonal cover near center (creates interesting angles)
-    this.barriers.push([new Barriers.Rect(new Point(420, 280), new Point(470, 320)), null])
-    this.barriers.push([new Barriers.Rect(new Point(420, 380), new Point(470, 420)), null])
-    this.barriers.push([new Barriers.Rect(new Point(730, 280), new Point(780, 320)), null])
-    this.barriers.push([new Barriers.Rect(new Point(730, 380), new Point(780, 420)), null])
+    // T-shaped lane dividers
+    this.barriers.push([new Barriers.TShape(new Point(350, 80), 80, 60, 25, "down"), null])   // top-left T
+    this.barriers.push([new Barriers.TShape(new Point(850, 80), 80, 60, 25, "down"), null])   // top-right T
+    this.barriers.push([new Barriers.TShape(new Point(350, 620), 80, 60, 25, "up"), null])    // bottom-left T
+    this.barriers.push([new Barriers.TShape(new Point(850, 620), 80, 60, 25, "up"), null])    // bottom-right T
 
-    // Lane dividers (top and bottom corridors)
-    this.barriers.push([new Barriers.Rect(new Point(300, 100), new Point(400, 130)), null])
-    this.barriers.push([new Barriers.Rect(new Point(800, 100), new Point(900, 130)), null])
-    this.barriers.push([new Barriers.Rect(new Point(300, 570), new Point(400, 600)), null])
-    this.barriers.push([new Barriers.Rect(new Point(800, 570), new Point(900, 600)), null])
+    // Plus shapes as cover near center lanes
+    this.barriers.push([new Barriers.PlusShape(new Point(440, 310), 40, 25), null])  // left of center
+    this.barriers.push([new Barriers.PlusShape(new Point(440, 390), 40, 25), null])
+    this.barriers.push([new Barriers.PlusShape(new Point(760, 310), 40, 25), null])  // right of center
+    this.barriers.push([new Barriers.PlusShape(new Point(760, 390), 40, 25), null])
 
-    // Cover pillars near capture points
-    this.barriers.push([new Barriers.Rect(new Point(250, 300), new Point(290, 340)), null])
-    this.barriers.push([new Barriers.Rect(new Point(250, 360), new Point(290, 400)), null])
-    this.barriers.push([new Barriers.Rect(new Point(910, 300), new Point(950, 340)), null])
-    this.barriers.push([new Barriers.Rect(new Point(910, 360), new Point(950, 400)), null])
+    // Small pillars near side capture points
+    this.barriers.push([new Barriers.Rect(new Point(220, 300), new Point(260, 340)), null])
+    this.barriers.push([new Barriers.Rect(new Point(220, 360), new Point(260, 400)), null])
+    this.barriers.push([new Barriers.Rect(new Point(940, 300), new Point(980, 340)), null])
+    this.barriers.push([new Barriers.Rect(new Point(940, 360), new Point(980, 400)), null])
 
     // Generate pathfinding grid
     this.pathGrid = generateGrid(this.map.size, this.barriers)
   }
 
-  findPath(from: Point, to: Point): Point[] {
+  findPath(from: Point, to: Point): { path: Point[], error: PathError } {
     return pathfindingFindPath(from, to, this.pathGrid, this.barriers)
   }
 
@@ -128,7 +130,7 @@ export default class GameState {
     for (const [barrier] of this.barriers) {
       const currentIntersect = barrier.circleIntersect(player.p, player.radius)
       const newIntersect = barrier.circleIntersect(newP, player.radius)
-      // Block movement INTO a barrier (even if we're not currently in one)
+      // Block movement INTO a barrier
       if (!currentIntersect && newIntersect) return false
       if (currentIntersect) currentUnallowed += player.radius
       if (newIntersect) newUnallowed += player.radius

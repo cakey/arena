@@ -195,4 +195,4 @@ class ClientHandler {
 const wss = new WebSocketServer({ port: Config.ws.port })
 const gameHandler = new GameHandler()
 const clientHandler = new ClientHandler(wss)
-console.log(`WebSocket server listening on port ${Config.ws.port}`)
+console.log(`[${new Date().toLocaleTimeString()}] WebSocket server listening on port ${Config.ws.port}`)

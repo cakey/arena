@@ -206,9 +206,14 @@ export function arena(gameState: GameState, canvas: Canvas, camera: Camera, focu
           ctx.lineWidth(2)
           ctx.stroke()
         }
-        // Draw action label
-        ctx.fillStyle("#000000")
-        ctx.fillText(debug.action, new Point(player.p.x - 20, player.p.y - 30))
+        // Draw action label - red if path error
+        if (debug.pathError) {
+          ctx.fillStyle("#ff0000")
+          ctx.fillText(`${debug.action} [${debug.pathError}]`, new Point(player.p.x - 30, player.p.y - 30))
+        } else {
+          ctx.fillStyle("#000000")
+          ctx.fillText(debug.action, new Point(player.p.x - 20, player.p.y - 30))
+        }
       }
     }
   }
