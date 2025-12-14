@@ -219,13 +219,3 @@ export function findPath(from: Point, to: Point, grid: PathGrid, barriers: [Path
 export function getGridCellSize(): number {
   return CELL_SIZE
 }
-
-// Legacy exports for compatibility
-export interface Waypoint {
-  p: Point
-  neighbors: number[]
-}
-
-export function generateWaypoints(): Waypoint[] {
-  return []
-}
