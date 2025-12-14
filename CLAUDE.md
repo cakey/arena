@@ -28,6 +28,26 @@ Don't add tests for every change.
 - Fewer lines of code is always better
 - Keep things minimal
 
+## Commit Style
+
+When committing multiple types of changes, use clear sections in the commit message:
+
+```
+Brief summary
+
+Balance:
+- Change 1
+- Change 2
+
+Visual:
+- Change 1
+
+AI:
+- Change 1
+```
+
+Categories: Balance, Visual, AI, Bugfix, Other
+
 ## Avoiding Over-Engineering
 
 Before proposing an abstraction or refactor, ask:
