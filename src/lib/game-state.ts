@@ -22,14 +22,14 @@ export default class GameState {
   iceZones: [IceZone.IceZone, number][] = []
 
   constructor(public time: number) {
-    // Capture points on far left and right sides
+    // Capture points - left, center, right
     this.capturePoints.push(new CapturePoint(new Point(150, 350), 70))
+    this.capturePoints.push(new CapturePoint(new Point(600, 350), 60))
     this.capturePoints.push(new CapturePoint(new Point(1050, 350), 70))
 
-    // Central cross structure - creates 4 paths around it
-    this.barriers.push([new Barriers.Rect(new Point(550, 300), new Point(650, 400)), null])  // center block
-    this.barriers.push([new Barriers.Rect(new Point(580, 200), new Point(620, 300)), null])  // top arm
-    this.barriers.push([new Barriers.Rect(new Point(580, 400), new Point(620, 500)), null])  // bottom arm
+    // Walls around center capture point
+    this.barriers.push([new Barriers.Rect(new Point(580, 180), new Point(620, 270)), null])  // top
+    this.barriers.push([new Barriers.Rect(new Point(580, 430), new Point(620, 520)), null])  // bottom
 
     // Diagonal cover near center (creates interesting angles)
     this.barriers.push([new Barriers.Rect(new Point(420, 280), new Point(470, 320)), null])
@@ -121,12 +121,12 @@ export default class GameState {
 
   projectileCollide(p: Projectile) {
     for (const player of Object.values(this.players)) {
-      if (player.alive && p.team !== player.team && p.p.within(player.p, p.skill.radius + player.radius)) {
+      if (player.alive && p.team !== player.team && p.p.within(player.p, p.radius + player.radius)) {
         return { player, type: "player" as const }
       }
     }
     for (const [barrier] of this.barriers) {
-      if (barrier.circleIntersect(p.p, p.skill.radius)) return { type: "barrier" as const }
+      if (barrier.circleIntersect(p.p, p.radius)) return { type: "barrier" as const }
     }
     return false
   }
@@ -170,6 +170,12 @@ export default class GameState {
           this.teams[hit.player.team].score -= projectile.skill.score
           projectile.skill.hitPlayer?.(hit.player, projectile, this)
           if (projectile.skill.continue) newProjectiles.push(projectile)
+        } else if (hit && hit.type === "barrier") {
+          // Bomb shrinks on wall hits instead of being destroyed
+          if (projectile.skill === require("./skills").default.bomb) {
+            projectile.radius -= 8
+            if (projectile.radius > 5) newProjectiles.push(projectile)
+          }
         } else if (!hit) {
           newProjectiles.push(projectile)
         }
@@ -188,7 +194,7 @@ export default class GameState {
   toJSON() {
     return {
       players: _.mapValues(this.players, (p) => ({
-        p: p.p?.toObject(), destP: p.destP?.toObject(), team: p.team, alive: p.alive, states: p.states
+        p: p.p?.toObject(), destP: p.destP?.toObject(), team: p.team, alive: p.alive, states: p.states, gunHits: p.gunHits
       })),
       time: this.time,
       teams: _.mapValues(this.teams, (t) => t.score),
@@ -212,6 +218,7 @@ export default class GameState {
       player.destP = Point.fromObject(playerState.destP)!
       player.alive = playerState.alive
       player.states = playerState.states
+      player.gunHits = playerState.gunHits || 0
     }
     for (let i = 0; i < newState.capturePoints.length; i++) {
       this.capturePoints[i].current = newState.capturePoints[i]

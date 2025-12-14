@@ -15,6 +15,7 @@ export class GamePlayer {
   time: number; radius = 20; maxCastRadius = 40; destP: Point; speed = 0.06
   startCastTime: number | null = null; castP: Point | null = null; alive = true
   states: Record<string, number> = {}; castedSkill: string = ""
+  gunHits = 0
   private _lastCasted: Record<string, number> = {}
 
   constructor(initTime: number, public p: Point, public team: string, public id: string = uuid()) {
@@ -23,7 +24,7 @@ export class GamePlayer {
 
   kill(spawnLocation: Point) {
     this.alive = false; this.p = this.destP = spawnLocation
-    this.castP = null; this.startCastTime = null; this.states = {}
+    this.castP = null; this.startCastTime = null; this.states = {}; this.gunHits = 0
   }
 
   applyState(stateName: string, duration: number) { this.states[stateName] = this.time + duration }
@@ -106,6 +107,13 @@ export class GamePlayer {
     if (this.alive) {
       const teamColor = gameState.teams[this.team]?.color || "#888888"
       ctx.filledCircle(this.p, this.radius, teamColor)
+      // Health ring showing gun hits taken
+      if (this.gunHits > 0) {
+        const healthPct = (6 - this.gunHits) / 6
+        const healthRadius = this.radius + 3 + (5 * healthPct)
+        ctx.beginPath(); ctx.circle(this.p, healthRadius); ctx.lineWidth(2 + healthPct * 2)
+        ctx.strokeStyle(healthPct > 0.5 ? "#44aa44" : healthPct > 0.2 ? "#aaaa44" : "#aa4444"); ctx.stroke()
+      }
     } else {
       const deathTime = gameState.deadPlayerIds[this.id]
       const pctRespawn = (this.time - deathTime) / Config.game.respawnTime
@@ -132,7 +140,7 @@ export class AIPlayer extends BasePlayer {
       let otherPs = _.reject(Object.values(gameState.players), { team: this.team })
       otherPs = _.reject(otherPs, { alive: false })
       if (otherPs.length > 0 && Math.random() < Utils.game.speed(0.015) && !self.startCastTime) {
-        const skill = _.sample(["bomb", "flame", "invulnerable", "barrier", "mine", "hamstring"])!
+        const skill = _.sample(["bomb", "gun", "invulnerable", "barrier", "mine", "iceslick"])!
         const castP = skills[skill].enemies ? _.sample(otherPs)!.p
           : skills[skill].allies ? self.p : _.sample(otherPs)!.p.towards(self.p, 50)
         this.handler.triggerFire(this, castP, skill)
@@ -146,7 +154,7 @@ export class AIPlayer extends BasePlayer {
 }
 
 export class UIPlayer extends BasePlayer {
-  keyBindings: Record<string, string> = { q: "barrier", w: "flame", e: "mine", a: "bomb", s: "hamstring", d: "invulnerable" }
+  keyBindings: Record<string, string> = { q: "gun", w: "bomb", e: "barrier", a: "mine", s: "iceslick", d: "invulnerable" }
   gameState: GameState; handler: any
 
   constructor(gameState: GameState, handler: any, startP: Point, team: string) {

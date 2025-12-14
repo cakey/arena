@@ -59,10 +59,23 @@ const ScoreBoard: React.FC<{ teams: Record<string, { color: string; score: numbe
 const SkillBoxUI: React.FC<{ skill: any; skillName: string; boundKey: string; left: number; pctCooldown: number }> =
   ({ skill, skillName, boundKey, left, pctCooldown }) => {
     const [hover, setHover] = useState(false)
+    const displayRadius = Math.min(skill.radius, 22)
+    const center = new Point(34, 34)
     return (
       <div style={{ left, position: "absolute" }}>
         <div className="keyBox box" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-          <Circle center={new Point(26, 26)} color={skill.color} radius={skill.radius} />
+          <div className="skillLabel">{skillName}</div>
+          {skill.type === "projectile" && (
+            <Circle center={center} color={skill.color} radius={displayRadius} />
+          )}
+          {skill.type === "ground_targeted" && (
+            <div style={{ position: "absolute", left: center.x - displayRadius, top: center.y - displayRadius,
+              width: displayRadius * 2, height: displayRadius * 2, background: skill.color, opacity: 0.7,
+              border: `2px solid ${skill.color}`, borderRadius: "4px" }} />
+          )}
+          {skill.type === "targeted" && (
+            <Circle center={center} color={skill.color} radius={displayRadius} extraStyle={{ border: `3px dashed ${skill.color}`, background: "transparent" }} />
+          )}
           {pctCooldown < 1 && (
             <div>
               <div className="cooldown" style={{
@@ -70,14 +83,14 @@ const SkillBoxUI: React.FC<{ skill: any; skillName: string; boundKey: string; le
                 background: "rgba(34,34,85,0.8)", position: "absolute"
               }} />
               <div style={{
-                position: "absolute", textAlign: "center", fontSize: 16, fontFamily: "Verdana",
-                color: "#ffffff", width: "80%", top: "30%", background: "rgba(34,34,85,0.65)"
+                position: "absolute", textAlign: "center", fontSize: 14, fontFamily: "Verdana",
+                color: "#ffffff", width: "100%", top: "35%", background: "rgba(34,34,85,0.65)"
               }}>
                 {`${Math.floor(Math.round(skill.cooldown * (1 - pctCooldown) / 100) / 10)}.${Math.round(skill.cooldown * (1 - pctCooldown) / 100) % 10}`}
               </div>
             </div>
           )}
-          <div className="keyText">{boundKey}</div>
+          <div className="keyText">{boundKey.toUpperCase()}</div>
         </div>
         {hover && (() => {
           const overLayX = 200, fontSize = 16
@@ -113,13 +126,13 @@ const SkillUI: React.FC<{ UIPlayer: UIPlayer; gameState: GameState }> = ({ UIPla
   return (
     <div>
       {rows.map((row, ri) => (
-        <div key={ri} style={{ bottom: (rows.length - ri) * 60, position: "fixed" }}>
+        <div key={ri} style={{ bottom: (rows.length - ri) * 75, position: "fixed" }}>
           {row.map((boundKey, ki) => {
             const skillName = UIPlayer.keyBindings[boundKey]
             const skill = skillName && skills[skillName]
             if (!skill) return null
             const pctCooldown = gameState.players[UIPlayer.id]?.pctCooldown(skillName) ?? 1
-            return <SkillBoxUI key={ki} skill={skill} skillName={skillName} boundKey={boundKey} left={(rowOffsets[ri] + ki) * 65} pctCooldown={pctCooldown} />
+            return <SkillBoxUI key={ki} skill={skill} skillName={skillName} boundKey={boundKey} left={(rowOffsets[ri] + ki) * 75} pctCooldown={pctCooldown} />
           })}
         </div>
       ))}

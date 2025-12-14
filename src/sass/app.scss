@@ -43,18 +43,31 @@ canvas {
 }
 
 .keyBox {
-  width: 44px;
-  height: 44px;
+  width: 60px;
+  height: 60px;
   padding: 4px;
   z-index: 2;
+  position: relative;
 }
 
 .keyText {
-  color: #444477;
+  color: #222244;
   position: absolute;
-  bottom: 1px;
+  bottom: 2px;
   z-index: 5;
-  left: 23px;
+  right: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.skillLabel {
+  color: #333355;
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .scoreRow {

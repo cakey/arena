@@ -5,9 +5,12 @@ import type GameState from "./game-state"
 
 export default class Projectile {
   destP: Point
+  radius: number
+
   constructor(public arena: GameState, public time: number, public p: Point, dirP: Point, public skill: Skill, public team: string) {
     const angle = this.p.angle(dirP)
     this.destP = this.p.bearing(angle, skill.range)
+    this.radius = skill.radius
   }
 
   update(newTime: number) {
@@ -19,10 +22,11 @@ export default class Projectile {
   }
 
   render(ctx: any) {
-    ctx.filledCircle(this.p, this.skill.radius, this.skill.color)
+    ctx.filledCircle(this.p, this.radius, this.skill.color)
     ctx.beginPath()
-    ctx.circle(this.p, this.skill.radius - 1)
-    ctx.strokeStyle(this.arena.teams[this.team].color)
+    ctx.circle(this.p, this.radius - 1)
+    const teamColor = this.arena.teams[this.team]?.color || "#888888"
+    ctx.strokeStyle(teamColor)
     ctx.lineWidth(1)
     ctx.stroke()
   }

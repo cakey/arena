@@ -17,38 +17,33 @@ export interface Skill {
 }
 
 const skills: Record<string, Skill> = {
-  orb: {
-    cone: Math.PI / 5, radius: 7, castTime: 750, speed: 0.3, range: 400,
-    color: "#aa0000", channeled: true, score: 0, description: "Standard range projectile, all rounder.",
-    cooldown: 0, enemies: true, type: "projectile"
-  },
   gun: {
-    cone: Math.PI / 10, radius: 2, castTime: 1, speed: 0.5, range: 800,
-    color: "#000000", channeled: false, score: 0, description: "High rate, low damage, long range machine gun.",
+    cone: Math.PI / 2, radius: 6, castTime: 1, speed: 0.2, range: 120,
+    color: "#990099", channeled: false, score: 0, description: "6 hits to kill. Knockback increases per hit.",
     cooldown: 0, enemies: true, type: "projectile",
-    hitPlayer: (p, proj, gs) => gs.killPlayer(p.id)
-  },
-  bomb: {
-    cone: Math.PI / 1.5, radius: 35, castTime: 600, speed: 0.03, range: 300,
-    color: "#00bbbb", channeled: false, score: 0, description: "One hit kill.",
-    cooldown: 3000, enemies: true, type: "projectile",
-    hitPlayer: (p, proj, gs) => gs.killPlayer(p.id)
-  },
-  flame: {
-    cone: Math.PI / 2, radius: 6, castTime: 1, speed: 0.2, range: 250,
-    color: "#990099", channeled: false, score: 0, description: "Close range, low damage. Knocks back targets.",
-    cooldown: 2000, enemies: true, type: "projectile",
     hitPlayer: (hitPlayer, projectile, gameState) => {
       if (!hitPlayer.states["invulnerable"]) {
-        const angle = projectile.p.angle(hitPlayer.p)
-        const knockbackP = hitPlayer.p.bearing(angle, 100)
-        const radiusP = new Point(hitPlayer.radius, hitPlayer.radius)
-        const limitP = gameState.map.size.subtract(radiusP)
-        hitPlayer.p = knockbackP.bound(radiusP, limitP)
-        hitPlayer.startCastTime = null
-        hitPlayer.destP = hitPlayer.p
+        hitPlayer.gunHits++
+        if (hitPlayer.gunHits >= 6) {
+          gameState.killPlayer(hitPlayer.id)
+        } else {
+          const knockback = 40 + hitPlayer.gunHits * 25
+          const angle = projectile.p.angle(hitPlayer.p)
+          const knockbackP = hitPlayer.p.bearing(angle, knockback)
+          const radiusP = new Point(hitPlayer.radius, hitPlayer.radius)
+          const limitP = gameState.map.size.subtract(radiusP)
+          hitPlayer.p = knockbackP.bound(radiusP, limitP)
+          hitPlayer.startCastTime = null
+          hitPlayer.destP = hitPlayer.p
+        }
       }
     }
+  },
+  bomb: {
+    cone: Math.PI / 1.5, radius: 50, castTime: 1, speed: 0.03, range: 300,
+    color: "#00bbbb", channeled: false, score: 0, description: "Slow heavy projectile. Shrinks on wall hits.",
+    cooldown: 3000, enemies: true, type: "projectile",
+    hitPlayer: (p, proj, gs) => gs.killPlayer(p.id)
   },
   interrupt: {
     cone: Math.PI / 8, radius: 4, castTime: 1, speed: 1.5, range: 1000,
@@ -77,7 +72,7 @@ const skills: Record<string, Skill> = {
       }
     }
   },
-  hamstring: {
+  iceslick: {
     castTime: 1, type: "ground_targeted", radius: 8, color: "#88ccff", range: 1000,
     channeled: false, score: 0, description: "Ice zone that slows enemies.", cooldown: 15000, cone: Math.PI * 2, speed: 0,
     onLand: (gameState, castP, originP, team) => {
@@ -85,12 +80,12 @@ const skills: Record<string, Skill> = {
     }
   },
   mine: {
-    castTime: 1000, type: "ground_targeted", radius: 33, color: Config.colors.mineRed,
+    castTime: 1000, type: "ground_targeted", radius: 66, color: Config.colors.mineRed,
     channeled: true, score: 15, description: "Mine that one hit kills.", cooldown: 10000, cone: Math.PI * 2, range: 0, speed: 0,
     onLand: (gameState, castP, originP, team) => {
-      for (const [x, y] of [[-20, -20], [20, -20], [-20, 20], [20, 20]]) {
+      for (const [x, y] of [[-40, -40], [40, -40], [-40, 40], [40, 40]]) {
         const center = originP.add(new Point(x, y))
-        gameState.createMine(new Mine.Circle(center, 22, team), 5000)
+        gameState.createMine(new Mine.Circle(center, 44, team), 5000)
       }
     }
   }
