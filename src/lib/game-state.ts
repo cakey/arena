@@ -203,10 +203,18 @@ export default class GameState {
           }
         }
       }
+      // Ice zone slow buildup - takes 3s to reach full slow
+      let inIceZone = false
       for (const [zone] of this.iceZones) {
-        if (player.team !== zone.team && zone.center.distance(player.p) < zone.currentRadius + player.radius) {
-          player.applyState("slow", 500)
+        if (zone.center.distance(player.p) < zone.currentRadius + player.radius) {
+          inIceZone = true
+          break
         }
+      }
+      if (inIceZone) {
+        player.iceSlowBuildup = Math.min(1, player.iceSlowBuildup + msDiff / 3000)
+      } else {
+        player.iceSlowBuildup = Math.max(0, player.iceSlowBuildup - msDiff / 1000)  // Decay faster
       }
     }
 

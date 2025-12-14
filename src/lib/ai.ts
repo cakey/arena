@@ -142,10 +142,9 @@ function getMostDangerousProjectile(gameState: GameState, self: GamePlayer): Pro
   return mostDangerous
 }
 
-// Get ice zones that could be affecting us
+// Get ice zones that could be affecting us (affects all teams)
 function getNearbyIceZones(gameState: GameState, self: GamePlayer): { center: Point; radius: number }[] {
   return gameState.iceZones
-    .filter(([zone]) => zone.team !== self.team)
     .map(([zone]) => ({ center: zone.center, radius: zone.currentRadius }))
     .filter(zone => zone.center.distance(self.p) < zone.radius + 30)
 }

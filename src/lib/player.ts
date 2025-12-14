@@ -17,6 +17,7 @@ export class GamePlayer {
   states: Record<string, number> = {}; castedSkill: string = ""
   gunHits = 0
   lastBarrierHit: { time: number; pushAngle: number; barrierVelocity: Point } | null = null
+  iceSlowBuildup = 0  // 0-1, how much ice slow has built up
   private _lastCasted: Record<string, number> = {}
   private _shotCounts: Record<string, number> = {}
 
@@ -28,6 +29,7 @@ export class GamePlayer {
     this.alive = false; this.p = this.destP = spawnLocation
     this.castP = null; this.startCastTime = null; this.states = {}; this.gunHits = 0
     this.lastBarrierHit = null
+    this.iceSlowBuildup = 0
   }
 
   applyState(stateName: string, duration: number) { this.states[stateName] = this.time + duration }
@@ -71,7 +73,9 @@ export class GamePlayer {
   update(newTime: number, gameState: GameState) {
     const msDiff = newTime - this.time
     if (this.alive) {
-      const speed = this.states["slow"] ? this.speed * 0.2 : this.speed
+      // Ice slow: gradual buildup from 100% speed to 20% speed
+      const slowMultiplier = 1 - (this.iceSlowBuildup * 0.8)  // 1.0 -> 0.2
+      const speed = this.speed * slowMultiplier
       const newP = this.p.towards(this.destP, Utils.game.speed(speed) * msDiff)
       if (gameState.allowedMovement(newP, this)) this.p = newP
 
@@ -122,9 +126,11 @@ export class GamePlayer {
       ctx.beginPath(); ctx.circle(this.p, shieldRadius); ctx.lineWidth(4 + 4 * pctRemaining)
       ctx.strokeStyle(Config.colors.invulnerable); ctx.stroke()
     }
-    if (this.states["slow"]) {
-      ctx.beginPath(); ctx.circle(this.p, this.radius + 2); ctx.lineWidth(3)
-      ctx.setLineDash([4, 2, 6, 2]); ctx.strokeStyle(Config.colors.barrierBrown); ctx.stroke(); ctx.setLineDash([])
+    if (this.iceSlowBuildup > 0.05) {
+      ctx.globalAlpha(this.iceSlowBuildup * 0.6)
+      ctx.beginPath(); ctx.circle(this.p, this.radius + 3); ctx.lineWidth(4)
+      ctx.strokeStyle("#60c0e0"); ctx.stroke()
+      ctx.globalAlpha(1)
     }
     if (this.alive) {
       const teamColor = gameState.teams[this.team]?.color || "#888888"
