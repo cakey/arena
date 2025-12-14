@@ -23,5 +23,8 @@ Add `?debug` to see pathfinding grid and AI debug info.
 
 ## Visual History
 
+### 2025-12-14
+![2025-12-14](screenshots/2025-12-14.png)
+
 ### 2025-12-13
 ![2025-12-13](screenshots/2025-12-13.png)
