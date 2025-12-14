@@ -41,7 +41,8 @@ export class Client {
           break
         }
         case "newPlayer": {
-          const player = new GamePlayer(this.gameState.time, this.gameState.map.randomPoint(), d.team, d.playerId)
+          const pos = Point.fromObject(d.playerPosition) || this.gameState.map.randomPoint()
+          const player = new GamePlayer(this.gameState.time, pos, d.team, d.playerId)
           this.gameState.addPlayer(player)
           break
         }

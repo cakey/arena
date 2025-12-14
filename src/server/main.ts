@@ -46,7 +46,7 @@ class GameHandler {
       }
     }
     if (this.tick % 10 === 0) clientHandler.sendPings()
-    if (this.tick % 5 === 0) clientHandler.broadcast({ data: this.gameState, action: "sync" })
+    if (this.tick % 2 === 0) clientHandler.broadcast({ data: this.gameState, action: "sync" })
     this.tick++
   }
 

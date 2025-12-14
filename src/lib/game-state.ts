@@ -20,10 +20,32 @@ export default class GameState {
   mines: [Mine.Circle, number][] = []
 
   constructor(public time: number) {
-    this.capturePoints.push(new CapturePoint(new Point(200, 250), 75))
-    this.capturePoints.push(new CapturePoint(new Point(700, 250), 75))
-    this.barriers.push([new Barriers.Rect(new Point(444, 100), new Point(456, 200)), null])
-    this.barriers.push([new Barriers.Rect(new Point(444, 300), new Point(456, 400)), null])
+    // Capture points on far left and right sides
+    this.capturePoints.push(new CapturePoint(new Point(150, 350), 70))
+    this.capturePoints.push(new CapturePoint(new Point(1050, 350), 70))
+
+    // Central cross structure - creates 4 paths around it
+    this.barriers.push([new Barriers.Rect(new Point(550, 300), new Point(650, 400)), null])  // center block
+    this.barriers.push([new Barriers.Rect(new Point(580, 200), new Point(620, 300)), null])  // top arm
+    this.barriers.push([new Barriers.Rect(new Point(580, 400), new Point(620, 500)), null])  // bottom arm
+
+    // Diagonal cover near center (creates interesting angles)
+    this.barriers.push([new Barriers.Rect(new Point(420, 280), new Point(470, 320)), null])
+    this.barriers.push([new Barriers.Rect(new Point(420, 380), new Point(470, 420)), null])
+    this.barriers.push([new Barriers.Rect(new Point(730, 280), new Point(780, 320)), null])
+    this.barriers.push([new Barriers.Rect(new Point(730, 380), new Point(780, 420)), null])
+
+    // Lane dividers (top and bottom corridors)
+    this.barriers.push([new Barriers.Rect(new Point(300, 100), new Point(400, 130)), null])
+    this.barriers.push([new Barriers.Rect(new Point(800, 100), new Point(900, 130)), null])
+    this.barriers.push([new Barriers.Rect(new Point(300, 570), new Point(400, 600)), null])
+    this.barriers.push([new Barriers.Rect(new Point(800, 570), new Point(900, 600)), null])
+
+    // Cover pillars near capture points
+    this.barriers.push([new Barriers.Rect(new Point(250, 300), new Point(290, 340)), null])
+    this.barriers.push([new Barriers.Rect(new Point(250, 360), new Point(290, 400)), null])
+    this.barriers.push([new Barriers.Rect(new Point(910, 300), new Point(950, 340)), null])
+    this.barriers.push([new Barriers.Rect(new Point(910, 360), new Point(950, 400)), null])
   }
 
   addTeam(name: string, color: string) { this.teams[name] = { color, score: 0 } }
@@ -36,8 +58,8 @@ export default class GameState {
     const player = this.players[playerId]
     if (!player.states["invulnerable"]) {
       this.deadPlayerIds[playerId] = this.time
-      const respawnX = 250 + _.sample(_.range(0, 400, 20))!
-      const respawnY = _.sample([-50, 550])!
+      const respawnX = 300 + _.sample(_.range(0, 600, 20))!
+      const respawnY = _.sample([-50, 750])!
       player.kill(new Point(respawnX, respawnY))
       return true
     }
@@ -167,10 +189,11 @@ export default class GameState {
 
   sync(newState: any) {
     for (const [teamId, newScore] of Object.entries(newState.teams)) {
-      this.teams[teamId].score = newScore as number
+      if (this.teams[teamId]) this.teams[teamId].score = newScore as number
     }
     for (const [playerId, playerState] of Object.entries(newState.players) as [string, any][]) {
       const player = this.players[playerId]
+      if (!player) continue
       player.p = Point.fromObject(playerState.p)!
       player.destP = Point.fromObject(playerState.destP)!
       player.alive = playerState.alive

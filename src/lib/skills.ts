@@ -17,24 +17,24 @@ export interface Skill {
 
 const skills: Record<string, Skill> = {
   orb: {
-    cone: Math.PI / 5, radius: 7, castTime: 750, speed: 0.6, range: 400,
+    cone: Math.PI / 5, radius: 7, castTime: 750, speed: 0.3, range: 400,
     color: "#aa0000", channeled: true, score: 0, description: "Standard range projectile, all rounder.",
     cooldown: 0, enemies: true, type: "projectile"
   },
   gun: {
-    cone: Math.PI / 10, radius: 2, castTime: 10, speed: 1, range: 800,
+    cone: Math.PI / 10, radius: 2, castTime: 10, speed: 0.5, range: 800,
     color: "#000000", channeled: false, score: 0, description: "High rate, low damage, long range machine gun.",
     cooldown: 0, enemies: true, type: "projectile",
     hitPlayer: (p, proj, gs) => gs.killPlayer(p.id)
   },
   bomb: {
-    cone: Math.PI / 1.5, radius: 12, castTime: 600, speed: 0.15, range: 300,
+    cone: Math.PI / 1.5, radius: 35, castTime: 600, speed: 0.03, range: 300,
     color: "#00bbbb", channeled: false, score: 0, description: "One hit kill.",
     cooldown: 3000, enemies: true, type: "projectile",
     hitPlayer: (p, proj, gs) => gs.killPlayer(p.id)
   },
   flame: {
-    cone: Math.PI / 2, radius: 6, castTime: 150, speed: 0.4, range: 250,
+    cone: Math.PI / 2, radius: 6, castTime: 150, speed: 0.2, range: 250,
     color: "#990099", channeled: false, score: 0, description: "Close range, low damage. Knocks back targets.",
     cooldown: 2000, enemies: true, type: "projectile",
     hitPlayer: (hitPlayer, projectile, gameState) => {
@@ -50,7 +50,7 @@ const skills: Record<string, Skill> = {
     }
   },
   interrupt: {
-    cone: Math.PI / 8, radius: 4, castTime: 1, speed: 3, range: 1000,
+    cone: Math.PI / 8, radius: 4, castTime: 1, speed: 1.5, range: 1000,
     color: "#aa0077", channeled: false, score: 0, description: "Instant projectile that interrupts targets. No damage.",
     cooldown: 6000, type: "projectile", enemies: true,
     hitPlayer: (p) => { p.startCastTime = null }

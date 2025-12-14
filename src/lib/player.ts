@@ -12,7 +12,7 @@ class BasePlayer {
 }
 
 export class GamePlayer {
-  time: number; radius = 20; maxCastRadius = 40; destP: Point; speed = 0.15
+  time: number; radius = 20; maxCastRadius = 40; destP: Point; speed = 0.06
   startCastTime: number | null = null; castP: Point | null = null; alive = true
   states: Record<string, number> = {}; castedSkill: string = ""
   private _lastCasted: Record<string, number> = {}
@@ -31,10 +31,7 @@ export class GamePlayer {
   respawn() { this.alive = true; this.applyState("invulnerable", 1500) }
 
   moveTo(destP: Point) {
-    if (this.alive) {
-      this.destP = destP
-      if (this.startCastTime !== null && skills[this.castedSkill].channeled) this.startCastTime = null
-    }
+    if (this.alive) this.destP = destP
   }
 
   pctCooldown(castedSkill: string) {
@@ -48,10 +45,7 @@ export class GamePlayer {
   fire(castP: Point, castedSkill: string) {
     if (this.alive) {
       this.castP = castP; this.castedSkill = castedSkill
-      if (this.pctCooldown(castedSkill) >= 1) {
-        if (skills[castedSkill].channeled) this.destP = this.p
-        this.startCastTime = this.time
-      }
+      if (this.pctCooldown(castedSkill) >= 1) this.startCastTime = this.time
     }
   }
 
@@ -107,12 +101,14 @@ export class GamePlayer {
       ctx.setLineDash([4, 2, 6, 2]); ctx.strokeStyle(Config.colors.barrierBrown); ctx.stroke(); ctx.setLineDash([])
     }
     if (this.alive) {
-      ctx.filledCircle(this.p, this.radius, gameState.teams[this.team].color)
+      const teamColor = gameState.teams[this.team]?.color || "#888888"
+      ctx.filledCircle(this.p, this.radius, teamColor)
     } else {
       const deathTime = gameState.deadPlayerIds[this.id]
       const pctRespawn = (this.time - deathTime) / Config.game.respawnTime
+      const teamColor = gameState.teams[this.team]?.color || "#888888"
       ctx.filledCircle(this.p, this.radius - 1, Config.colors.barrierBrown)
-      ctx.filledCircle(this.p, this.radius * pctRespawn, gameState.teams[this.team].color)
+      ctx.filledCircle(this.p, this.radius * pctRespawn, teamColor)
     }
     if (focused) ctx.filledCircle(this.p, 3, "#000000")
     if (Config.UI.castingCircles) {
@@ -147,17 +143,19 @@ export class AIPlayer extends BasePlayer {
 }
 
 export class UIPlayer extends BasePlayer {
-  keyBindings: Record<string, string> = { g: "barrier", h: "flame", b: "mine", n: "bomb", j: "hamstring", m: "invulnerable" }
+  keyBindings: Record<string, string> = { q: "barrier", w: "flame", e: "mine", a: "bomb", s: "hamstring", d: "invulnerable" }
   gameState: GameState; handler: any
 
   constructor(gameState: GameState, handler: any, startP: Point, team: string) {
     super(startP, team); this.gameState = gameState; this.handler = handler
     addEventListener("mousedown", (event) => {
-      const radius = this.gameState.players[this.id].radius
-      const topLeft = new Point(radius, radius)
-      const bottomRight = this.gameState.map.size.subtract(topLeft)
-      const p = this.handler.camera.mapMouseP.bound(topLeft, bottomRight)
-      if (event.which === 3) this.handler.triggerMoveTo(this, p)
+      if (event.which === 1) {
+        const radius = this.gameState.players[this.id].radius
+        const topLeft = new Point(radius, radius)
+        const bottomRight = this.gameState.map.size.subtract(topLeft)
+        const p = this.handler.camera.mapMouseP.bound(topLeft, bottomRight)
+        this.handler.triggerMoveTo(this, p)
+      }
     })
     addEventListener("keypress", (event) => {
       const skill = this.keyBindings[String.fromCharCode(event.which)]

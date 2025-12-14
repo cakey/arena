@@ -8,7 +8,7 @@ export default class CapturePoint {
   constructor(public p: Point, public radius: number) {}
 
   render(ctx: any, teams: Record<string, { color: string }>) {
-    if (this.current.team) {
+    if (this.current.team && teams[this.current.team]) {
       const percent = this.current.strength / this.maxStrength
       ctx.beginPath()
       ctx.moveTo(this.p)
@@ -16,7 +16,7 @@ export default class CapturePoint {
       ctx.fillStyle(teams[this.current.team].color)
       ctx.fill()
     }
-    const color = this.current.captured ? teams[this.current.team!].color : "#ffffff"
+    const color = this.current.captured && teams[this.current.team!] ? teams[this.current.team!].color : "#ffffff"
     ctx.beginPath()
     ctx.moveTo(this.p)
     ctx.arc(this.p, this.radius + 3, 0, 2 * Math.PI)
@@ -40,6 +40,6 @@ export default class CapturePoint {
         }
       }
     }
-    if (this.current.captured) gameState.teams[this.current.team!].score += 1
+    if (this.current.captured && gameState.teams[this.current.team!]) gameState.teams[this.current.team!].score += 1
   }
 }

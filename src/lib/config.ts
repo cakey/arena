@@ -1,6 +1,6 @@
 export default {
   ws: { port: 8001 },
-  game: { width: 900, height: 500, speedup: 1, numAIs: 1, tickTime: 10, respawnTime: 2000 },
+  game: { width: 1200, height: 700, speedup: 1, numAIs: 0, tickTime: 10, respawnTime: 2000 },
   UI: { castingCircles: false },
   colors: {
     blue: "#5599dd", red: "#bb4455", green: "#55bb55", yellow: "#ddaa44",
