@@ -1,15 +1,27 @@
-## setup
-    # 1. Install node
-    npm i -g gulp nodemon coffee-script
-    npm install
+# Arena
 
+Multiplayer browser PvP arena game.
 
-## to dev (watches for file changes, and runs dev server)
-	gulp
-    gulp tdd # separate tab for karma tests
-    nodemon -w src/server -w src/lib src/server/main.coffee # run server
-## stack
- * http://sass-lang.com/guide
- * http://coffeescript.org/
- * http://jade-lang.com/
- * http://gulpjs.com/
+## Setup
+
+```
+npm install
+```
+
+## Run
+
+```
+npm start          # dev server with live reload (port 8765)
+npm run server     # game server (port 8001)
+```
+
+Open http://localhost:8765 to play, or http://localhost:8765?spectate to watch AIs only.
+
+Add `?debug` to see pathfinding grid and AI debug info.
+
+---
+
+## Visual History
+
+### 2025-12-13
+![2025-12-13](screenshots/2025-12-13.png)
