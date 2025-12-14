@@ -1,4 +1,5 @@
 import Point from "./point"
+import skills from "./skills"
 import type GameState from "./game-state"
 import type { GamePlayer } from "./player"
 import type CapturePoint from "./mechanics/capture-point"
@@ -228,6 +229,7 @@ function leadTarget(self: GamePlayer, target: GamePlayer, projectileSpeed: numbe
 // ============= Skill Checks =============
 
 function canUseSkill(self: GamePlayer, skillName: string): boolean {
+  if (!skills[skillName]) return false  // Skill doesn't exist
   return self.pctCooldown(skillName) >= 1 && !self.startCastTime
 }
 
@@ -352,20 +354,21 @@ export function decideAction(gameState: GameState, self: GamePlayer): AIDecision
     }
   }
 
-  // ========== Priority 5: CONTROL - place mine offensively ==========
-  // Place mines toward contested points when safe
-  if (canUseSkill(self, "mine")) {
-    const noNearbyEnemies = !nearestEnemy || nearestEnemy.distance > 150
-    if (noNearbyEnemies) {
-      // Find a contested or enemy point to mine
-      const contestedPoint = gameState.capturePoints.find(cp =>
-        !cp.current.captured || cp.current.team !== self.team
-      )
-      if (contestedPoint && self.p.distance(contestedPoint.p) < 200) {
-        // Place mine toward the contested point
-        aiDebugState[self.id] = { action: "mine" }
-        return { skill: "mine", castP: self.p }
-      }
+  // ========== Priority 5: MOBILITY - jump to escape or engage ==========
+  // Use jump to escape when in danger or to reach capture points faster
+  if (canUseSkill(self, "jump")) {
+    // Escape: jump away from nearby enemies when low health
+    if (nearestEnemy && nearestEnemy.distance < 100 && self.gunHits >= 3) {
+      const escapeAngle = nearestEnemy.player.p.angle(self.p)
+      const escapeP = self.p.bearing(escapeAngle, 150)
+      aiDebugState[self.id] = { action: "jump-escape" }
+      return { skill: "jump", castP: escapeP }
+    }
+    // Engage: jump toward capture points when far away
+    const targetPoint = getBestCapturePoint(gameState, self)
+    if (targetPoint && self.p.distance(targetPoint.p) > 120) {
+      aiDebugState[self.id] = { action: "jump-engage" }
+      return { skill: "jump", castP: targetPoint.p }
     }
   }
 

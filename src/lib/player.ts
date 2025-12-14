@@ -18,6 +18,10 @@ export class GamePlayer {
   gunHits = 0
   lastBarrierHit: { time: number; pushAngle: number; barrierVelocity: Point } | null = null
   iceSlowBuildup = 0  // 0-1, how much ice slow has built up
+  // Jump state
+  jumpStartTime: number | null = null
+  jumpStartP: Point | null = null
+  jumpEndP: Point | null = null
   private _lastCasted: Record<string, number> = {}
   private _shotCounts: Record<string, number> = {}
 
@@ -37,11 +41,29 @@ export class GamePlayer {
   respawn() { this.alive = true; this.applyState("invulnerable", 1500) }
 
   moveTo(destP: Point) {
-    if (this.alive) this.destP = destP
+    if (this.alive && !this.isJumping()) this.destP = destP
+  }
+
+  isJumping() { return this.jumpStartTime !== null }
+
+  startJump(targetP: Point, maxRange: number = 150) {
+    if (this.isJumping()) return
+    const dist = Math.min(this.p.distance(targetP), maxRange)
+    const angle = this.p.angle(targetP)
+    this.jumpStartTime = this.time
+    this.jumpStartP = this.p
+    this.jumpEndP = this.p.bearing(angle, dist)
+  }
+
+  getJumpProgress(): number {
+    if (!this.jumpStartTime) return 0
+    const duration = 350  // ms
+    return Math.min((this.time - this.jumpStartTime) / duration, 1)
   }
 
   pctCooldown(castedSkill: string) {
     const skill = skills[castedSkill]
+    if (!skill) return 0  // Skill doesn't exist
     const lastCasted = this._lastCasted[castedSkill]
 
     // Handle burst weapons (like gun) - short cooldown between shots, long cooldown after burst
@@ -73,11 +95,27 @@ export class GamePlayer {
   update(newTime: number, gameState: GameState) {
     const msDiff = newTime - this.time
     if (this.alive) {
-      // Ice slow: gradual buildup from 100% speed to 20% speed
-      const slowMultiplier = 1 - (this.iceSlowBuildup * 0.8)  // 1.0 -> 0.2
-      const speed = this.speed * slowMultiplier
-      const newP = this.p.towards(this.destP, Utils.game.speed(speed) * msDiff)
-      if (gameState.allowedMovement(newP, this)) this.p = newP
+      // Handle jump movement
+      if (this.isJumping()) {
+        const progress = this.getJumpProgress()
+        if (progress >= 1) {
+          // Land
+          this.p = this.jumpEndP!
+          this.destP = this.jumpEndP!
+          this.jumpStartTime = null
+          this.jumpStartP = null
+          this.jumpEndP = null
+        } else {
+          // Interpolate position
+          this.p = this.jumpStartP!.towards(this.jumpEndP!, this.jumpStartP!.distance(this.jumpEndP!) * progress)
+        }
+      } else {
+        // Normal movement with ice slow
+        const slowMultiplier = 1 - (this.iceSlowBuildup * 0.8)  // 1.0 -> 0.2
+        const speed = this.speed * slowMultiplier
+        const newP = this.p.towards(this.destP, Utils.game.speed(speed) * msDiff)
+        if (gameState.allowedMovement(newP, this)) this.p = newP
+      }
 
       if (this.startCastTime !== null) {
         const skill = skills[this.castedSkill]
@@ -97,7 +135,7 @@ export class GamePlayer {
           } else if (skill.type === "targeted") {
             gameState.castTargeted(this.p, this.castP!, skill, this.team)
           } else if (skill.type === "ground_targeted") {
-            gameState.castGroundTargeted(this.p, this.castP!, skill, this.team)
+            gameState.castGroundTargeted(this.p, this.castP!, skill, this.team, this)
           }
         }
         this._lastCasted[this.castedSkill] = newTime
@@ -135,24 +173,40 @@ export class GamePlayer {
     if (this.alive) {
       const teamColor = gameState.teams[this.team]?.color || "#888888"
       const healthPct = (6 - this.gunHits) / 6
-      const displayRadius = this.radius * (0.85 + 0.15 * healthPct)
+      let displayRadius = this.radius * (0.85 + 0.15 * healthPct)
+
+      // Jump visual - scale up and show shadow
+      let jumpScale = 1
+      if (this.isJumping()) {
+        const progress = this.getJumpProgress()
+        // Arc: scale peaks at middle of jump (sin curve)
+        jumpScale = 1 + 0.6 * Math.sin(progress * Math.PI)
+        displayRadius *= jumpScale
+
+        // Shadow on ground (at interpolated ground position)
+        const groundP = this.jumpStartP!.towards(this.jumpEndP!, this.jumpStartP!.distance(this.jumpEndP!) * progress)
+        const shadowScale = 1 - 0.3 * Math.sin(progress * Math.PI)  // Shadow shrinks as player rises
+        ctx.globalAlpha(0.25)
+        ctx.filledCircle(groundP, this.radius * shadowScale * 0.7, "#000000")
+        ctx.globalAlpha(1)
+      }
+
       // Body
       ctx.filledCircle(this.p, displayRadius, teamColor)
       // Highlight/shine
       ctx.globalAlpha(0.4)
-      ctx.filledCircle(this.p.add(new Point(-5, -5)), displayRadius * 0.3, "#ffffff")
+      ctx.filledCircle(this.p.add(new Point(-5 * jumpScale, -5 * jumpScale)), displayRadius * 0.3, "#ffffff")
       ctx.globalAlpha(1)
       // Face - eyes look toward destination
       const lookAngle = this.p.angle(this.destP)
-      const eyeOffset = 5
-      const eyeDist = 6
-      const leftEyeBase = this.p.add(new Point(-eyeDist, -2))
-      const rightEyeBase = this.p.add(new Point(eyeDist, -2))
-      const pupilOffset = new Point(Math.cos(lookAngle) * 2, Math.sin(lookAngle) * 2)
+      const eyeDist = 6 * jumpScale
+      const leftEyeBase = this.p.add(new Point(-eyeDist, -2 * jumpScale))
+      const rightEyeBase = this.p.add(new Point(eyeDist, -2 * jumpScale))
+      const pupilOffset = new Point(Math.cos(lookAngle) * 2 * jumpScale, Math.sin(lookAngle) * 2 * jumpScale)
       // Eye whites
-      ctx.filledCircle(leftEyeBase, 5, "#ffffff")
-      ctx.filledCircle(rightEyeBase, 5, "#ffffff")
-      // Pupils - look toward movement
+      ctx.filledCircle(leftEyeBase, 5 * jumpScale, "#ffffff")
+      ctx.filledCircle(rightEyeBase, 5 * jumpScale, "#ffffff")
+      // Pupils - look toward movement (or excited during jump)
       if (this.gunHits >= 4) {
         // Worried X eyes when low health
         ctx.strokeStyle("#444444"); ctx.lineWidth(2)
@@ -160,14 +214,18 @@ export class GamePlayer {
         ctx.beginPath(); ctx.moveTo(leftEyeBase.add(new Point(3, -3))); ctx.lineTo(leftEyeBase.add(new Point(-3, 3))); ctx.stroke()
         ctx.beginPath(); ctx.moveTo(rightEyeBase.add(new Point(-3, -3))); ctx.lineTo(rightEyeBase.add(new Point(3, 3))); ctx.stroke()
         ctx.beginPath(); ctx.moveTo(rightEyeBase.add(new Point(3, -3))); ctx.lineTo(rightEyeBase.add(new Point(-3, 3))); ctx.stroke()
+      } else if (this.isJumping()) {
+        // Excited wide eyes during jump
+        ctx.filledCircle(leftEyeBase.add(pupilOffset), 3 * jumpScale, "#444444")
+        ctx.filledCircle(rightEyeBase.add(pupilOffset), 3 * jumpScale, "#444444")
       } else {
         ctx.filledCircle(leftEyeBase.add(pupilOffset), 2.5, "#444444")
         ctx.filledCircle(rightEyeBase.add(pupilOffset), 2.5, "#444444")
       }
       // Soft blush marks - subtle and blended
       ctx.globalAlpha(0.15)
-      ctx.filledCircle(this.p.add(new Point(-9, 5)), 6, "#e07878")
-      ctx.filledCircle(this.p.add(new Point(9, 5)), 6, "#e07878")
+      ctx.filledCircle(this.p.add(new Point(-9 * jumpScale, 5 * jumpScale)), 6 * jumpScale, "#e07878")
+      ctx.filledCircle(this.p.add(new Point(9 * jumpScale, 5 * jumpScale)), 6 * jumpScale, "#e07878")
       ctx.globalAlpha(1)
     } else {
       const deathTime = gameState.deadPlayerIds[this.id]
@@ -205,7 +263,7 @@ export class AIPlayer extends BasePlayer {
 }
 
 export class UIPlayer extends BasePlayer {
-  keyBindings: Record<string, string> = { q: "gun", w: "bomb", e: "barrier", a: "mine", s: "iceslick", d: "invulnerable" }
+  keyBindings: Record<string, string> = { q: "gun", w: "bomb", e: "barrier", a: "jump", s: "iceslick", d: "invulnerable" }
   gameState: GameState; handler: any
 
   constructor(gameState: GameState, handler: any, startP: Point, team: string) {

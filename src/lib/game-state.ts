@@ -116,8 +116,8 @@ export default class GameState {
     }
   }
 
-  castGroundTargeted(originP: Point, castP: Point, skill: Skill, team: string) {
-    skill.onLand?.(this, castP, originP, team)
+  castGroundTargeted(originP: Point, castP: Point, skill: Skill, team: string, caster?: GamePlayer) {
+    skill.onLand?.(this, castP, originP, team, caster)
   }
 
   allowedMovement(newP: Point, player: GamePlayer) {
@@ -145,7 +145,7 @@ export default class GameState {
 
   projectileCollide(p: Projectile) {
     for (const player of Object.values(this.players)) {
-      if (player.alive && p.team !== player.team && p.p.within(player.p, p.radius + player.radius)) {
+      if (player.alive && !player.isJumping() && p.team !== player.team && p.p.within(player.p, p.radius + player.radius)) {
         return { player, type: "player" as const }
       }
     }
@@ -164,9 +164,9 @@ export default class GameState {
     for (const [barrier] of this.barriers) barrier.update(msDiff)
     for (const [zone] of this.iceZones) zone.update(msDiff)
 
-    // Push players out of barriers
+    // Push players out of barriers (skip jumping players)
     for (const player of Object.values(this.players)) {
-      if (!player.alive) continue
+      if (!player.alive || player.isJumping()) continue
       for (const [barrier] of this.barriers) {
         if (barrier.circleIntersect(player.p, player.radius)) {
           // Find barrier center and push player away from it
@@ -194,27 +194,32 @@ export default class GameState {
     for (const player of Object.values(this.players)) player.update(updateTime, this)
 
     for (const player of Object.values(this.players)) {
-      for (let i = 0; i < this.mines.length; i++) {
-        const [mine, d] = this.mines[i]
-        if (d > 0 && player.team !== mine.team && mine.center.distance(player.p) < mine.radius + player.radius) {
-          if (this.killPlayer(player.id)) {
-            this.mines[i][1] = 0
-            this.teams[mine.team].score += 1500
+      // Skip mine collision for jumping players
+      if (!player.isJumping()) {
+        for (let i = 0; i < this.mines.length; i++) {
+          const [mine, d] = this.mines[i]
+          if (d > 0 && player.team !== mine.team && mine.center.distance(player.p) < mine.radius + player.radius) {
+            if (this.killPlayer(player.id)) {
+              this.mines[i][1] = 0
+              this.teams[mine.team].score += 1500
+            }
           }
         }
       }
-      // Ice zone slow buildup - takes 3s to reach full slow
-      let inIceZone = false
-      for (const [zone] of this.iceZones) {
-        if (zone.center.distance(player.p) < zone.currentRadius + player.radius) {
-          inIceZone = true
-          break
+      // Ice zone slow buildup - takes 3s to reach full slow (skip if jumping)
+      if (!player.isJumping()) {
+        let inIceZone = false
+        for (const [zone] of this.iceZones) {
+          if (zone.center.distance(player.p) < zone.currentRadius + player.radius) {
+            inIceZone = true
+            break
+          }
         }
-      }
-      if (inIceZone) {
-        player.iceSlowBuildup = Math.min(1, player.iceSlowBuildup + msDiff / 3000)
-      } else {
-        player.iceSlowBuildup = Math.max(0, player.iceSlowBuildup - msDiff / 1000)  // Decay faster
+        if (inIceZone) {
+          player.iceSlowBuildup = Math.min(1, player.iceSlowBuildup + msDiff / 3000)
+        } else {
+          player.iceSlowBuildup = Math.max(0, player.iceSlowBuildup - msDiff / 1000)  // Decay faster
+        }
       }
     }
 

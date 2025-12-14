@@ -1,6 +1,16 @@
 import { v4 as uuid } from "uuid"
+import { writeFileSync, appendFileSync } from "fs"
 import { WebSocketServer, WebSocket } from "ws"
 import Config from "../lib/config"
+
+// Error logging
+const ERROR_LOG = "server-errors.log"
+writeFileSync(ERROR_LOG, `=== Server started ${new Date().toISOString()} ===\n`)
+function logError(context: string, error: any) {
+  const msg = `[${new Date().toISOString()}] ${context}: ${error?.message || error}\n`
+  console.error(msg.trim())
+  appendFileSync(ERROR_LOG, msg)
+}
 import GameState from "../lib/game-state"
 import Point from "../lib/point"
 import { GamePlayer, AIPlayer } from "../lib/player"
@@ -48,7 +58,7 @@ class GameHandler {
       try {
         ai.update(newTime, this.gameState)
       } catch (e: any) {
-        console.error(`AI ${ai.id.slice(0, 8)} error:`, e.message)
+        logError(`AI ${ai.id.slice(0, 8)}`, e)
       }
     }
     this.aiPerfBuffer.add(performance.now() - aiStart)
@@ -146,7 +156,7 @@ class ClientHandler {
         case "ping": this.ping(ws, message); break
         default: console.log("Unsupported message action", message.action)
       }
-    } catch (e: any) { console.log("EXCEPTION!", e.message, e.stack) }
+    } catch (e: any) { logError("Message handler", e) }
   }
 
   broadcast(message: any) {

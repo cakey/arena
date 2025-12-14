@@ -1,7 +1,6 @@
 import Point from "./point"
 import Config from "./config"
 import * as Barriers from "./mechanics/barriers"
-import * as Mine from "./mechanics/mine"
 import { IceZone } from "./mechanics/ice-zone"
 import type GameState from "./game-state"
 import type { GamePlayer } from "./player"
@@ -14,7 +13,7 @@ export interface Skill {
   enemies?: boolean; allies?: boolean; accuracyRadius?: number; continue?: boolean
   shotsBeforeCooldown?: number; actualCooldown?: number  // For burst weapons like gun
   hitPlayer?: (player: GamePlayer, projectile: Projectile, gameState: GameState) => void
-  onLand?: (gameState: GameState, castP: Point, originP: Point, team: string) => void
+  onLand?: (gameState: GameState, castP: Point, originP: Point, team: string, caster?: GamePlayer) => void
 }
 
 const skills: Record<string, Skill> = {
@@ -80,11 +79,11 @@ const skills: Record<string, Skill> = {
       gameState.createIceZone(new IceZone(castP, 10, 80, 0.015, team), 8000)
     }
   },
-  mine: {
-    castTime: 1000, type: "ground_targeted", radius: 66, color: Config.colors.mineRed,
-    channeled: true, score: 15, description: "Mine that one hit kills.", cooldown: 10000, cone: Math.PI * 2, range: 0, speed: 0,
-    onLand: (gameState, castP, originP, team) => {
-      gameState.createMine(new Mine.Circle(originP, 60, team), 6000)
+  jump: {
+    castTime: 1, type: "ground_targeted", radius: 8, color: "#aaddff",
+    channeled: false, score: 0, description: "Jump toward cursor. Invulnerable mid-air, passes over obstacles.", cooldown: 8000, cone: Math.PI * 2, range: 150, speed: 0,
+    onLand: (gameState, castP, originP, team, caster) => {
+      caster?.startJump(castP, 150)
     }
   }
 }
