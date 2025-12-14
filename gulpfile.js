@@ -14,6 +14,8 @@ function scripts() {
     outfile: 'public/app.js',
     platform: 'browser',
     sourcemap: true,
+    minify: true,
+    treeShaking: true,
     logLevel: 'info'
   }).then(() => {
     livereload.changed('public/app.js');
