@@ -15,6 +15,10 @@ class FixedBuffer {
 class GameHandler {
   SERVERID = "SERVER"; tick = 0; gameState!: GameState; locallyProccessed: AIPlayer[] = []
   loopTimeout: NodeJS.Timeout | null = null
+  // Performance tracking
+  perfBuffer = new FixedBuffer(100)
+  aiPerfBuffer = new FixedBuffer(100)
+  updatePerfBuffer = new FixedBuffer(100)
 
   start() {
     console.log("Game Loop (start)")
@@ -36,7 +40,10 @@ class GameHandler {
 
   loop = () => {
     this.loopTimeout = setTimeout(this.loop, Config.game.tickTime)
+    const loopStart = performance.now()
     const newTime = Date.now()
+
+    const aiStart = performance.now()
     for (const ai of this.locallyProccessed) {
       try {
         ai.update(newTime, this.gameState)
@@ -44,11 +51,26 @@ class GameHandler {
         console.error(`AI ${ai.id.slice(0, 8)} error:`, e.message)
       }
     }
+    this.aiPerfBuffer.add(performance.now() - aiStart)
+
+    const updateStart = performance.now()
     this.gameState.update(newTime)
+    this.updatePerfBuffer.add(performance.now() - updateStart)
+
     // if (this.tick % 500 === 0) console.log(JSON.stringify(this.gameState, null, 4))
     if (this.tick % 10 === 0) clientHandler.sendPings()
-    if (this.tick % 2 === 0) clientHandler.broadcast({ data: this.gameState, action: "sync" })
+    if (this.tick % 2 === 0) clientHandler.broadcast({ data: this.gameState, action: "sync", perf: this.getPerf() })
+
+    this.perfBuffer.add(performance.now() - loopStart)
     this.tick++
+  }
+
+  getPerf() {
+    return {
+      total: this.perfBuffer.average().toFixed(2),
+      ai: this.aiPerfBuffer.average().toFixed(2),
+      update: this.updatePerfBuffer.average().toFixed(2)
+    }
   }
 
   newPlayer(d: any) {
