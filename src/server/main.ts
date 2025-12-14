@@ -14,6 +14,7 @@ function logError(context: string, error: any) {
 import GameState from "../lib/game-state"
 import Point from "../lib/point"
 import { GamePlayer, AIPlayer } from "../lib/player"
+import { getAIPerf } from "../lib/ai"
 
 class FixedBuffer {
   i = 0; _arr: number[] = []
@@ -67,7 +68,11 @@ class GameHandler {
     this.gameState.update(newTime)
     this.updatePerfBuffer.add(performance.now() - updateStart)
 
-    // if (this.tick % 500 === 0) console.log(JSON.stringify(this.gameState, null, 4))
+    // Log AI perf every 5 seconds (500 ticks at 10ms) - enable with DEBUG=1
+    if (process.env.DEBUG && this.tick % 500 === 0) {
+      const aiPerf = getAIPerf()
+      console.log(`AI perf: ${aiPerf.calls} calls, avg=${aiPerf.avgMs}ms, path=${aiPerf.pathMs}ms, threat=${aiPerf.threatMs}ms`)
+    }
     if (this.tick % 10 === 0) clientHandler.sendPings()
     if (this.tick % 2 === 0) clientHandler.broadcast({ data: this.gameState, action: "sync", perf: this.getPerf() })
 

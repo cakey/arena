@@ -13,6 +13,26 @@ const AI_CONFIG = {
   threatDetectionRadius: 150,
 }
 
+// Performance profiling
+const AI_PERF = {
+  calls: 0,
+  totalTime: 0,
+  pathfindTime: 0,
+  threatTime: 0,
+}
+export function getAIPerf() {
+  const avg = AI_PERF.calls > 0 ? AI_PERF.totalTime / AI_PERF.calls : 0
+  const pathAvg = AI_PERF.calls > 0 ? AI_PERF.pathfindTime / AI_PERF.calls : 0
+  const threatAvg = AI_PERF.calls > 0 ? AI_PERF.threatTime / AI_PERF.calls : 0
+  const result = { calls: AI_PERF.calls, avgMs: avg.toFixed(3), pathMs: pathAvg.toFixed(3), threatMs: threatAvg.toFixed(3) }
+  // Reset
+  AI_PERF.calls = 0
+  AI_PERF.totalTime = 0
+  AI_PERF.pathfindTime = 0
+  AI_PERF.threatTime = 0
+  return result
+}
+
 export interface AIDecision {
   move?: Point
   skill?: string
@@ -21,6 +41,10 @@ export interface AIDecision {
 
 // Debug state - tracks what each AI is thinking
 export const aiDebugState: Record<string, { targetPoint?: Point; action: string; fullPath?: Point[]; pathError?: string }> = {}
+
+// Path cache - avoid recalculating path every tick
+const pathCache: Record<string, { path: Point[]; targetP: Point; time: number }> = {}
+const PATH_CACHE_TTL = 200  // Recalculate path every 200ms
 
 // ============= Geometry Helpers =============
 
@@ -236,9 +260,13 @@ function canUseSkill(self: GamePlayer, skillName: string): boolean {
 // ============= Main Decision Function =============
 
 export function decideAction(gameState: GameState, self: GamePlayer): AIDecision {
+  const startTime = performance.now()
+  AI_PERF.calls++
+
   // Don't act if already casting
   if (self.startCastTime !== null) {
     aiDebugState[self.id] = { action: "casting" }
+    AI_PERF.totalTime += performance.now() - startTime
     return {}
   }
 
@@ -246,7 +274,9 @@ export function decideAction(gameState: GameState, self: GamePlayer): AIDecision
   const currentCapturePoint = isOnCapturePoint(gameState, self)
 
   // ========== Priority 1: DODGE incoming threats ==========
+  const threatStart = performance.now()
   const dangerousProjectile = getMostDangerousProjectile(gameState, self)
+  AI_PERF.threatTime += performance.now() - threatStart
   if (dangerousProjectile) {
     const distToProjectile = self.p.distance(dangerousProjectile.p)
 
@@ -377,14 +407,37 @@ export function decideAction(gameState: GameState, self: GamePlayer): AIDecision
   if (targetPoint) {
     const distToPoint = self.p.distance(targetPoint.p)
     if (distToPoint > 30) {
-      // Use pathfinding to navigate around barriers, mines, and other players
-      const { path, error } = gameState.findPath(self.p, targetPoint.p, self.team, self.id)
+      // Check path cache - invalidate if target changed, expired, or hit barrier
+      const cached = pathCache[self.id]
+      const now = gameState.time
+      const targetChanged = !cached || cached.targetP.distance(targetPoint.p) > 10
+      const cacheExpired = !cached || (now - cached.time) > PATH_CACHE_TTL
+      const hitBarrier = self.lastBarrierHit && (now - self.lastBarrierHit.time) < 100
+
+      let path: Point[] = []
+      let error: string | null = null
+
+      if (cached && !targetChanged && !cacheExpired && !hitBarrier && cached.path.length > 0) {
+        // Use cached path, but advance if we passed waypoints
+        const remainingPath = cached.path.filter(wp => self.p.distance(wp) > 15)
+        path = remainingPath.length > 0 ? remainingPath : cached.path
+      } else {
+        // Recalculate path
+        const pathStart = performance.now()
+        const result = gameState.findPath(self.p, targetPoint.p, self.team, self.id)
+        AI_PERF.pathfindTime += performance.now() - pathStart
+        path = result.path
+        error = result.error
+        // Cache result
+        pathCache[self.id] = { path, targetP: targetPoint.p, time: now }
+      }
+
       if (path.length > 0) {
         const nextWaypoint = path[0]
         aiDebugState[self.id] = { targetPoint: nextWaypoint, action: `move(${path.length})`, fullPath: path, pathError: error || undefined }
+        AI_PERF.totalTime += performance.now() - startTime
         return { move: nextWaypoint }
       } else {
-        // No path found - record error, don't move
         aiDebugState[self.id] = { action: "stuck", fullPath: [], pathError: error || "unknown" }
       }
     } else {
@@ -394,5 +447,6 @@ export function decideAction(gameState: GameState, self: GamePlayer): AIDecision
     aiDebugState[self.id] = { action: "no target", fullPath: [] }
   }
 
+  AI_PERF.totalTime += performance.now() - startTime
   return {}
 }
